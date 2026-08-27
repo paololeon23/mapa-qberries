@@ -1,7 +1,7 @@
 /** Configuración compartida · mapa (index) + formulario móvil (form.html) */
 window.QB_CONFIG = {
   // URL del Web App de Google Apps Script (.../exec)
-  API_URL: "",
+  API_URL: "https://script.google.com/macros/s/AKfycbyMsvkvDiSwOVd-adNdKvnLWBAop4dPIBnPKU_Z5A3yaVGtt7dTtNfEX_T08RWLj9x3IA/exec",
   // Opcional: mismo valor que Script property API_TOKEN en Apps Script
   API_TOKEN: "",
 
