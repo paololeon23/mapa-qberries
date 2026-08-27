@@ -1,0 +1,3721 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <title>Q Berries · Plano de Cosecha Etapa I</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --qb-red: #e31e24;
+      --qb-orange: #f6921e;
+      --qb-lime: #a1cd3a;
+      --qb-green: #6db344;
+      --forest: #0f3327;
+      --forest-mid: #1a5c40;
+      --forest-soft: #2f8a58;
+      --ink: #0f1720;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --panel: #ffffff;
+      --canvas: #f8fafc;
+      --canvas-deep: #f1f5f9;
+      --shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --cell-line: #94a3b8;
+      --header-h: 72px;
+      --stats-h: 64px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- App shell --- */
+    .app-header {
+      flex: 0 0 auto;
+      min-height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      padding: 0.85rem 1.5rem;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+      position: relative;
+      z-index: 30;
+    }
+    .app-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--qb-red), var(--qb-orange), var(--qb-lime), var(--qb-green));
+      opacity: 0.85;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .brand-logo {
+      height: 42px;
+      width: auto;
+      max-width: 180px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+    }
+    .brand-copy {
+      min-width: 0;
+      padding-left: 1rem;
+      border-left: 1px solid var(--line);
+    }
+    .brand-eyebrow {
+      margin: 0 0 0.15rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .page-title {
+      margin: 0;
+      font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--forest);
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .search-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-field svg {
+      position: absolute;
+      left: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-field input {
+      width: min(240px, 28vw);
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 0 0.85rem 0 2.35rem;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--canvas-deep);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .search-field input::placeholder { color: #94a3b8; }
+    .search-field input:focus {
+      background: #fff;
+      border-color: var(--forest-soft);
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.14);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      height: 40px;
+      min-width: 40px;
+      padding: 0 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, box-shadow .15s, transform .15s;
+    }
+    .btn:hover {
+      background: var(--canvas-deep);
+      border-color: var(--line-strong);
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .btn-icon { padding: 0; width: 40px; }
+    .btn-primary {
+      background: var(--forest);
+      border-color: var(--forest);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--forest-mid);
+      border-color: var(--forest-mid);
+    }
+    .btn-labor {
+      background: var(--qb-red);
+      border-color: var(--qb-red);
+      color: #fff;
+      white-space: nowrap;
+    }
+    .btn-labor:hover {
+      background: #c4191f;
+      border-color: #c4191f;
+    }
+    .btn-outline {
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    .segmented {
+      display: inline-flex;
+      align-items: center;
+      height: 40px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--canvas-deep);
+    }
+    .segmented .btn {
+      height: 32px;
+      min-width: 32px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      box-shadow: none;
+    }
+    .segmented .btn:hover {
+      background: rgba(255,255,255,0.7);
+      color: var(--ink);
+    }
+    .segmented .btn.is-active,
+    .segmented #zoomReset {
+      background: #fff;
+      color: var(--forest);
+      box-shadow: var(--shadow-sm);
+    }
+    #zoomReset {
+      min-width: 54px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- Stats ribbon --- */
+    .sidebar {
+      flex: 0 0 auto;
+      background: #f4f7f5;
+      border-bottom: 1px solid #d6e0da;
+      padding: 0.65rem 1.25rem;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      align-items: stretch;
+      gap: 0.75rem;
+      overflow: hidden;
+    }
+    .side-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.35rem;
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 12px;
+      padding: 0.45rem 0.7rem 0.5rem;
+      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.04);
+    }
+    .side-block.kpi-block {
+      flex: 0 0 auto;
+    }
+    .side-block.mod-block {
+      min-width: 0;
+    }
+    .side-block h2 {
+      margin: 0;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #64748b;
+      white-space: nowrap;
+      padding-bottom: 0.2rem;
+      border-bottom: 1px solid #eef3f0;
+    }
+    .kpi-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding-bottom: 0.2rem;
+      border-bottom: 1px solid #eef3f0;
+    }
+    .kpi-head-row h2 {
+      border: 0;
+      padding: 0;
+    }
+    .kpi-refresh {
+      height: 28px;
+      padding: 0 0.55rem;
+      font-size: 0.64rem;
+      gap: 0.25rem;
+    }
+
+    .kpis {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: nowrap;
+    }
+    .kpi {
+      background: #f7fbf8;
+      border: 1px solid #e2ebe6;
+      border-radius: 9px;
+      padding: 0.3rem 0.55rem;
+      min-width: 58px;
+    }
+    .kpi span {
+      display: block;
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .kpi strong {
+      display: flex;
+      align-items: baseline;
+      gap: 0.2em;
+      margin-top: 0.1rem;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #0f3327;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .kpi strong .unit {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .mod-list {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.35rem;
+      align-items: center;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .leg-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      padding: 0.28rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid #e2ebe6;
+      background: #f7fbf8;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, box-shadow .15s;
+      white-space: nowrap;
+    }
+    .leg-item:hover {
+      background: #fff;
+      border-color: #2f8a58;
+    }
+    .leg-item.active {
+      background: #ecfdf3;
+      border-color: var(--qb-green);
+      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.14);
+    }
+    .leg-swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .leg-item b {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #0f3327;
+    }
+    .leg-item .ha {
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+    }
+    @media (max-width: 1280px) {
+      .leg-item .ha { display: none; }
+    }
+    @media (max-width: 980px) {
+      .side-block h2 { font-size: 0.55rem; }
+      .kpi { min-width: 52px; padding: 0.25rem 0.4rem; }
+      .kpi strong { font-size: 0.82rem; }
+    }
+
+    .labor-actions,
+    .share-actions {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.35rem;
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 12px;
+      padding: 0.45rem 0.55rem 0.5rem;
+      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.04);
+      flex-shrink: 0;
+    }
+    .labor-actions h2,
+    .share-actions h2 {
+      margin: 0;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #64748b;
+      white-space: nowrap;
+      padding-bottom: 0.2rem;
+      border-bottom: 1px solid #eef3f0;
+    }
+    .labor-actions-row,
+    .share-actions-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .labor-actions .btn,
+    .share-actions .btn {
+      height: 32px;
+      min-width: 32px;
+      padding: 0 0.65rem;
+      font-size: 0.7rem;
+      gap: 0.28rem;
+    }
+    .labor-actions .btn svg,
+    .share-actions .btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .labor-actions .btn-text,
+    .share-actions .btn-text {
+      display: inline;
+    }
+    @media (max-width: 1180px) {
+      .labor-actions .btn-text,
+      .share-actions .btn-text { display: none; }
+      .labor-actions .btn,
+      .share-actions .btn {
+        padding: 0;
+        width: 34px;
+        justify-content: center;
+      }
+    }
+    .share-actions .btn.is-image:hover { border-color: #1E88E5; color: #1E88E5; }
+    .share-actions .btn.is-pdf:hover { border-color: var(--qb-red); color: var(--qb-red); }
+    .share-actions .btn.is-excel:hover { border-color: #43A047; color: #43A047; }
+
+    /* --- Map --- */
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .map-panel {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .map-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      cursor: grab;
+      position: relative;
+      background: var(--canvas);
+      padding: 20px;
+    }
+    .map-wrap.dragging { cursor: grabbing; }
+
+    .scaler {
+      width: 100%;
+      height: 100%;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+    }
+
+    .grid {
+      position: relative;
+      display: grid;
+      gap: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .cell {
+      border: 1px solid #cbd5e1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      padding: 2px 1px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.08;
+      cursor: pointer;
+      position: relative;
+      background: #ffffff;
+      user-select: none;
+      transition: box-shadow .12s ease, border-color .12s ease, filter .15s;
+      overflow: hidden;
+    }
+    .cell.empty {
+      border-color: transparent;
+      background: transparent;
+      pointer-events: none;
+    }
+    .cell .t,
+    .cell .l,
+    .cell .h {
+      color: #0b0f0d;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: clip;
+      white-space: nowrap;
+      font-size: var(--fs-cell, 11px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+    .cell .h {
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+    .cell:hover {
+      z-index: 3;
+      box-shadow: inset 0 0 0 2px var(--forest);
+    }
+    .cell.active {
+      outline: 2px solid var(--forest);
+      box-shadow: inset 0 0 0 2px var(--forest), 0 0 0 3px rgba(15, 61, 46, 0.16);
+      z-index: 4;
+    }
+    .cell.dim {
+      opacity: 0.16;
+      filter: grayscale(0.55);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .cell.m1  { background: #fff; border-color: #8E24AA; }
+    .cell.m2  { background: #fff; border-color: #43A047; }
+    .cell.m3  { background: #fff; border-color: #1E88E5; }
+    .cell.m4  { background: #fff; border-color: #F9A825; }
+    .cell.m5  { background: #fff; border-color: #E64A19; }
+    .cell.m10 { background: #fff; border-color: #00695C; }
+
+    .cell-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
+      opacity: 0.88;
+      pointer-events: none;
+      z-index: 0;
+      transition: height .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .cell .t, .cell .l, .cell .h { position: relative; z-index: 1; }
+    .cell.labor-progress { box-shadow: inset 0 0 0 1px rgba(15, 51, 39, 0.12); }
+    .cell.labor-done { box-shadow: inset 0 0 0 2px var(--forest-soft); }
+    .cell.labor-flash {
+      animation: laborFlash 1.2s ease;
+      z-index: 6;
+    }
+    @keyframes laborFlash {
+      0%, 100% { box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent; }
+      30% { box-shadow: inset 0 0 0 3px var(--forest), 0 0 0 4px rgba(47, 138, 88, 0.35); }
+    }
+
+    .lot-preview {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 0.15rem;
+      padding: 0.85rem 0.75rem 0.9rem;
+      border: 1.5px solid #d6e0da;
+      border-radius: 14px;
+      background: #f4f7f5;
+    }
+    .lot-preview > label {
+      display: block;
+      width: 100%;
+      margin: 0;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #64748b;
+      text-align: left;
+    }
+    .lot-preview-cell {
+      position: relative;
+      width: 100%;
+      max-width: 220px;
+      height: 96px;
+      margin: 0.15rem auto 0.1rem;
+      background: #fff;
+      border: 1.5px solid #c5d4cc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(15, 51, 39, 0.05);
+    }
+    .lot-preview-cell .cell-fill { opacity: 0.85; }
+    .lot-preview-cell .t,
+    .lot-preview-cell .l,
+    .lot-preview-cell .h {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      line-height: 1.15;
+    }
+    .lot-preview-cell .l {
+      font-size: 15px;
+      margin: 0.1rem 0;
+    }
+    .lot-preview-status {
+      margin: 0.15rem 0 0;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #1a5c40;
+      line-height: 1.35;
+      max-width: 100%;
+    }
+
+    .save-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      background: #166534;
+      color: #fff;
+      padding: 1.1rem 1.6rem;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: 0 20px 50px rgba(22, 101, 52, 0.45);
+      z-index: 9999;
+      transition: transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+      pointer-events: none;
+      opacity: 0;
+      border: 2px solid #4ade80;
+      text-align: center;
+      min-width: min(320px, 86vw);
+    }
+    .save-toast.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .save-toast.error {
+      background: var(--qb-red);
+      border-color: #fca5a5;
+      box-shadow: 0 20px 50px rgba(227, 30, 36, 0.35);
+    }
+    .save-toast .toast-sub {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      opacity: 0.95;
+    }
+
+    #saveLaborBtn.saved {
+      background: #166534;
+      border-color: #166534;
+    }
+
+    .drawer-foot {
+      flex: 0 0 auto;
+      padding: 0.85rem 1rem 1.05rem;
+      border-top: 1px solid #d6e0da;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      background: #f7fbf8;
+    }
+    .drawer-foot-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .drawer-foot-btns .btn { flex: 1; height: 38px; }
+    .drawer-save-msg {
+      display: none;
+      margin: 0;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      background: #dcfce7;
+      border: 1.5px solid #4ade80;
+      color: #166534;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12);
+    }
+    .drawer-save-msg.show { display: block; animation: savePulse .35s ease; }
+    @keyframes savePulse {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .drawer-save-msg span {
+      display: block;
+      margin-top: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #15803d;
+      line-height: 1.35;
+    }
+
+    /* Confirm clear modal */
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .confirm-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .confirm-card {
+      width: min(380px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d6e0da;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.22);
+      overflow: hidden;
+      transform: translateY(10px) scale(0.97);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .confirm-modal.open .confirm-card {
+      transform: translateY(0) scale(1);
+    }
+    .confirm-card-head {
+      padding: 1rem 1.15rem 0.75rem;
+      background: #0f3327;
+      color: #fff;
+    }
+    .confirm-card-head h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .confirm-card-body {
+      padding: 1.05rem 1.15rem 0.35rem;
+      color: #334155;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+    .confirm-card-body strong {
+      color: #0f3327;
+    }
+    .confirm-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.85rem 1.15rem 1.1rem;
+    }
+    .confirm-card-actions .btn {
+      flex: 1;
+      height: 40px;
+    }
+    .btn-danger {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }
+
+    /* --- Labor drawer --- */
+    .drawer-backdrop {
+      display: none;
+    }
+
+    .labor-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(400px, 100vw);
+      height: 100%;
+      background: #ffffff;
+      border-left: 1px solid #d6e0da;
+      box-shadow: -10px 0 36px rgba(15, 51, 39, 0.12);
+      transform: translateX(100%);
+      transition: transform .28s cubic-bezier(.2,.8,.2,1);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .labor-drawer.open { transform: translateX(0); }
+
+    .drawer-head {
+      flex: 0 0 auto;
+      padding: 0.85rem 1.1rem 0.75rem;
+      border-bottom: 1px solid #0a241c;
+      background: #0f3327;
+      color: #fff;
+    }
+    .drawer-head h2 {
+      margin: 0 0 0.15rem;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .drawer-head p {
+      margin: 0;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.72);
+    }
+    .drawer-close {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.7rem;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      font-size: 1.15rem;
+      line-height: 1;
+      color: #fff;
+    }
+    .drawer-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+    .drawer-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 0.75rem 1rem 1rem;
+      scrollbar-width: thin;
+    }
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem 0.55rem;
+      align-content: start;
+    }
+    .field { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    .field label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #4b6358;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      max-width: 100%;
+      height: 34px;
+      border: 1.5px solid #c5d4cc;
+      border-radius: 9px;
+      padding: 0 0.6rem;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #f7fbf8;
+      color: #0f3327;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .field select,
+    .field input[type="text"] {
+      text-transform: uppercase;
+    }
+    .field input[type="date"],
+    .field input[type="number"] {
+      text-transform: none;
+    }
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 2rem;
+      background-color: #f7fbf8;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #1a5c40 50%),
+        linear-gradient(135deg, #1a5c40 50%, transparent 50%);
+      background-position:
+        calc(100% - 14px) calc(50% - 2px),
+        calc(100% - 9px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      cursor: pointer;
+    }
+    .field select:hover {
+      border-color: #2f8a58;
+      background-color: #fff;
+    }
+    .field select option {
+      color: #0f3327;
+      background: #fff;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .field input:focus,
+    .field select:focus {
+      border-color: #2f8a58;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.16);
+    }
+    .field input::placeholder,
+    .cselect-search input::placeholder {
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 1;
+    }
+    .field input[readonly] {
+      background: #eef5f1;
+      color: #5a6f65;
+      border-color: #d3ddd7;
+    }
+    .avance-wrap { grid-column: 1 / -1; }
+    .avance-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: #e6eee9;
+      overflow: hidden;
+      margin-top: 0.2rem;
+    }
+    .avance-bar i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1a5c40, #6db344);
+      transition: width .18s ease;
+    }
+
+    /* Custom lote select */
+    .cselect {
+      position: relative;
+      width: 100%;
+    }
+    .cselect-trigger {
+      width: 100%;
+      height: 34px;
+      border: 1.5px solid #c5d4cc;
+      border-radius: 9px;
+      padding: 0 2rem 0 0.6rem;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      text-align: left;
+      background: #f7fbf8;
+      color: #0f3327;
+      cursor: pointer;
+      position: relative;
+    }
+    .cselect-trigger::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #1a5c40;
+      transform: translateY(-40%);
+    }
+    .cselect.open .cselect-trigger,
+    .cselect-trigger:focus {
+      border-color: #2f8a58;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.16);
+      outline: none;
+    }
+    .cselect-trigger.is-empty { color: #7a8f85; font-weight: 600; }
+    .cselect-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      background: #fff;
+      border: 1.5px solid #1a5c40;
+      border-radius: 10px;
+      box-shadow: 0 12px 28px rgba(15, 51, 39, 0.14);
+      z-index: 40;
+      display: none;
+      overflow: hidden;
+    }
+    .cselect.open .cselect-panel { display: block; }
+    .cselect-search {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.55rem;
+      border-bottom: 1px solid #e2ebe6;
+      background: #f7fbf8;
+    }
+    .cselect-search svg {
+      width: 14px;
+      height: 14px;
+      color: #1a5c40;
+      flex-shrink: 0;
+    }
+    .cselect-search input {
+      flex: 1;
+      height: 30px;
+      border: 1px solid #c5d4cc;
+      border-radius: 7px;
+      padding: 0 0.55rem;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #fff;
+      color: #0f3327;
+      outline: none;
+      text-transform: uppercase;
+    }
+    .cselect-search input:focus {
+      border-color: #2f8a58;
+      box-shadow: 0 0 0 2px rgba(47, 138, 88, 0.12);
+    }
+    .cselect-list {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 0.25rem;
+    }
+    .cselect-option {
+      display: block;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 0.45rem 0.55rem;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #0f3327;
+      cursor: pointer;
+      white-space: normal;
+      line-height: 1.25;
+    }
+    .cselect-option:hover,
+    .cselect-option.active {
+      background: #eaf6ee;
+      color: #0f3327;
+    }
+    .cselect-option.selected {
+      background: #0f3327;
+      color: #fff;
+    }
+    .cselect-empty {
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* --- Progress drawer (izquierda) --- */
+    .progress-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      pointer-events: none;
+    }
+    .progress-modal.open { pointer-events: none; }
+    .progress-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: min(440px, 100vw);
+      height: 100%;
+      background: #fff;
+      border-right: 1px solid #d6e0da;
+      box-shadow: 10px 0 36px rgba(15, 51, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(-105%);
+      transition: transform .28s cubic-bezier(.2,.8,.2,1);
+      pointer-events: auto;
+      z-index: 111;
+    }
+    .progress-modal.open .progress-panel { transform: translateX(0); }
+    .progress-head {
+      flex: 0 0 auto;
+      padding: 0.95rem 1.1rem;
+      background: #0f3327;
+      color: #fff;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .progress-head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+    }
+    .progress-head .sub {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+    .progress-head button {
+      border: 1px solid rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .progress-head button:hover { background: rgba(255,255,255,0.18); }
+    .progress-summary {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.45rem;
+      padding: 0.75rem 1rem;
+      background: #f7fbf8;
+      border-bottom: 1px solid #d6e0da;
+    }
+    .progress-summary .ps {
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 10px;
+      padding: 0.45rem 0.55rem;
+      text-align: center;
+    }
+    .progress-summary .ps span {
+      display: block;
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .progress-summary .ps strong {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f3327;
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0.75rem 0.85rem 1rem;
+      background: #f4f7f5;
+    }
+    .progress-empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: #64748b;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .labor-group {
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 12px;
+      margin-bottom: 0.65rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15, 51, 39, 0.04);
+    }
+    .labor-group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.65rem 0.8rem;
+      background: linear-gradient(180deg, #ffffff 0%, #f0f7f3 100%);
+      border-bottom: 1px solid #e2ebe6;
+    }
+    .labor-group-head h3 {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #0f3327;
+      line-height: 1.25;
+    }
+    .labor-group-meta {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #1a5c40;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .labor-group-bar {
+      height: 4px;
+      background: #e6eee9;
+    }
+    .labor-group-bar i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #1a5c40, #6db344);
+    }
+    .labor-lot {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.25rem 0.65rem;
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid #eef3f0;
+      align-items: center;
+    }
+    .labor-lot:last-child { border-bottom: 0; }
+    .labor-lot:hover { background: #f7fbf8; }
+    .labor-lot .lot-name {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #0f1720;
+      text-transform: uppercase;
+    }
+    .labor-lot .lot-info {
+      font-size: 0.68rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .labor-lot .lot-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2rem;
+    }
+    .labor-lot .lot-avance {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #0f3327;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-pill.done { background: #dcfce7; color: #166534; }
+    .status-pill.progress { background: #fef3c7; color: #92400e; }
+    .status-pill.pending { background: #f1f5f9; color: #64748b; }
+
+    .hint {
+      position: absolute;
+      left: 1rem;
+      bottom: 1rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: rgba(255,255,255,0.96);
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+      z-index: 12;
+      pointer-events: none;
+    }
+
+    .detail {
+      position: absolute;
+      right: 1rem;
+      bottom: 1rem;
+      width: min(300px, calc(100% - 2rem));
+      background: rgba(255,255,255,0.98);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.15rem 1rem;
+      box-shadow: var(--shadow);
+      transform: translateY(120%);
+      opacity: 0;
+      transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+    }
+    .detail.open {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .detail .mod-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      color: #fff;
+      margin-bottom: 0.45rem;
+    }
+    .detail h3 {
+      margin: 0 0 0.65rem;
+      font-size: 1.05rem;
+      color: var(--forest);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .detail dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.4rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .detail dt { color: var(--muted); font-weight: 600; }
+    .detail dd {
+      margin: 0;
+      font-weight: 800;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .detail .x {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.65rem;
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 8px;
+      background: #f1f5f3;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .detail .x:hover { background: #e4ece7; color: var(--ink); }
+
+    @media (max-width: 960px) {
+      .app-header {
+        flex-wrap: wrap;
+        padding: 0.85rem 1rem;
+      }
+      .brand { flex: 1 1 100%; }
+      .toolbar {
+        flex: 1 1 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      .page-title { white-space: normal; }
+      .sidebar { padding: 0.65rem 1rem; }
+    }
+
+    /* Celular: mapa + panel operativo (resumen, módulos, actualizar) */
+    .mob-chrome,
+    .mob-detail {
+      display: none;
+    }
+    /* Móvil: portrait ≤768px o landscape de celular (poco alto + ancho ≤1024) */
+    @media (max-width: 768px), ((max-height: 520px) and (max-width: 1024px)) {
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      .app-header,
+      .sidebar,
+      .hint,
+      .detail,
+      .labor-drawer,
+      .drawer-backdrop,
+      .progress-modal,
+      .confirm-modal,
+      .save-toast {
+        display: none !important;
+      }
+      .workspace {
+        flex: 1;
+        min-height: 0;
+        height: 100%;
+      }
+      .map-panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .mob-chrome {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        background: #fff;
+        border-bottom: 1px solid #e5e5e5;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        z-index: 60;
+      }
+      .mob-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        padding: 0.5rem 0.85rem 0.4rem;
+        padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+      }
+      .mob-brand {
+        flex: 1;
+        min-width: 0;
+      }
+      .mob-brand-copy {
+        min-width: 0;
+      }
+      .mob-brand-copy .eyebrow {
+        display: block;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+        line-height: 1.2;
+      }
+      .mob-brand-copy strong {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #0f3327;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mob-refresh {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 36px;
+        padding: 0 0.75rem;
+        border: 1px solid #2f8a58;
+        border-radius: 11px;
+        background: linear-gradient(145deg, #2f8a58 0%, #0f3327 100%);
+        color: #fff;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(15, 51, 39, 0.18);
+      }
+      .mob-refresh svg { width: 15px; height: 15px; flex-shrink: 0; }
+      .mob-refresh:active { transform: scale(0.97); }
+      .mob-refresh.loading svg { animation: mobSpin 0.8s linear infinite; }
+      @keyframes mobSpin { to { transform: rotate(360deg); } }
+      .mob-resumen {
+        padding: 0 0.85rem 0.4rem;
+      }
+      .mob-resumen-label {
+        margin: 0 0 0.35rem;
+        font-size: 0.56rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+      .mob-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.35rem;
+      }
+      .mob-kpi {
+        background: #fff;
+        border: 1px solid #e2ebe6;
+        border-radius: 10px;
+        padding: 0.35rem 0.4rem;
+        text-align: center;
+      }
+      .mob-kpi span {
+        display: block;
+        font-size: 0.52rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #64748b;
+        line-height: 1.1;
+      }
+      .mob-kpi strong {
+        display: block;
+        margin-top: 0.12rem;
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: #0f3327;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+      }
+      .mob-kpi strong em {
+        font-style: normal;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #64748b;
+      }
+      .mob-search-wrap {
+        padding: 0 0.85rem 0.4rem;
+      }
+      .mob-search-wrap input {
+        width: 100%;
+        height: 38px;
+        padding: 0 0.85rem 0 2.2rem;
+        border: 1px solid #dde5e0;
+        border-radius: 11px;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M14 14l-3-3'/%3E%3C/svg%3E") 0.7rem center no-repeat;
+        font: inherit;
+        font-size: 0.82rem;
+        color: #0f3327;
+      }
+      .mob-search-wrap input:focus {
+        outline: none;
+        border-color: #2f8a58;
+        box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.12);
+      }
+      .mob-mod-scroll {
+        display: flex;
+        gap: 0.35rem;
+        padding: 0 0.85rem 0.45rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .mob-mod-scroll::-webkit-scrollbar { display: none; }
+      .mob-mod-chip {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+        height: 32px;
+        padding: 0 0.65rem;
+        border: 1px solid #e2ebe6;
+        border-radius: 999px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #0f3327;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .mob-mod-chip .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.08);
+      }
+      .mob-mod-chip.active {
+        background: #ecfdf3;
+        border-color: #2f8a58;
+        box-shadow: 0 0 0 2px rgba(47, 138, 88, 0.12);
+      }
+      .mob-foot-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.35rem 0.85rem 0.45rem;
+        border-top: 1px solid #eef3f0;
+        background: rgba(255,255,255,0.72);
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #64748b;
+      }
+      .mob-foot-bar strong { color: #0f3327; font-weight: 800; }
+      .map-wrap {
+        flex: 1;
+        min-height: 0;
+        padding: 10px;
+        border-radius: 0;
+        touch-action: none;
+        cursor: grab;
+        background-color: #fff;
+        background-image:
+          linear-gradient(rgba(0, 0, 0, 0.14) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.14) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+      .map-wrap.dragging { cursor: grabbing; }
+      .scaler, .stage {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1;
+      }
+      .grid {
+        border-radius: 10px;
+        border: 1px solid #b8c5bc;
+        box-shadow:
+          0 10px 36px rgba(15, 51, 39, 0.14),
+          0 0 0 1px rgba(255,255,255,0.6) inset;
+      }
+      .mob-detail {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 75;
+        transform: translateY(105%);
+        transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
+        pointer-events: none;
+      }
+      .mob-detail.open {
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .mob-detail-card {
+        background: #fff;
+        border-radius: 18px 18px 0 0;
+        padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -12px 40px rgba(15, 51, 39, 0.16);
+        border-top: 1px solid #e2ebe6;
+      }
+      .mob-detail-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.65rem;
+        margin-bottom: 0.65rem;
+      }
+      .mob-detail-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        color: #fff;
+      }
+      .mob-detail-head h3 {
+        margin: 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0f3327;
+      }
+      .mob-detail-close {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #e2ebe6;
+        border-radius: 10px;
+        background: #f7fbf8;
+        color: #64748b;
+        font-size: 1.2rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .mob-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+      }
+      .mob-detail-grid div {
+        background: #f7fbf8;
+        border: 1px solid #e2ebe6;
+        border-radius: 10px;
+        padding: 0.45rem 0.55rem;
+      }
+      .mob-detail-grid dt {
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+      .mob-detail-grid dd {
+        margin: 0.15rem 0 0;
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #0f3327;
+      }
+      .map-mobile-ui {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.55rem;
+        position: fixed;
+        right: 0.85rem;
+        bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+        z-index: 80;
+        pointer-events: none;
+      }
+      .map-mobile-ui > * { pointer-events: auto; }
+      .mob-zoom {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 0.35rem;
+        box-shadow: 0 6px 20px rgba(15, 51, 39, 0.14);
+        backdrop-filter: blur(12px);
+      }
+      .mob-zoom button {
+        width: 42px;
+        height: 42px;
+        border: 1px solid #e5e7eb;
+        border-radius: 11px;
+        background: #fff;
+        color: #0f3327;
+        font: inherit;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1;
+      }
+      .mob-zoom button:active { transform: scale(0.94); background: #f3f4f6; }
+      .mob-zoom button.mob-fit { font-size: 0.95rem; }
+      .mob-fab-panel {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        border: 1px solid #e0e0e0;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f3327;
+        box-shadow: 0 6px 20px rgba(15, 51, 39, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mob-fab-panel:active { transform: scale(0.94); background: #f3f4f6; }
+      .mob-fab-panel svg {
+        width: 22px;
+        height: 22px;
+        transition: transform 0.2s ease;
+      }
+      body.mob-chrome-hidden .mob-fab-panel svg {
+        transform: rotate(180deg);
+      }
+      .mob-fab-form {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(145deg, #2f8a58 0%, #0f3327 100%);
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(15, 51, 39, 0.28);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .mob-fab-form svg { width: 24px; height: 24px; }
+    }
+
+    @media (min-width: 769px) and (min-height: 521px), (min-width: 1025px) {
+      .map-mobile-ui { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <img class="brand-logo" src="assets/logo-qberries.png" alt="Q Berries" width="180" height="42" />
+      <div class="brand-copy">
+        <p class="brand-eyebrow">Operations · Harvest</p>
+        <h1 class="page-title" id="title">Plano de cosecha</h1>
+      </div>
+    </div>
+    <div class="toolbar">
+      <label class="search-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+        </svg>
+        <input id="search" type="search" placeholder="Buscar lote, túnel o módulo..." autocomplete="off" />
+      </label>
+      <div class="segmented" role="group" aria-label="Zoom">
+        <button type="button" class="btn btn-icon" id="zoomOut" title="Alejar" aria-label="Alejar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </button>
+        <button type="button" class="btn btn-icon" id="zoomIn" title="Acercar" aria-label="Acercar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button type="button" class="btn" id="zoomReset" title="Restablecer zoom">100%</button>
+      </div>
+      <button type="button" class="btn btn-primary" id="clearBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+        </svg>
+        Limpiar
+      </button>
+      <a class="btn btn-outline" href="form.html" title="Formulario móvil para celular y tablet" style="text-decoration:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" width="16" height="16">
+          <rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>
+        </svg>
+        Formulario
+      </a>
+    </div>
+  </header>
+
+  <div class="drawer-backdrop" id="laborBackdrop"></div>
+  <aside class="labor-drawer" id="laborDrawer" aria-hidden="true">
+    <div class="drawer-head" style="position:relative">
+      <h2>Reporte de labores</h2>
+      <p>Selecciona lote · labor · avance · se pinta al instante</p>
+      <button type="button" class="drawer-close" id="closeLaborDrawer" aria-label="Cerrar">×</button>
+    </div>
+    <form class="drawer-body" id="laborForm" novalidate>
+      <div class="field-grid">
+        <div class="field">
+          <label for="fSem">Sem</label>
+          <input id="fSem" type="number" readonly />
+        </div>
+        <div class="field">
+          <label for="fFecha">Fecha</label>
+          <input id="fFecha" type="date" required />
+        </div>
+        <div class="field full">
+          <label>Lote</label>
+          <div class="cselect" id="loteSelect" data-cselect>
+            <input type="hidden" id="fLote" value="" required />
+            <button type="button" class="cselect-trigger is-empty" id="fLoteTrigger" aria-haspopup="listbox" aria-expanded="false">
+              Seleccionar lote...
+            </button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input id="fLoteSearch" type="search" placeholder="Buscar lote..." autocomplete="off" />
+              </div>
+              <div class="cselect-list" id="fLoteList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fModulo">Módulo</label>
+          <input id="fModulo" type="text" readonly placeholder="MÓDULO" />
+        </div>
+        <div class="field">
+          <label for="fTurno">Turno</label>
+          <input id="fTurno" type="text" readonly placeholder="TURNO" />
+        </div>
+        <div class="field">
+          <label>Variedad</label>
+          <div class="cselect" id="variedadSelect" data-cselect>
+            <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+            <button type="button" class="cselect-trigger" aria-haspopup="listbox" aria-expanded="false">SEKOYA POP</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input type="search" placeholder="Buscar..." autocomplete="off" />
+              </div>
+              <div class="cselect-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fArea">Área lote (ha)</label>
+          <input id="fArea" type="number" step="0.01" readonly placeholder="0.00" />
+        </div>
+        <div class="field full">
+          <label>Labor ppto</label>
+          <div class="cselect" id="laborPptoSelect" data-cselect>
+            <input type="hidden" id="fLaborPpto" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor ppto...</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input type="search" placeholder="Buscar labor..." autocomplete="off" />
+              </div>
+              <div class="cselect-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Labor real</label>
+          <div class="cselect" id="laborRealSelect" data-cselect>
+            <input type="hidden" id="fLaborReal" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor real...</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input type="search" placeholder="Buscar labor..." autocomplete="off" />
+              </div>
+              <div class="cselect-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fAvance">Avance (ha)</label>
+          <input id="fAvance" type="number" step="0.01" min="0" value="" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <label for="fTotalJr">Total (JR)</label>
+          <input id="fTotalJr" type="number" step="0.1" min="0" value="" placeholder="0" />
+        </div>
+        <div class="field avance-wrap">
+          <label>Progreso del lote</label>
+          <div class="avance-bar"><i id="fAvanceBar"></i></div>
+        </div>
+        <div class="lot-preview">
+          <label>Vista previa en el mapa</label>
+          <div class="lot-preview-cell" id="lotPreviewCell">
+            <div class="cell-fill" id="lotPreviewFill"></div>
+            <span class="t" id="lotPreviewT">—</span>
+            <span class="l" id="lotPreviewL">LOTE —</span>
+            <span class="h" id="lotPreviewH">—</span>
+          </div>
+          <p class="lot-preview-status" id="lotPreviewStatus">Selecciona un lote para ver el avance</p>
+        </div>
+      </div>
+    </form>
+    <div class="drawer-foot">
+      <div class="drawer-save-msg" id="drawerSaveMsg" role="status"></div>
+      <div class="drawer-foot-btns">
+        <button type="button" class="btn" id="resetLaborForm">Limpiar formulario</button>
+        <button type="button" class="btn btn-primary" id="saveLaborBtn" title="Guardar avance">Guardar avance</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="confirm-modal" id="confirmClearModal" aria-hidden="true">
+    <div class="confirm-card" role="dialog" aria-labelledby="confirmClearTitle">
+      <div class="confirm-card-head">
+        <h3 id="confirmClearTitle">Confirmar limpieza</h3>
+      </div>
+      <div class="confirm-card-body">
+        ¿Estás seguro de que quieres <strong>eliminar todas las áreas sombreadas</strong> del mapa y limpiar el formulario?
+      </div>
+      <div class="confirm-card-actions">
+        <button type="button" class="btn" id="confirmClearCancel">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmClearOk">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-modal" id="progressModal" aria-hidden="true">
+    <aside class="progress-panel" role="dialog" aria-labelledby="progressTitle">
+      <div class="progress-head">
+        <div>
+          <h2 id="progressTitle">Avances por labores</h2>
+          <span class="sub">Semana <span id="progressSemLabel"></span> · desglose por labor</span>
+        </div>
+        <button type="button" id="closeProgressModal">Cerrar</button>
+      </div>
+      <div class="progress-summary" id="progressSummary">
+        <div class="ps"><span>Labores</span><strong id="psLabors">0</strong></div>
+        <div class="ps"><span>Lotes</span><strong id="psLots">0</strong></div>
+        <div class="ps"><span>Avance ha</span><strong id="psHa">0</strong></div>
+      </div>
+      <div class="progress-body" id="progressTableBody"></div>
+    </aside>
+  </div>
+
+  <div class="workspace">
+    <aside class="sidebar" id="sidebar"></aside>
+    <section class="map-panel">
+      <div class="mob-chrome" id="mobChrome" aria-hidden="true">
+        <div class="mob-head">
+          <div class="mob-brand">
+            <div class="mob-brand-copy">
+              <span class="eyebrow">Plano de cosecha</span>
+              <strong id="mobTitle">—</strong>
+            </div>
+          </div>
+          <button type="button" class="mob-refresh" id="mobRefreshBtn" title="Traer datos de la hoja">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+        <div class="mob-resumen">
+          <p class="mob-resumen-label">Resumen · filtro activo</p>
+          <div class="mob-kpis" id="mobKpis">
+            <div class="mob-kpi"><span>Lotes</span><strong id="mobKpiLots">—</strong></div>
+            <div class="mob-kpi"><span>Área</span><strong id="mobKpiHa">—</strong></div>
+            <div class="mob-kpi"><span>Avance</span><strong id="mobKpiAv">—</strong></div>
+            <div class="mob-kpi"><span>Semana</span><strong id="mobKpiSem">—</strong></div>
+          </div>
+        </div>
+        <div class="mob-search-wrap">
+          <input type="search" id="mobSearch" placeholder="Buscar lote, túnel o módulo..." autocomplete="off" />
+        </div>
+        <div class="mob-mod-scroll" id="mobModScroll" role="tablist" aria-label="Filtrar por módulo"></div>
+        <div class="mob-foot-bar">
+          <span id="mobFilterInfo">—</span>
+          <span id="mobSyncTime">Sin sincronizar</span>
+        </div>
+      </div>
+      <div class="map-wrap" id="viewport">
+        <div class="scaler" id="scaler">
+          <div class="stage" id="stage">
+            <div class="grid" id="grid"></div>
+          </div>
+        </div>
+        <div class="map-mobile-ui" id="mapMobileUi" aria-hidden="true">
+          <div class="mob-zoom">
+            <button type="button" id="mobZoomIn" title="Acercar" aria-label="Acercar">+</button>
+            <button type="button" class="mob-fit" id="mobZoomFit" title="Ver todo" aria-label="Ver todo">◎</button>
+            <button type="button" id="mobZoomOut" title="Alejar" aria-label="Alejar">−</button>
+          </div>
+          <button type="button" class="mob-fab-panel" id="mobPanelToggle" title="Ocultar panel" aria-label="Ocultar panel" aria-pressed="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>
+              <path d="M18 15l3-3-3-3"/>
+            </svg>
+          </button>
+          <a href="form.html" class="mob-fab-form" title="Reporte de labores" aria-label="Ir al formulario">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 12h6M9 16h6"/>
+            </svg>
+          </a>
+        </div>
+        <div class="hint">100%: fijo · Con zoom: arrastra para explorar todo el mapa · <span id="zoomChip">Zoom 100%</span></div>
+        <div class="detail" id="detail">
+          <button class="x" id="closeDetail" type="button" aria-label="Cerrar">×</button>
+          <div class="mod-pill" id="dPill">M—</div>
+          <h3 id="dTitle">Lote</h3>
+          <dl>
+            <dt>Túnel</dt><dd id="dTunel">—</dd>
+            <dt>Lote</dt><dd id="dLote">—</dd>
+            <dt>Área</dt><dd id="dHa">—</dd>
+            <dt>Módulo</dt><dd id="dMod">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="mob-detail" id="mobDetail" aria-hidden="true">
+        <div class="mob-detail-card">
+          <div class="mob-detail-head">
+            <div>
+              <span class="mob-detail-pill" id="mobDPill">M—</span>
+              <h3 id="mobDTitle">Lote</h3>
+            </div>
+            <button type="button" class="mob-detail-close" id="mobDetailClose" aria-label="Cerrar">×</button>
+          </div>
+          <dl class="mob-detail-grid">
+            <div><dt>Túnel</dt><dd id="mobDTunel">—</dd></div>
+            <div><dt>Lote</dt><dd id="mobDLote">—</dd></div>
+            <div><dt>Área</dt><dd id="mobDHa">—</dd></div>
+            <div><dt>Labor</dt><dd id="mobDLabor">—</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="save-toast" id="saveToast" role="status"></div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="data.js?v=8"></script>
+  <script>
+    const API_URL = (window.QB_CONFIG && QB_CONFIG.API_URL) || "";
+
+    const data = window.MAP_DATA;
+    const lots = data.lots || [];
+    const modules = data.modules || [];
+    const modById = Object.fromEntries(modules.map(m => [m.id, m]));
+    const uniqueLotes = new Set(lots.map(l => l.lote)).size;
+
+    function getCurrentWeek(date = new Date()) {
+      const d = new Date(date.getTime());
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+      const week1 = new Date(d.getFullYear(), 0, 4);
+      return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    }
+
+    function roundHa(v) {
+      const n = parseFloat(v);
+      if (isNaN(n) || n < 0) return 0;
+      return Math.round(n * 100) / 100;
+    }
+
+    function formatHa(v) {
+      return roundHa(v).toFixed(2);
+    }
+
+    function formatTitle(raw) {
+      const week = getCurrentWeek();
+      const base = String(raw || "PLANO DE COSECHA ETAPA I")
+        .replace(/I-\s*/i, "I — ")
+        .replace(/\s*—?\s*SEM\s*\d+/i, "")
+        .trim();
+      return `${base} — SEM ${week}`;
+    }
+
+    const currentWeek = getCurrentWeek();
+    const pageTitle = formatTitle(data.title);
+    document.title = `${data.brand || "Q Berries"} · ${pageTitle}`;
+    document.getElementById("title").textContent = pageTitle;
+    const eyebrow = document.querySelector(".brand-eyebrow");
+    if (eyebrow) eyebrow.textContent = `${data.brand || "Q Berries"} · Operations · Harvest`;
+
+    const grid = document.getElementById("grid");
+    const viewport = document.getElementById("viewport");
+    const scaler = document.getElementById("scaler");
+    const stage = document.getElementById("stage");
+    const detail = document.getElementById("detail");
+    const sidebar = document.getElementById("sidebar");
+    const zoomChip = document.getElementById("zoomChip");
+    const mobModScroll = document.getElementById("mobModScroll");
+    const mobTitleEl = document.getElementById("mobTitle");
+    if (mobTitleEl) mobTitleEl.textContent = pageTitle;
+
+    let activeMod = null;
+    let searchTerm = "";
+    let lastSyncLabel = "Sin sincronizar";
+
+    function setActiveMod(modId) {
+      activeMod = modId == null ? null : modId;
+      document.querySelectorAll("#modList .leg-item").forEach(el => {
+        el.classList.toggle("active", activeMod != null && Number(el.dataset.mod) === activeMod);
+      });
+      if (mobModScroll) {
+        mobModScroll.querySelectorAll(".mob-mod-chip").forEach(el => {
+          const chipMod = el.dataset.mod === "" ? null : Number(el.dataset.mod);
+          el.classList.toggle("active", chipMod === activeMod);
+        });
+      }
+      applyFilter();
+    }
+
+    function updateMobileChrome() {
+      if (!isMobileMap()) return;
+      let visibleLots = 0;
+      let visibleHa = 0;
+      let avanceHa = 0;
+      let withLabor = 0;
+      const q = searchTerm.trim().toLowerCase().replace(/\s+/g, "");
+      lots.forEach(lot => {
+        if (activeMod != null && lot.modulo !== activeMod) return;
+        const lote = String(lot.lote);
+        const tunel = String(lot.tunel || "").toLowerCase();
+        const mod = lot.modulo == null ? "" : String(lot.modulo);
+        const matchQ = !q ||
+          lote.includes(q) ||
+          (`lt.${lote}`).includes(q) ||
+          (`lt${lote}`).includes(q) ||
+          tunel.includes(q) ||
+          (`m${mod}`).includes(q);
+        if (!matchQ) return;
+        visibleLots++;
+        const area = roundHa(lot.ha);
+        visibleHa += area;
+        const rec = laborRecords[`${lot.r},${lot.c}`];
+        if (rec?.laborReal) {
+          withLabor++;
+          avanceHa += roundHa(rec.avance);
+        }
+      });
+      const mobKpiLots = document.getElementById("mobKpiLots");
+      const mobKpiHa = document.getElementById("mobKpiHa");
+      const mobKpiAv = document.getElementById("mobKpiAv");
+      const mobKpiSem = document.getElementById("mobKpiSem");
+      const mobFilterInfo = document.getElementById("mobFilterInfo");
+      const mobSyncTime = document.getElementById("mobSyncTime");
+      if (mobKpiLots) mobKpiLots.textContent = String(visibleLots);
+      if (mobKpiHa) mobKpiHa.innerHTML = formatHa(visibleHa) + '<em> ha</em>';
+      if (mobKpiAv) mobKpiAv.innerHTML = formatHa(avanceHa) + '<em> ha</em>';
+      if (mobKpiSem) mobKpiSem.textContent = String(currentWeek);
+      if (mobFilterInfo) {
+        const modLabel = activeMod != null && modById[activeMod] ? modById[activeMod].label : "Todos los módulos";
+        const pct = visibleHa > 0 ? Math.round((avanceHa / visibleHa) * 100) : 0;
+        mobFilterInfo.innerHTML = `<strong>${modLabel}</strong> · ${withLabor} con labor · ${pct}% avance`;
+      }
+      if (mobSyncTime) mobSyncTime.textContent = lastSyncLabel;
+    }
+
+    async function refreshMapData(showFeedback) {
+      const btn = document.getElementById("mobRefreshBtn");
+      if (btn) {
+        btn.classList.add("loading");
+        btn.disabled = true;
+      }
+      let n = 0;
+      if (API_URL) {
+        const filters = { sem: currentWeek };
+        if (activeMod != null) filters.modulo = "M" + activeMod;
+        n = await syncLaborsFromSheet(filters);
+        await QBApi.flushQueue();
+        const n2 = await syncLaborsFromSheet(filters);
+        if (n2 > n) n = n2;
+        lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+      } else {
+        lastSyncLabel = "Sin API configurada";
+      }
+      updateMobileChrome();
+      applyFilter();
+      if (showFeedback) {
+        showToast(n > 0 ? "Datos actualizados" : "Mapa al día", false, n > 0 ? `${n} lotes desde la hoja` : "Sin cambios nuevos");
+      }
+      if (btn) {
+        btn.classList.remove("loading");
+        btn.disabled = false;
+      }
+      return n;
+    }
+
+    function buildMobModChips() {
+      if (!mobModScroll) return;
+      mobModScroll.innerHTML = "";
+      const allBtn = document.createElement("button");
+      allBtn.type = "button";
+      allBtn.className = "mob-mod-chip active";
+      allBtn.dataset.mod = "";
+      allBtn.textContent = "Todos";
+      allBtn.addEventListener("click", () => setActiveMod(null));
+      mobModScroll.appendChild(allBtn);
+      modules.forEach(m => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mob-mod-chip";
+        btn.dataset.mod = String(m.id);
+        btn.innerHTML = `<span class="dot" style="background:${m.fill}"></span>${m.label}`;
+        btn.addEventListener("click", () => setActiveMod(activeMod === m.id ? null : m.id));
+        mobModScroll.appendChild(btn);
+      });
+    }
+    buildMobModChips();
+
+    document.getElementById("mobRefreshBtn")?.addEventListener("click", () => refreshMapData(true));
+    document.getElementById("mobSearch")?.addEventListener("input", e => {
+      searchTerm = e.target.value;
+      const deskSearch = document.getElementById("search");
+      if (deskSearch) deskSearch.value = searchTerm;
+      applyFilter();
+    });
+
+    // Top bar: Resumen | Módulos | Acciones (paneles separados)
+    const kpiBlock = document.createElement("div");
+    kpiBlock.className = "side-block kpi-block";
+    kpiBlock.innerHTML = `
+      <div class="kpi-head-row">
+        <h2>Resumen</h2>
+        <button type="button" class="btn btn-outline kpi-refresh" id="deskRefreshBtn" title="Traer datos de la hoja">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+          </svg>
+          Actualizar
+        </button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><span>Lotes</span><strong>${uniqueLotes}</strong></div>
+        <div class="kpi"><span>Área</span><strong>${Number(data.totalHa).toFixed(2)}<span class="unit">ha</span></strong></div>
+        <div class="kpi"><span>Módulos</span><strong>${modules.length}</strong></div>
+        <div class="kpi"><span>Semana</span><strong>${currentWeek}</strong></div>
+      </div>`;
+    sidebar.appendChild(kpiBlock);
+    document.getElementById("deskRefreshBtn")?.addEventListener("click", () => refreshMapData(true));
+
+    const modBlock = document.createElement("div");
+    modBlock.className = "side-block mod-block";
+    modBlock.innerHTML = `<h2>Módulos</h2>`;
+    const list = document.createElement("div");
+    list.className = "mod-list";
+    list.id = "modList";
+    modules.forEach(m => {
+      const count = lots.filter(l => l.modulo === m.id).length;
+      const div = document.createElement("div");
+      div.className = "leg-item";
+      div.dataset.mod = m.id;
+      div.title = `${m.label} · ${count} lotes · ${m.ha} ha`;
+      div.innerHTML = `
+        <span class="leg-swatch" style="background:${m.fill}"></span>
+        <b>${m.label}</b>
+        <span class="ha">${m.ha} ha</span>`;
+      div.addEventListener("click", () => {
+        setActiveMod(activeMod === m.id ? null : m.id);
+      });
+      list.appendChild(div);
+    });
+    modBlock.appendChild(list);
+    sidebar.appendChild(modBlock);
+
+    const laborActions = document.createElement("div");
+    laborActions.className = "labor-actions";
+    laborActions.innerHTML = `
+      <h2>Acciones</h2>
+      <div class="labor-actions-row">
+        <button type="button" class="btn btn-labor" id="openLaborBtn" title="Registrar labores">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span class="btn-text">Labores</span>
+        </button>
+        <button type="button" class="btn btn-outline" id="viewProgressBtn" title="Ver avances por labores">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 19V5M4 19h16M8 15V9M12 15V7M16 15v-3"/>
+          </svg>
+          <span class="btn-text">Avances</span>
+        </button>
+      </div>`;
+    sidebar.appendChild(laborActions);
+
+    const shareActions = document.createElement("div");
+    shareActions.className = "share-actions";
+    shareActions.innerHTML = `
+      <h2>Compartir</h2>
+      <div class="share-actions-row">
+        <button type="button" class="btn btn-outline is-image" data-export="image" title="Descargar imagen del mapa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <circle cx="8.5" cy="10" r="1.5"/>
+            <path d="M21 15l-5-5-4 4-2-2-5 5"/>
+          </svg>
+          <span class="btn-text">Imagen</span>
+        </button>
+        <button type="button" class="btn btn-outline is-pdf" data-export="pdf" title="Descargar PDF del mapa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/>
+            <path d="M14 3v6h6"/>
+            <path d="M9 13h6M9 17h4"/>
+          </svg>
+          <span class="btn-text">PDF</span>
+        </button>
+        <button type="button" class="btn btn-outline is-excel" data-export="excel" title="Descargar Excel de lotes y labores">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="4" y="3" width="16" height="18" rx="2"/>
+            <path d="M4 9h16M4 15h16M10 3v18"/>
+          </svg>
+          <span class="btn-text">Excel</span>
+        </button>
+      </div>`;
+    sidebar.appendChild(shareActions);
+
+    const LABOR_OPTS = (window.QB_CONFIG && QB_CONFIG.LABOR_OPTS) || {
+      labor_ppto: [],
+      labor_real: []
+    };
+
+    let laborRecords = {};
+    try { laborRecords = JSON.parse(localStorage.getItem("qb-labores") || "{}"); } catch { laborRecords = {}; }
+
+    function saveLaborRecords() {
+      localStorage.setItem("qb-labores", JSON.stringify(laborRecords));
+    }
+
+    function posKeyFromRecord(rec) {
+      if (!rec) return null;
+      const lot = lots.find(l =>
+        Number(l.lote) === Number(rec.lote) &&
+        String(l.tunel || "").toUpperCase() === String(rec.turno || "").toUpperCase()
+      );
+      return lot ? `${lot.r},${lot.c}` : null;
+    }
+
+    function applyApiRecords(records) {
+      if (!records) return 0;
+      let n = 0;
+      const entries = Array.isArray(records)
+        ? records.map(r => [null, r])
+        : Object.entries(records);
+      entries.forEach(([, rec]) => {
+        if (!rec || !rec.laborReal) return;
+        const posKey = posKeyFromRecord(rec);
+        if (!posKey) return;
+        laborRecords[posKey] = {
+          sem: Number(rec.sem) || currentWeek,
+          fecha: rec.fechaIso || rec.fecha || "",
+          laborPpto: String(rec.laborPpto || "").toUpperCase(),
+          laborReal: String(rec.laborReal || "").toUpperCase(),
+          modulo: String(rec.modulo || "").toUpperCase(),
+          turno: String(rec.turno || "").toUpperCase(),
+          lote: Number(rec.lote),
+          variedad: rec.variedad || "SEKOYA POP",
+          area: roundHa(rec.area),
+          avance: roundHa(rec.avance),
+          totalJr: Number(rec.totalJr) || 0
+        };
+        n++;
+      });
+      saveLaborRecords();
+      refreshAllLaborVisuals();
+      updateMobileChrome();
+      return n;
+    }
+
+    async function syncLaborsFromSheet(filters = {}) {
+      try {
+        const json = await QBApi.getLabors(filters);
+        if (!json?.ok) throw new Error(json?.error || "Error al cargar");
+        return applyApiRecords(json.records);
+      } catch (err) {
+        console.warn("API GET:", err);
+        return 0;
+      }
+    }
+
+    function laborStatus(rec, area) {
+      const av = Number(rec?.avance) || 0;
+      if (!rec?.laborReal) return { key: "none", label: "Sin labor registrada" };
+      if (av >= area * 0.98) return { key: "done", label: "Completado" };
+      if (av > 0) return { key: "progress", label: "En progreso" };
+      return { key: "pending", label: "Pendiente" };
+    }
+
+    function getCellByKey(posKey) {
+      if (!posKey) return null;
+      return grid.querySelector(`.cell[data-key="${posKey}"]`);
+    }
+
+    function paintCellProgress(cell, lot, avance, laborReal) {
+      if (!cell || !lot) return;
+      const area = roundHa(lot.ha) || 1;
+      let av = roundHa(avance);
+      if (av > area) av = area;
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      let fill = cell.querySelector(".cell-fill");
+      if (!fill) {
+        fill = document.createElement("div");
+        fill.className = "cell-fill";
+        cell.insertBefore(fill, cell.firstChild);
+      }
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      fill.style.background = mod?.badge || mod?.fill || "#64748b";
+      fill.style.height = pct + "%";
+      const fakeRec = { avance: av, laborReal: laborReal || "" };
+      const st = laborStatus(fakeRec, area);
+      cell.classList.toggle("labor-done", st.key === "done");
+      cell.classList.toggle("labor-progress", st.key === "progress");
+      if (laborReal) {
+        cell.title = `${st.label} · ${laborReal} · Avance ${av.toFixed(2)} / ${area.toFixed(2)} ha`;
+      }
+      return { pct, st, area, av };
+    }
+
+    function applyLaborVisual(cell, lot) {
+      const key = cell.dataset.key;
+      const rec = laborRecords[key];
+      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal);
+      if (rec?.laborPpto && rec?.laborReal) {
+        cell.title += ` · Ppto: ${rec.laborPpto}`;
+      } else if (!rec?.laborReal) {
+        cell.title = "Sin labor registrada";
+      }
+    }
+
+    function updateDrawerPreview(lot, avance, laborReal) {
+      const lotPreviewT = document.getElementById("lotPreviewT");
+      const lotPreviewL = document.getElementById("lotPreviewL");
+      const lotPreviewH = document.getElementById("lotPreviewH");
+      const lotPreviewFill = document.getElementById("lotPreviewFill");
+      const lotPreviewStatus = document.getElementById("lotPreviewStatus");
+      const lotPreviewCell = document.getElementById("lotPreviewCell");
+      if (!lot) {
+        lotPreviewStatus.textContent = "Selecciona un lote para ver el avance";
+        lotPreviewFill.style.height = "0%";
+        return;
+      }
+      lotPreviewT.textContent = String(lot.tunel).toUpperCase();
+      lotPreviewL.textContent = "LOTE " + lot.lote;
+      lotPreviewH.textContent = lot.ha != null ? Number(lot.ha).toFixed(2) : "—";
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      if (mod) lotPreviewCell.style.borderColor = mod.badge || "#cbd5e1";
+      const area = roundHa(lot.ha) || 1;
+      let av = roundHa(avance);
+      if (av > area) av = area;
+      const pct = area > 0 ? (av / area) * 100 : 0;
+      lotPreviewFill.style.background = mod?.badge || "#64748b";
+      lotPreviewFill.style.height = pct + "%";
+      const st = laborStatus({ avance: av, laborReal }, area);
+      lotPreviewStatus.textContent = laborReal
+        ? `${st.label} · ${Math.round(pct)}% · ${av.toFixed(2)} / ${area.toFixed(2)} ha`
+        : "Elige una labor real para registrar";
+    }
+
+    function previewFromForm() {
+      const posKey = fLote.value;
+      if (!posKey) {
+        updateDrawerPreview(null);
+        return;
+      }
+      const lot = byPos.get(posKey);
+      if (!lot) return;
+      const area = roundHa(lot.ha) || 0;
+      let avance = roundHa(fAvance.value);
+      if (area > 0 && avance > area) avance = area;
+      if (fAvance.value !== "") fAvance.value = formatHa(avance);
+      const laborReal = fLaborReal.value;
+      updateAvanceBar();
+      updateDrawerPreview(lot, avance, laborReal);
+      const cell = getCellByKey(posKey);
+      if (cell) {
+        cell.classList.remove("dim");
+        paintCellProgress(cell, lot, avance, laborReal);
+      }
+    }
+
+    let toastTimer = null;
+    let drawerMsgTimer = null;
+    function showToast(title, isError, subtitle) {
+      const toast = document.getElementById("saveToast");
+      if (!toast) return;
+      toast.innerHTML = subtitle
+        ? `<strong>${title}</strong><span class="toast-sub">${subtitle}</span>`
+        : `<strong>${title}</strong>`;
+      toast.classList.toggle("error", !!isError);
+      toast.classList.remove("show");
+      void toast.offsetWidth;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), isError ? 3500 : 5000);
+    }
+
+    function showDrawerSavedMsg(detail) {
+      const msg = document.getElementById("drawerSaveMsg");
+      if (!msg) return;
+      msg.innerHTML = `✓ Se guardó correctamente<span>${detail || ""}</span>`;
+      msg.classList.add("show");
+      msg.title = "Se guardó correctamente";
+      clearTimeout(drawerMsgTimer);
+      drawerMsgTimer = setTimeout(() => msg.classList.remove("show"), 5000);
+    }
+
+    function flashSavedCell(posKey) {
+      const cell = getCellByKey(posKey);
+      if (!cell) return;
+      cell.classList.remove("dim");
+      cell.classList.add("labor-flash");
+      setTimeout(() => cell.classList.remove("labor-flash"), 700);
+    }
+
+    function refreshAllLaborVisuals() {
+      document.querySelectorAll(".cell:not(.empty)").forEach(cell => {
+        const lot = byPos.get(cell.dataset.key);
+        if (lot) applyLaborVisual(cell, lot);
+      });
+      updateMobileChrome();
+    }
+
+    // Grid
+    const minC = Math.min(...lots.map(l => l.c));
+    const maxC = Math.max(...lots.map(l => l.c));
+    const cols = maxC - minC + 1;
+    const labelRows = [...new Set(lots.map(l => l.r))].sort((a, b) => a - b);
+    const byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+    const rowsCount = labelRows.length;
+
+    let cellW = 40;
+    let cellH = 38;
+    let mapW = 0;
+    let mapH = 0;
+    let scale = 1;
+    let minScale = 1;
+    let maxScale = 3.5;
+    let panX = 0;
+    let panY = 0;
+    let mobChromeOpen = true;
+    try { mobChromeOpen = sessionStorage.getItem("qb-mob-chrome") !== "0"; } catch { /* ignore */ }
+
+    const MOBILE_MAP_MQ = "(max-width: 768px), ((max-height: 520px) and (max-width: 1024px))";
+
+    function isMobileMap() {
+      return window.matchMedia(MOBILE_MAP_MQ).matches;
+    }
+
+    function syncMobChromeVisibility() {
+      const mobChrome = document.getElementById("mobChrome");
+      const panelBtn = document.getElementById("mobPanelToggle");
+      const mobile = isMobileMap();
+      const show = mobile && mobChromeOpen;
+      if (mobChrome) {
+        mobChrome.style.display = show ? "flex" : "none";
+        mobChrome.setAttribute("aria-hidden", show ? "false" : "true");
+      }
+      document.body.classList.toggle("mob-chrome-hidden", mobile && !mobChromeOpen);
+      if (panelBtn) {
+        const label = show ? "Ocultar panel" : "Mostrar panel";
+        panelBtn.title = label;
+        panelBtn.setAttribute("aria-label", label);
+        panelBtn.setAttribute("aria-pressed", show ? "true" : "false");
+      }
+    }
+
+    function toggleMobChrome() {
+      mobChromeOpen = !mobChromeOpen;
+      try { sessionStorage.setItem("qb-mob-chrome", mobChromeOpen ? "1" : "0"); } catch { /* ignore */ }
+      syncMobChromeVisibility();
+      updateMobileChrome();
+      requestAnimationFrame(() => {
+        fitToScreen();
+        requestAnimationFrame(fitToScreen);
+      });
+    }
+
+    document.getElementById("mobPanelToggle")?.addEventListener("click", toggleMobChrome);
+
+    function getViewportSize() {
+      return {
+        w: Math.max(1, viewport.clientWidth),
+        h: Math.max(1, viewport.clientHeight)
+      };
+    }
+
+    function applyTransform() {
+      scaler.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      const pct = Math.round((scale / minScale) * 100);
+      zoomChip.textContent = isMobileMap() ? `Mapa ${pct}%` : `Zoom ${Math.round(scale * 100)}%`;
+      viewport.style.cursor = canPan() ? "grab" : "default";
+      const mobUi = document.getElementById("mapMobileUi");
+      const mobChrome = document.getElementById("mobChrome");
+      const mobile = isMobileMap();
+      if (mobUi) {
+        mobUi.style.display = mobile ? "flex" : "none";
+        mobUi.setAttribute("aria-hidden", mobile ? "false" : "true");
+      }
+      syncMobChromeVisibility();
+      if (mobile) updateMobileChrome();
+    }
+
+    function rebuildMapMetrics() {
+      const mobile = isMobileMap();
+      cellW = mobile ? 34 : Math.max(22, Math.floor((viewport.clientWidth - 40) / cols));
+      cellH = mobile ? 30 : Math.max(20, Math.floor((viewport.clientHeight - 40) / rowsCount));
+      if (!mobile) {
+        cellW = Math.max(22, cellW);
+        cellH = Math.max(20, cellH);
+      }
+      mapW = cols * cellW;
+      mapH = rowsCount * cellH;
+      grid.style.gridTemplateColumns = `repeat(${cols}, ${cellW}px)`;
+      grid.style.gridTemplateRows = `repeat(${rowsCount}, ${cellH}px)`;
+      grid.style.width = mapW + "px";
+      grid.style.height = mapH + "px";
+      stage.style.width = mapW + "px";
+      stage.style.height = mapH + "px";
+      scaler.style.width = mapW + "px";
+      scaler.style.height = mapH + "px";
+      const fsCell = Math.max(7, Math.min(12, Math.min(cellH * 0.28, cellW * 0.22)));
+      grid.style.setProperty("--fs-cell", fsCell + "px");
+    }
+
+    rebuildMapMetrics();
+
+    function clampPan() {
+      const { w, h } = getViewportSize();
+      const scaledW = mapW * scale;
+      const scaledH = mapH * scale;
+      if (scaledW <= w) panX = (w - scaledW) / 2;
+      else panX = Math.max(w - scaledW, Math.min(0, panX));
+      if (scaledH <= h) panY = (h - scaledH) / 2;
+      else panY = Math.max(h - scaledH, Math.min(0, panY));
+    }
+
+    function centerMap() {
+      const { w, h } = getViewportSize();
+      panX = (w - mapW * scale) / 2;
+      panY = (h - mapH * scale) / 2;
+      clampPan();
+    }
+
+    function canPan() {
+      const { w, h } = getViewportSize();
+      return mapW * scale > w + 2 || mapH * scale > h + 2;
+    }
+
+    function applyZoomAt(newScale, focalX, focalY) {
+      const prev = scale;
+      scale = Math.min(maxScale, Math.max(minScale, newScale));
+      if (focalX != null && focalY != null) {
+        const rect = viewport.getBoundingClientRect();
+        const px = focalX - rect.left;
+        const py = focalY - rect.top;
+        const mx = (px - panX) / prev;
+        const my = (py - panY) / prev;
+        panX = px - mx * scale;
+        panY = py - my * scale;
+      }
+      clampPan();
+      applyTransform();
+    }
+
+    function applyZoom(s, focalX, focalY) {
+      applyZoomAt(s, focalX, focalY);
+    }
+
+    /** Encaja todo el mapa (vertical u horizontal) */
+    function fitToScreen() {
+      rebuildMapMetrics();
+      const { w, h } = getViewportSize();
+      const pad = isMobileMap() ? 12 : 40;
+      minScale = Math.min((w - pad) / mapW, (h - pad) / mapH);
+      if (!isFinite(minScale) || minScale <= 0) minScale = 0.15;
+      maxScale = Math.max(minScale * 4, 2.5);
+      scale = minScale;
+      centerMap();
+      applyTransform();
+    }
+
+    labelRows.forEach(r => {
+      for (let c = minC; c <= maxC; c++) {
+        const lot = byPos.get(`${r},${c}`);
+        const cell = document.createElement("div");
+        if (!lot) {
+          cell.className = "cell empty";
+          grid.appendChild(cell);
+          continue;
+        }
+        const m = lot.modulo;
+        cell.className = "cell" + (m ? ` m${m}` : "");
+        cell.dataset.key = `${lot.r},${lot.c}`;
+        cell.dataset.lote = String(lot.lote);
+        cell.dataset.tunel = lot.tunel;
+        cell.dataset.mod = m == null ? "" : String(m);
+        const posKey = `${lot.r},${lot.c}`;
+        cell.innerHTML = `
+          <div class="cell-fill"></div>
+          <span class="t">${String(lot.tunel).toUpperCase()}</span>
+          <span class="l">LT.${lot.lote}</span>
+          <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>`;
+        cell.addEventListener("click", () => {
+          selectLot(lot, cell);
+          if (document.getElementById("laborDrawer").classList.contains("open")) fillLaborForm(posKey);
+        });
+        applyLaborVisual(cell, lot);
+        grid.appendChild(cell);
+      }
+    });
+
+    function selectLot(lot, cell) {
+      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+      cell.classList.add("active");
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      const posKey = `${lot.r},${lot.c}`;
+      const rec = laborRecords[posKey];
+      if (isMobileMap()) {
+        const mobDetail = document.getElementById("mobDetail");
+        const mobPill = document.getElementById("mobDPill");
+        if (mod && mobPill) {
+          mobPill.textContent = mod.label;
+          mobPill.style.background = mod.badge;
+          mobPill.style.display = "inline-flex";
+        } else if (mobPill) {
+          mobPill.style.display = "none";
+        }
+        document.getElementById("mobDTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
+        document.getElementById("mobDTunel").textContent = lot.tunel;
+        document.getElementById("mobDLote").textContent = "Lt. " + lot.lote;
+        document.getElementById("mobDHa").textContent = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "—";
+        document.getElementById("mobDLabor").textContent = rec?.laborReal
+          ? `${rec.laborReal} · ${formatHa(rec.avance)} ha`
+          : "Sin labor registrada";
+        if (mobDetail) {
+          mobDetail.classList.add("open");
+          mobDetail.setAttribute("aria-hidden", "false");
+        }
+        return;
+      }
+      const pill = document.getElementById("dPill");
+      if (mod) {
+        pill.textContent = mod.label;
+        pill.style.background = mod.badge;
+        pill.style.display = "inline-flex";
+      } else {
+        pill.style.display = "none";
+      }
+      document.getElementById("dTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
+      document.getElementById("dTunel").textContent = lot.tunel;
+      document.getElementById("dLote").textContent = "Lt. " + lot.lote;
+      document.getElementById("dHa").textContent = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "—";
+      document.getElementById("dMod").textContent = mod ? `${mod.label} · ${mod.ha} ha` : "—";
+      detail.classList.add("open");
+    }
+
+    document.getElementById("closeDetail").onclick = () => {
+      detail.classList.remove("open");
+      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+    };
+
+    document.getElementById("mobDetailClose")?.addEventListener("click", () => {
+      const mobDetail = document.getElementById("mobDetail");
+      mobDetail?.classList.remove("open");
+      mobDetail?.setAttribute("aria-hidden", "true");
+      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+    });
+
+    function applyFilter() {
+      const q = searchTerm.trim().toLowerCase().replace(/\s+/g, "");
+      document.querySelectorAll(".cell:not(.empty)").forEach(cell => {
+        const lote = cell.dataset.lote;
+        const tunel = cell.dataset.tunel.toLowerCase();
+        const mod = cell.dataset.mod;
+        const matchMod = activeMod == null || mod === String(activeMod);
+        const matchQ = !q ||
+          lote.includes(q) ||
+          (`lt.${lote}`).includes(q) ||
+          (`lt${lote}`).includes(q) ||
+          tunel.includes(q) ||
+          (`m${mod}`).includes(q);
+        cell.classList.toggle("dim", !(matchMod && matchQ));
+      });
+      updateMobileChrome();
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      searchTerm = e.target.value;
+      const mobSearch = document.getElementById("mobSearch");
+      if (mobSearch) mobSearch.value = searchTerm;
+      applyFilter();
+    });
+    document.getElementById("clearBtn").onclick = () => {
+      searchTerm = "";
+      document.getElementById("search").value = "";
+      const mobSearch = document.getElementById("mobSearch");
+      if (mobSearch) mobSearch.value = "";
+      setActiveMod(null);
+    };
+
+    document.getElementById("zoomIn").onclick = () => applyZoom(scale * 1.2);
+    document.getElementById("zoomOut").onclick = () => applyZoom(scale / 1.2);
+    document.getElementById("zoomReset").onclick = () => fitToScreen();
+
+    const mobZoomIn = document.getElementById("mobZoomIn");
+    const mobZoomOut = document.getElementById("mobZoomOut");
+    const mobZoomFit = document.getElementById("mobZoomFit");
+    if (mobZoomIn) mobZoomIn.onclick = () => {
+      const { w, h } = getViewportSize();
+      applyZoom(scale * 1.25, w / 2, h / 2);
+    };
+    if (mobZoomOut) mobZoomOut.onclick = () => {
+      const { w, h } = getViewportSize();
+      applyZoom(scale / 1.25, w / 2, h / 2);
+    };
+    if (mobZoomFit) mobZoomFit.onclick = () => fitToScreen();
+
+    // Arrastre con dedo / mouse (estilo mapa)
+    let dragging = false, sx = 0, sy = 0, startPanX = 0, startPanY = 0, moved = false;
+    let pinchStartDist = 0, pinchStartScale = 1, pinchMidX = 0, pinchMidY = 0;
+
+    function touchDist(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    }
+    function touchMid(touches) {
+      return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2
+      };
+    }
+
+    function startDrag(clientX, clientY) {
+      if (!canPan() && !isMobileMap()) return;
+      dragging = true;
+      moved = false;
+      viewport.classList.add("dragging");
+      sx = clientX;
+      sy = clientY;
+      startPanX = panX;
+      startPanY = panY;
+    }
+    function moveDrag(clientX, clientY) {
+      if (!dragging) return;
+      const dx = clientX - sx;
+      const dy = clientY - sy;
+      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      panX = startPanX + dx;
+      panY = startPanY + dy;
+      clampPan();
+      applyTransform();
+    }
+    function endDrag() {
+      dragging = false;
+      viewport.classList.remove("dragging");
+    }
+
+    viewport.addEventListener("mousedown", e => {
+      if (e.button !== 0 || e.target.closest(".detail") || e.target.closest(".map-mobile-ui")) return;
+      e.preventDefault();
+      startDrag(e.clientX, e.clientY);
+    });
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("mousemove", e => {
+      if (!dragging) return;
+      e.preventDefault();
+      moveDrag(e.clientX, e.clientY);
+    });
+
+    viewport.addEventListener("touchstart", e => {
+      if (e.target.closest(".detail") || e.target.closest(".map-mobile-ui")) return;
+      if (e.touches.length === 2) {
+        dragging = false;
+        pinchStartDist = touchDist(e.touches);
+        pinchStartScale = scale;
+        const mid = touchMid(e.touches);
+        pinchMidX = mid.x;
+        pinchMidY = mid.y;
+      } else if (e.touches.length === 1) {
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    viewport.addEventListener("touchmove", e => {
+      if (e.touches.length === 2 && pinchStartDist > 0) {
+        e.preventDefault();
+        const dist = touchDist(e.touches);
+        applyZoomAt(pinchStartScale * (dist / pinchStartDist), pinchMidX, pinchMidY);
+      } else if (dragging && e.touches.length === 1) {
+        e.preventDefault();
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: false });
+
+    viewport.addEventListener("touchend", e => {
+      if (e.touches.length < 2) pinchStartDist = 0;
+      if (e.touches.length === 0) endDrag();
+    });
+
+    viewport.addEventListener("click", e => {
+      if (moved && e.target.closest(".cell:not(.empty)")) {
+        e.stopPropagation();
+        moved = false;
+      }
+    }, true);
+
+    viewport.addEventListener("wheel", e => {
+      e.preventDefault();
+      if (e.deltaY < 0) applyZoom(scale * 1.1, e.clientX, e.clientY);
+      else applyZoom(scale / 1.1, e.clientX, e.clientY);
+    }, { passive: false });
+
+    requestAnimationFrame(() => {
+      fitToScreen();
+      requestAnimationFrame(fitToScreen);
+    });
+    let resizeTimer = null;
+    function onMapResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fitToScreen, 80);
+    }
+    window.addEventListener("resize", onMapResize);
+    window.addEventListener("orientationchange", onMapResize);
+    window.matchMedia(MOBILE_MAP_MQ).addEventListener("change", () => {
+      fitToScreen();
+      applyTransform();
+      updateMobileChrome();
+    });
+    window.addEventListener("pageshow", () => {
+      fitToScreen();
+      applyTransform();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        fitToScreen();
+        applyTransform();
+      }
+    });
+
+    // --- Labor drawer logic ---
+    const laborDrawer = document.getElementById("laborDrawer");
+    const progressModal = document.getElementById("progressModal");
+    const fLote = document.getElementById("fLote");
+    const fSem = document.getElementById("fSem");
+    const fFecha = document.getElementById("fFecha");
+    const fModulo = document.getElementById("fModulo");
+    const fTurno = document.getElementById("fTurno");
+    const fVariedad = document.getElementById("fVariedad");
+    const fArea = document.getElementById("fArea");
+    const fLaborPpto = document.getElementById("fLaborPpto");
+    const fLaborReal = document.getElementById("fLaborReal");
+    const fAvance = document.getElementById("fAvance");
+    const fTotalJr = document.getElementById("fTotalJr");
+    const fAvanceBar = document.getElementById("fAvanceBar");
+
+    function createCustomSelect(root, { items, placeholder, onChange }) {
+      const hidden = root.querySelector('input[type="hidden"]');
+      const trigger = root.querySelector(".cselect-trigger");
+      const search = root.querySelector(".cselect-search input");
+      const list = root.querySelector(".cselect-list");
+      const normalized = items.map(it => typeof it === "string"
+        ? { value: it, label: it }
+        : { value: String(it.value), label: String(it.label), search: it.search });
+
+      function render(filter) {
+        const q = String(filter || "").trim().toLowerCase().replace(/\s+/g, "");
+        const filtered = normalized.filter(it => {
+          if (!q) return true;
+          const hay = `${it.label} ${it.value} ${it.search || ""}`.toLowerCase().replace(/\s+/g, "");
+          return hay.includes(q);
+        });
+        if (!filtered.length) {
+          list.innerHTML = `<div class="cselect-empty">Sin resultados</div>`;
+          return;
+        }
+        list.innerHTML = filtered.map(it => {
+          const sel = hidden.value === it.value ? " selected" : "";
+          return `<button type="button" class="cselect-option${sel}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option">${it.label}</button>`;
+        }).join("");
+      }
+
+      function setValue(val, silent) {
+        const found = normalized.find(it => it.value === val);
+        hidden.value = found ? found.value : "";
+        if (found) {
+          trigger.textContent = found.label;
+          trigger.classList.remove("is-empty");
+        } else {
+          trigger.textContent = placeholder;
+          trigger.classList.add("is-empty");
+        }
+        list.querySelectorAll(".cselect-option").forEach(btn => {
+          btn.classList.toggle("selected", btn.dataset.value === hidden.value);
+        });
+        if (!silent && onChange) onChange(hidden.value);
+      }
+
+      function open() {
+        document.querySelectorAll(".cselect.open").forEach(el => {
+          if (el !== root) {
+            el.classList.remove("open");
+            const t = el.querySelector(".cselect-trigger");
+            if (t) t.setAttribute("aria-expanded", "false");
+          }
+        });
+        root.classList.add("open");
+        trigger.setAttribute("aria-expanded", "true");
+        if (search) {
+          search.value = "";
+          render("");
+          setTimeout(() => search.focus(), 0);
+        } else {
+          render("");
+        }
+      }
+
+      function close() {
+        root.classList.remove("open");
+        trigger.setAttribute("aria-expanded", "false");
+      }
+
+      trigger.addEventListener("click", e => {
+        e.stopPropagation();
+        if (root.classList.contains("open")) close();
+        else open();
+      });
+      if (search) {
+        search.addEventListener("input", () => render(search.value));
+        search.addEventListener("click", e => e.stopPropagation());
+      }
+      list.addEventListener("click", e => {
+        const btn = e.target.closest(".cselect-option");
+        if (!btn) return;
+        setValue(btn.dataset.value);
+        close();
+      });
+
+      render("");
+      if (hidden.value) setValue(hidden.value, true);
+      else {
+        trigger.textContent = placeholder;
+        trigger.classList.add("is-empty");
+      }
+
+      return { setValue, open, close, get value() { return hidden.value; } };
+    }
+
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".cselect")) {
+        document.querySelectorAll(".cselect.open").forEach(el => {
+          el.classList.remove("open");
+          const t = el.querySelector(".cselect-trigger");
+          if (t) t.setAttribute("aria-expanded", "false");
+        });
+      }
+    });
+
+    const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
+    const loteItems = sortedLots.map(lot => ({
+      value: `${lot.r},${lot.c}`,
+      label: `LOTE ${lot.lote}`,
+      search: `lote ${lot.lote} lt.${lot.lote}`
+    }));
+
+    const loteCSelect = createCustomSelect(document.getElementById("loteSelect"), {
+      items: loteItems,
+      placeholder: "Seleccionar lote...",
+      onChange: (val) => {
+        if (val) {
+          fillLaborForm(val);
+          previewFromForm();
+        }
+      }
+    });
+
+    const variedadCSelect = createCustomSelect(document.getElementById("variedadSelect"), {
+      items: ["SEKOYA POP", "MAGICA"],
+      placeholder: "Seleccionar variedad...",
+      onChange: () => previewFromForm()
+    });
+    variedadCSelect.setValue("SEKOYA POP", true);
+
+    const laborPptoCSelect = createCustomSelect(document.getElementById("laborPptoSelect"), {
+      items: LABOR_OPTS.labor_ppto,
+      placeholder: "Seleccionar labor ppto...",
+      onChange: () => previewFromForm()
+    });
+
+    const laborRealCSelect = createCustomSelect(document.getElementById("laborRealSelect"), {
+      items: LABOR_OPTS.labor_real,
+      placeholder: "Seleccionar labor real...",
+      onChange: () => previewFromForm()
+    });
+
+    function setLoteValue(posKey, silent) {
+      loteCSelect.setValue(posKey || "", true);
+      if (!silent && posKey) {
+        fillLaborForm(posKey);
+        previewFromForm();
+      }
+    }
+    function openLoteSelect() { loteCSelect.open(); }
+
+    fSem.value = currentWeek;
+    fFecha.value = new Date().toISOString().slice(0, 10);
+
+    function updateAvanceBar() {
+      const area = Number(fArea.value) || 0;
+      const av = Number(fAvance.value) || 0;
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      fAvanceBar.style.width = pct + "%";
+    }
+
+    function fillLaborForm(posKey) {
+      if (!posKey) return;
+      setLoteValue(posKey, true);
+      const lot = byPos.get(posKey);
+      if (!lot) return;
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      fModulo.value = mod ? mod.label : "";
+      fTurno.value = lot.tunel || "";
+      fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
+      fAvance.max = roundHa(lot.ha) || 999;
+      const rec = laborRecords[posKey];
+      if (rec) {
+        const up = (v) => String(v || "").toUpperCase();
+        laborPptoCSelect.setValue(up(rec.laborPpto), true);
+        laborRealCSelect.setValue(up(rec.laborReal), true);
+        fAvance.value = rec.avance != null && rec.avance !== "" ? formatHa(rec.avance) : "";
+        fTotalJr.value = rec.totalJr ?? "";
+        variedadCSelect.setValue(rec.variedad === "MAGICA" ? "MAGICA" : "SEKOYA POP", true);
+        fFecha.value = rec.fecha || fFecha.value;
+        fSem.value = rec.sem ?? currentWeek;
+      } else {
+        fAvance.value = "";
+        fTotalJr.value = "";
+        variedadCSelect.setValue("SEKOYA POP", true);
+        laborPptoCSelect.setValue("", true);
+        laborRealCSelect.setValue("", true);
+      }
+      updateAvanceBar();
+      previewFromForm();
+    }
+
+    function commitLaborFromForm(showFeedback) {
+      const posKey = fLote.value;
+      if (!posKey) {
+        if (showFeedback) { showToast("Selecciona un lote", true); openLoteSelect(); }
+        return false;
+      }
+      if (!fLaborReal.value) {
+        if (showFeedback) { showToast("Selecciona la labor real", true); laborRealCSelect.open(); }
+        return false;
+      }
+      const lot = byPos.get(posKey);
+      if (!lot) return false;
+      const area = roundHa(lot.ha);
+      let avance = roundHa(fAvance.value);
+      if (avance > area) avance = area;
+      fAvance.value = formatHa(avance);
+      laborRecords[posKey] = {
+        sem: Number(fSem.value) || currentWeek,
+        fecha: fFecha.value,
+        laborPpto: String(fLaborPpto.value || "").toUpperCase(),
+        laborReal: String(fLaborReal.value || "").toUpperCase(),
+        modulo: String(fModulo.value || "").toUpperCase(),
+        turno: String(fTurno.value || "").toUpperCase(),
+        lote: lot.lote,
+        variedad: fVariedad.value || "SEKOYA POP",
+        area,
+        avance,
+        totalJr: Number(fTotalJr.value) || 0
+      };
+      saveLaborRecords();
+      if (API_URL) {
+        QBApi.saveLabor(Object.assign({ posKey }, laborRecords[posKey])).catch(err => {
+          console.warn("API POST:", err);
+          showToast("Guardado local", true, "No se pudo enviar a la hoja");
+        });
+      }
+      const cell = getCellByKey(posKey);
+      if (cell) applyLaborVisual(cell, lot);
+      if (showFeedback) {
+        const pct = area > 0 ? Math.round((avance / area) * 100) : 0;
+        const detail = `LOTE ${lot.lote} · ${pct}% · ${avance.toFixed(2)} ha`;
+        const saveBtn = document.getElementById("saveLaborBtn");
+        saveBtn.classList.add("saved");
+        saveBtn.textContent = "✓ Guardado";
+        saveBtn.title = "Se guardó correctamente";
+        setTimeout(() => {
+          saveBtn.classList.remove("saved");
+          saveBtn.textContent = "Guardar avance";
+          saveBtn.title = "Guardar avance";
+        }, 2000);
+        showToast("Se guardó correctamente", false, detail);
+        showDrawerSavedMsg(detail);
+        flashSavedCell(posKey);
+      }
+      requestAnimationFrame(() => {
+        updateDrawerPreview(lot, avance, fLaborReal.value);
+        updateAvanceBar();
+      });
+      return true;
+    }
+
+    function openLaborDrawer(posKey) {
+      laborDrawer.classList.add("open");
+      laborDrawer.setAttribute("aria-hidden", "false");
+      if (posKey) fillLaborForm(posKey);
+      else previewFromForm();
+    }
+    function closeLaborDrawer() {
+      laborDrawer.classList.remove("open");
+      laborDrawer.setAttribute("aria-hidden", "true");
+    }
+
+    fAvance.addEventListener("input", previewFromForm);
+    fAvance.addEventListener("blur", () => {
+      const lot = byPos.get(fLote.value);
+      if (!lot) return;
+      const area = roundHa(lot.ha);
+      let av = roundHa(fAvance.value);
+      if (area > 0 && av > area) {
+        av = area;
+        showToast("Avance no puede superar " + formatHa(area) + " ha", true);
+      }
+      if (fAvance.value !== "") fAvance.value = formatHa(av);
+      previewFromForm();
+    });
+    fTotalJr.addEventListener("change", previewFromForm);
+    fFecha.addEventListener("change", previewFromForm);
+
+    document.getElementById("laborForm").addEventListener("submit", e => {
+      e.preventDefault();
+      commitLaborFromForm(true);
+    });
+    document.getElementById("saveLaborBtn").addEventListener("click", e => {
+      e.preventDefault();
+      commitLaborFromForm(true);
+    });
+    document.getElementById("openLaborBtn").onclick = () => openLaborDrawer();
+    document.getElementById("closeLaborDrawer").onclick = closeLaborDrawer;
+    document.getElementById("resetLaborForm").onclick = () => {
+      openConfirmClear();
+    };
+
+    const confirmClearModal = document.getElementById("confirmClearModal");
+    function openConfirmClear() {
+      confirmClearModal.classList.add("open");
+      confirmClearModal.setAttribute("aria-hidden", "false");
+    }
+    function closeConfirmClear() {
+      confirmClearModal.classList.remove("open");
+      confirmClearModal.setAttribute("aria-hidden", "true");
+    }
+    function clearAllShadedAreas() {
+      laborRecords = {};
+      saveLaborRecords();
+      refreshAllLaborVisuals();
+      setLoteValue("", true);
+      fModulo.value = "";
+      fTurno.value = "";
+      fArea.value = "";
+      laborPptoCSelect.setValue("", true);
+      laborRealCSelect.setValue("", true);
+      fAvance.value = "";
+      fTotalJr.value = "";
+      variedadCSelect.setValue("SEKOYA POP", true);
+      fSem.value = currentWeek;
+      updateAvanceBar();
+      previewFromForm();
+      const msg = document.getElementById("drawerSaveMsg");
+      if (msg) msg.classList.remove("show");
+      showToast("Áreas sombreadas eliminadas", false, "El mapa y el formulario quedaron limpios");
+      closeConfirmClear();
+    }
+    document.getElementById("confirmClearCancel").onclick = closeConfirmClear;
+    document.getElementById("confirmClearOk").onclick = clearAllShadedAreas;
+    confirmClearModal.addEventListener("click", e => {
+      if (e.target === confirmClearModal) closeConfirmClear();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && confirmClearModal.classList.contains("open")) closeConfirmClear();
+    });
+
+    function openProgressModal() {
+      const body = document.getElementById("progressTableBody");
+      document.getElementById("progressSemLabel").textContent = currentWeek;
+      const rows = Object.entries(laborRecords)
+        .filter(([, r]) => r.laborReal)
+        .sort((a, b) => (a[1].laborReal || "").localeCompare(b[1].laborReal || ""));
+
+      const byLabor = new Map();
+      rows.forEach(([key, r]) => {
+        const labor = String(r.laborReal || "SIN LABOR").toUpperCase();
+        if (!byLabor.has(labor)) byLabor.set(labor, []);
+        byLabor.get(labor).push([key, r]);
+      });
+
+      let totalAvance = 0;
+      rows.forEach(([, r]) => { totalAvance += Number(r.avance) || 0; });
+      document.getElementById("psLabors").textContent = byLabor.size;
+      document.getElementById("psLots").textContent = rows.length;
+      document.getElementById("psHa").textContent = totalAvance.toFixed(2);
+
+      if (!rows.length) {
+        body.innerHTML = `<div class="progress-empty">No hay labores registradas aún.<br>Usa <b>Registrar labores</b> para empezar.</div>`;
+      } else {
+        body.innerHTML = [...byLabor.entries()].map(([labor, items]) => {
+          let sumAv = 0, sumArea = 0;
+          items.forEach(([, r]) => {
+            sumAv += Number(r.avance) || 0;
+            sumArea += Number(r.area) || 0;
+          });
+          const pct = sumArea > 0 ? Math.min(100, Math.round((sumAv / sumArea) * 100)) : 0;
+          const lotsHtml = items.map(([key, r]) => {
+            const st = laborStatus(r, Number(r.area) || 1);
+            const pillClass = st.key === "done" ? "done" : st.key === "progress" ? "progress" : "pending";
+            const lot = byPos.get(key);
+            const loteLabel = lot
+              ? `${String(lot.tunel).toUpperCase()} · LT.${lot.lote}`
+              : `LT.${r.lote}`;
+            const fecha = r.fecha
+              ? new Date(r.fecha + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" })
+              : "—";
+            return `<div class="labor-lot">
+              <div>
+                <div class="lot-name">${loteLabel}</div>
+                <div class="lot-info">${r.modulo || "—"} · ${String(r.turno || "—").toUpperCase()} · ${String(r.variedad || "—").toUpperCase()} · ${fecha}</div>
+              </div>
+              <div class="lot-right">
+                <span class="status-pill ${pillClass}">${st.label}</span>
+                <span class="lot-avance">${Number(r.avance || 0).toFixed(2)} / ${Number(r.area || 0).toFixed(2)} ha</span>
+              </div>
+            </div>`;
+          }).join("");
+          return `<section class="labor-group">
+            <div class="labor-group-head">
+              <h3>${labor}</h3>
+              <span class="labor-group-meta">${items.length} lote${items.length === 1 ? "" : "s"} · ${pct}%</span>
+            </div>
+            <div class="labor-group-bar"><i style="width:${pct}%"></i></div>
+            ${lotsHtml}
+          </section>`;
+        }).join("");
+      }
+      progressModal.classList.add("open");
+      progressModal.setAttribute("aria-hidden", "false");
+    }
+    function closeProgressModal() {
+      progressModal.classList.remove("open");
+      progressModal.setAttribute("aria-hidden", "true");
+    }
+    document.getElementById("viewProgressBtn").onclick = openProgressModal;
+    document.getElementById("closeProgressModal").onclick = closeProgressModal;
+
+    // --- Exportar / compartir: Imagen · PDF · Excel ---
+    const MOD_BORDER = {
+      1: "#8E24AA", 2: "#43A047", 3: "#1E88E5",
+      4: "#F9A825", 5: "#E64A19", 10: "#00695C"
+    };
+    const exportImageBtns = document.querySelectorAll('[data-export="image"]');
+    const exportPdfBtns = document.querySelectorAll('[data-export="pdf"]');
+    const exportExcelBtns = document.querySelectorAll('[data-export="excel"]');
+    const allExportBtns = document.querySelectorAll("[data-export]");
+
+    function exportFileBase() {
+      const safe = String(pageTitle || "plano-cosecha")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      return `${safe || "plano-cosecha"}-sem${currentWeek}`;
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function buildMapCanvas() {
+      const cw = 78;
+      const ch = 58;
+      const pad = 28;
+      const headerH = 64;
+      const footerH = 36;
+      const mapW = cols * cw;
+      const mapH = rowsCount * ch;
+      const canvas = document.createElement("canvas");
+      canvas.width = mapW + pad * 2;
+      canvas.height = mapH + pad * 2 + headerH + footerH;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#f4f7f5";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#0f3327";
+      ctx.font = "700 22px Inter, Arial, sans-serif";
+      ctx.fillText(pageTitle || "PLANO DE COSECHA ETAPA I", pad, 34);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "600 13px Inter, Arial, sans-serif";
+      ctx.fillText(`Q Berries · Semana ${currentWeek} · ${uniqueLotes} lotes · ${Number(data.totalHa).toFixed(2)} ha`, pad, 54);
+
+      const ox = pad;
+      const oy = pad + headerH;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(ox, oy, mapW, mapH);
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ox + 0.5, oy + 0.5, mapW - 1, mapH - 1);
+
+      labelRows.forEach((r, ri) => {
+        for (let c = minC; c <= maxC; c++) {
+          const lot = byPos.get(`${r},${c}`);
+          if (!lot) continue;
+          const x = ox + (c - minC) * cw;
+          const y = oy + ri * ch;
+          const border = MOD_BORDER[lot.modulo] || "#94a3b8";
+          const rec = laborRecords[`${lot.r},${lot.c}`];
+          const area = Number(lot.ha) || 1;
+          const av = Math.min(area, Math.max(0, Number(rec?.avance) || 0));
+          const pct = area > 0 ? Math.min(1, av / area) : 0;
+          const mod = lot.modulo != null ? modById[lot.modulo] : null;
+          const fillColor = mod?.badge || mod?.fill || "#94a3b8";
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(x, y, cw, ch);
+          if (pct > 0) {
+            const fh = ch * pct;
+            ctx.fillStyle = fillColor;
+            ctx.globalAlpha = 0.72;
+            ctx.fillRect(x, y + ch - fh, cw, fh);
+            ctx.globalAlpha = 1;
+          }
+          ctx.strokeStyle = border;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x + 0.75, y + 0.75, cw - 1.5, ch - 1.5);
+          ctx.fillStyle = "#0b0f0d";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = "800 11px Inter, Arial, sans-serif";
+          ctx.fillText(String(lot.tunel || "").toUpperCase(), x + cw / 2, y + ch * 0.28);
+          ctx.fillText("LT." + lot.lote, x + cw / 2, y + ch * 0.52);
+          ctx.font = "700 10px Inter, Arial, sans-serif";
+          ctx.fillText(lot.ha != null ? Number(lot.ha).toFixed(2) : "", x + cw / 2, y + ch * 0.76);
+        }
+      });
+
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#64748b";
+      ctx.font = "600 11px Inter, Arial, sans-serif";
+      ctx.fillText(modules.map(m => m.label + " " + m.ha + " ha").join("  ·  "), pad, canvas.height - 16);
+      return canvas;
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("No se pudo generar el archivo")), type, quality);
+      });
+    }
+
+    function uint8(str) {
+      return new TextEncoder().encode(str);
+    }
+
+    function concatUint8(parts) {
+      const total = parts.reduce((n, p) => n + p.length, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      parts.forEach(p => { out.set(p, off); off += p.length; });
+      return out;
+    }
+
+    async function canvasToPdfBlob(canvas) {
+      const jpegBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+      const jpg = new Uint8Array(await jpegBlob.arrayBuffer());
+      const w = canvas.width;
+      const h = canvas.height;
+      const pageW = 842;
+      const pageH = 595;
+      const scaleFit = Math.min(pageW / w, pageH / h) * 0.92;
+      const imgW = w * scaleFit;
+      const imgH = h * scaleFit;
+      const imgX = (pageW - imgW) / 2;
+      const imgY = (pageH - imgH) / 2;
+      const content = "q\n" + imgW.toFixed(2) + " 0 0 " + imgH.toFixed(2) + " " + imgX.toFixed(2) + " " + imgY.toFixed(2) + " cm\n/Im0 Do\nQ";
+      const objs = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageW + " " + pageH + "] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>",
+        {
+          dict: "<< /Type /XObject /Subtype /Image /Width " + w + " /Height " + h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jpg.length + " >>",
+          stream: jpg
+        },
+        "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream"
+      ];
+      const chunks = [uint8("%PDF-1.4\n")];
+      const offsets = [0];
+      for (let i = 0; i < objs.length; i++) {
+        offsets.push(chunks.reduce((n, c) => n + c.length, 0));
+        const num = i + 1;
+        const o = objs[i];
+        if (typeof o === "string") {
+          chunks.push(uint8(num + " 0 obj\n" + o + "\nendobj\n"));
+        } else {
+          chunks.push(uint8(num + " 0 obj\n" + o.dict + "\nstream\n"));
+          chunks.push(o.stream);
+          chunks.push(uint8("\nendstream\nendobj\n"));
+        }
+      }
+      const xrefPos = chunks.reduce((n, c) => n + c.length, 0);
+      let xref = "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n";
+      for (let i = 1; i <= objs.length; i++) {
+        xref += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+      }
+      chunks.push(uint8(xref));
+      chunks.push(uint8("trailer\n<< /Size " + (objs.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xrefPos + "\n%%EOF"));
+      return new Blob([concatUint8(chunks)], { type: "application/pdf" });
+    }
+
+    function xmlEscape(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function buildExcelXml() {
+      const header = ["Semana", "Fecha", "Lote", "Tunel", "Modulo", "Area_ha", "Variedad", "Labor_ppto", "Labor_real", "Avance_ha", "Total_JR", "Estado", "Pct"];
+      const sorted = [...lots].sort((a, b) => a.lote - b.lote || a.r - b.r || a.c - b.c);
+      const bodyRows = sorted.map(lot => {
+        const key = lot.r + "," + lot.c;
+        const rec = laborRecords[key] || {};
+        const area = Number(lot.ha) || 0;
+        const av = Number(rec.avance) || 0;
+        const st = laborStatus(rec, area || 1);
+        const pct = area > 0 ? Math.round((av / area) * 100) : 0;
+        return [
+          rec.sem || currentWeek,
+          rec.fecha || "",
+          lot.lote,
+          lot.tunel,
+          lot.modulo != null ? "M" + lot.modulo : "",
+          area ? area.toFixed(2) : "",
+          rec.variedad || "",
+          rec.laborPpto || "",
+          rec.laborReal || "",
+          av ? av.toFixed(2) : "",
+          rec.totalJr != null && rec.totalJr !== "" ? rec.totalJr : "",
+          st.label,
+          pct + "%"
+        ];
+      });
+
+      function cellXml(v) {
+        if (typeof v === "number") return "<Cell><Data ss:Type=\"Number\">" + v + "</Data></Cell>";
+        if (typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v)) return "<Cell><Data ss:Type=\"Number\">" + v + "</Data></Cell>";
+        return "<Cell><Data ss:Type=\"String\">" + xmlEscape(v) + "</Data></Cell>";
+      }
+
+      const headerRow = "<Row>" + header.map(h => "<Cell ss:StyleID=\"Header\"><Data ss:Type=\"String\">" + h + "</Data></Cell>").join("") + "</Row>";
+      const dataRows = bodyRows.map(colsArr => "<Row>" + colsArr.map(cellXml).join("") + "</Row>").join("\n");
+
+      return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<?mso-application progid=\"Excel.Sheet\"?>\n" +
+        "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
+        " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
+        " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
+        " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
+        " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n" +
+        " <Styles><Style ss:ID=\"Header\"><Font ss:Bold=\"1\"/><Interior ss:Color=\"#E8F5E9\" ss:Pattern=\"Solid\"/></Style></Styles>\n" +
+        " <Worksheet ss:Name=\"Lotes\">\n  <Table>\n" + headerRow + "\n" + dataRows + "\n  </Table>\n </Worksheet>\n</Workbook>";
+    }
+
+    async function withExportBusy(fn) {
+      allExportBtns.forEach(b => { b.disabled = true; });
+      try {
+        await fn();
+      } catch (err) {
+        console.error(err);
+        showToast("No se pudo exportar", true, err?.message || "Intenta de nuevo");
+      } finally {
+        allExportBtns.forEach(b => { b.disabled = false; });
+      }
+    }
+
+    exportImageBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
+      const blob = await canvasToBlob(buildMapCanvas(), "image/png");
+      downloadBlob(blob, exportFileBase() + ".png");
+      showToast("Imagen descargada", false, "Mapa en formato PNG");
+    })));
+
+    exportPdfBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
+      const blob = await canvasToPdfBlob(buildMapCanvas());
+      downloadBlob(blob, exportFileBase() + ".pdf");
+      showToast("PDF descargado", false, "Mapa en formato PDF");
+    })));
+
+    exportExcelBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
+      const blob = new Blob([uint8(buildExcelXml())], { type: "application/vnd.ms-excel" });
+      downloadBlob(blob, exportFileBase() + ".xls");
+      showToast("Excel descargado", false, "Lotes y labores en hoja de cálculo");
+    })));
+
+    refreshAllLaborVisuals();
+    updateMobileChrome();
+    if (API_URL) {
+      syncLaborsFromSheet({ sem: currentWeek }).then(n => {
+        if (n > 0) {
+          lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+          updateMobileChrome();
+          showToast("Mapa actualizado", false, `${n} lotes desde la hoja`);
+        }
+      });
+      QBApi.flushQueue();
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="QB Labores" />
+  <meta name="description" content="Reporte de labores arándano · Q Berries" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <title>Q Berries · Labores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --qb-red: #e31e24;
+      --qb-orange: #f6921e;
+      --forest: #0f3327;
+      --forest-soft: #2f8a58;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --panel: #fff;
+      --canvas: #f9fafb;
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --app-max: 100%;
+      --input-h: 50px;
+      --pick-min-h: 50px;
+      --btn-h: 52px;
+      --fs-body: 1rem;
+      --fs-pick: 0.95rem;
+      --fs-title: 1.35rem;
+      --space: 1rem;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: calc(5.75rem + var(--safe-b));
+    }
+
+    /* ── App header (referencia) ── */
+    .app-head {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #fff;
+      padding: calc(0.85rem + var(--safe-t)) 1rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .app-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      max-width: var(--app-max);
+      margin: 0 auto;
+      width: 100%;
+    }
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex: 1;
+      min-width: 0;
+    }
+    .logo-plate {
+      flex-shrink: 0;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+    .logo-plate img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .app-titles { min-width: 0; flex: 1; }
+    .app-eyebrow {
+      margin: 0 0 0.2rem;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--qb-red);
+    }
+    .app-titles h1 {
+      margin: 0;
+      font-size: var(--fs-title);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .app-sub {
+      margin: 0.2rem 0 0;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .app-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.34rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .status-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9ca3af;
+      flex-shrink: 0;
+    }
+    .status-pill.online {
+      background: #fff;
+      border-color: #86efac;
+      color: #059669;
+    }
+    .status-pill.online .dot { background: #22c55e; }
+    .status-pill.offline {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #b45309;
+    }
+    .status-pill.offline .dot { background: #f59e0b; }
+    .status-pill.sync {
+      background: #fff;
+      border-color: var(--line);
+      color: #374151;
+    }
+    .status-pill.sync.has-pending {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+    .status-pill svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    /* ── Main ── */
+    main {
+      padding: var(--space);
+      max-width: var(--app-max);
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .install-card {
+      display: none;
+      margin-bottom: 0.85rem;
+      padding: 0.85rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+      border: 1px solid #bbf7d0;
+    }
+    .install-card.show { display: block; }
+    .install-card p { margin: 0; font-size: 0.82rem; color: #166534; font-weight: 500; }
+    .install-card .install-ios-hint {
+      margin: 0.45rem 0 0;
+      font-size: 0.78rem;
+      color: #15803d;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .install-card button {
+      margin-top: 0.55rem;
+      width: 100%;
+      height: 42px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--forest);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .install-card button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 18px;
+      padding: 1.25rem 1.2rem;
+      box-shadow: 0 2px 14px rgba(15, 51, 39, 0.05);
+      margin-bottom: 1rem;
+    }
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1.15rem;
+    }
+    .card-head-accent {
+      width: 4px;
+      min-height: 2.35rem;
+      align-self: stretch;
+      border-radius: 4px;
+      background: linear-gradient(180deg, var(--qb-orange) 0%, var(--qb-red) 100%);
+      flex-shrink: 0;
+    }
+    .card-head-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .card-head h2 {
+      margin: 0;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #1a3c34;
+      line-height: 1.2;
+    }
+    .card-head-sub {
+      margin: 0.28rem 0 0;
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: #757575;
+      line-height: 1.4;
+    }
+    .card-head .draft-badge {
+      align-self: flex-start;
+      margin-top: 0.15rem;
+    }
+    .draft-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #047857;
+      background: #ecfdf5;
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      display: none;
+    }
+    .draft-badge.show { display: inline-block; }
+
+    .field { margin-bottom: 1rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1f2937;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .field label .req {
+      color: var(--qb-red);
+      font-weight: 700;
+      margin-left: 0.1rem;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      height: var(--input-h);
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 0 0.95rem;
+      font: inherit;
+      font-size: var(--fs-body);
+      font-weight: 500;
+      color: var(--ink);
+      background: #f9f9f9;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .field input::placeholder {
+      color: #bdbdbd;
+      font-weight: 400;
+    }
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      background: #fff;
+      border-color: #cbd5e1;
+      box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.08);
+    }
+    .field input[readonly] {
+      background: #f9fafb;
+      color: #374151;
+      border-color: #e8eeeb;
+      cursor: default;
+      box-shadow: none;
+    }
+    .field input[readonly]:focus {
+      border-color: #e8eeeb;
+      box-shadow: none;
+    }
+    .field input.avance-capped {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .field-hint {
+      margin: 0.25rem 0 0;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .field-hint.warn { color: #b45309; }
+    .field select { display: none; }
+
+    /* ── Select personalizado (mobile picker) ── */
+    .mpick-trigger {
+      width: 100%;
+      min-height: var(--pick-min-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      padding: 0.65rem 0.95rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      background: #f9f9f9;
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .mpick-trigger:active { transform: scale(0.995); }
+    .mpick-trigger:focus-visible {
+      outline: none;
+      background: #fff;
+      border-color: #cbd5e1;
+      box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.08);
+    }
+    .mpick-text {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--fs-pick);
+      font-weight: 700;
+      color: var(--forest);
+      line-height: 1.2;
+    }
+    .mpick-text.is-empty {
+      color: #bdbdbd;
+      font-weight: 500;
+    }
+    .mpick-text small {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .mpick-chevron {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: #9ca3af;
+      transition: transform .2s;
+    }
+    .mpick-trigger[aria-expanded="true"] .mpick-chevron {
+      transform: rotate(180deg);
+    }
+
+    .picker-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(15, 23, 42, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .picker-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .picker-sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 100;
+      transform: translateY(105%);
+      transition: transform .32s cubic-bezier(.2,.8,.2,1);
+      pointer-events: none;
+    }
+    .picker-sheet.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .picker-sheet-inner {
+      background: #fff;
+      border-radius: 22px 22px 0 0;
+      padding: 1rem 1rem calc(1rem + var(--safe-b));
+      box-shadow: 0 -12px 48px rgba(15, 51, 39, 0.16);
+      max-height: min(78vh, 620px);
+      display: flex;
+      flex-direction: column;
+    }
+    .picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .picker-head h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--forest);
+      letter-spacing: -0.01em;
+    }
+    .picker-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .picker-search-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+      flex-shrink: 0;
+    }
+    .picker-search-wrap svg {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+      pointer-events: none;
+    }
+    .picker-search-wrap input {
+      width: 100%;
+      height: 46px;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 0 0.9rem 0 2.35rem;
+      font: inherit;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    .picker-search-wrap input:focus {
+      outline: none;
+      border-color: var(--forest-soft);
+      box-shadow: 0 0 0 3px rgba(47,138,88,0.12);
+    }
+    .picker-list {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      padding-bottom: 0.25rem;
+    }
+    .picker-option {
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      font: inherit;
+      transition: border-color .12s, background .12s;
+    }
+    .picker-option b {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--forest);
+      line-height: 1.2;
+    }
+    .picker-option small {
+      display: block;
+      margin-top: 0.18rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .picker-option:active { background: #f9fafb; }
+    .picker-option.selected {
+      border-color: var(--forest-soft);
+      background: #f0fdf4;
+    }
+    .picker-empty {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .form-meta {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 1.15rem;
+      padding: 0.85rem 1rem;
+      background: #f9f9f9;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+    }
+    .meta-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .meta-cell:first-child {
+      flex-shrink: 0;
+      padding-right: 0.25rem;
+    }
+    .meta-cell + .meta-cell {
+      padding-left: 0.65rem;
+      border-left: 1px solid #e2ebe6;
+    }
+    .meta-k {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .meta-v {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: var(--forest);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .meta-cell:first-child .meta-v {
+      white-space: nowrap;
+    }
+    .meta-v.is-date {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #0f3327;
+      text-transform: none;
+      white-space: normal;
+      word-break: keep-all;
+      line-height: 1.25;
+    }
+
+    .search-wrap {
+      position: relative;
+      margin-bottom: 0.45rem;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+      pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%;
+      height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0 0.9rem 0 2.35rem;
+      font: inherit;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+
+    .progress-wrap { margin-top: 0.15rem; }
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      overflow: hidden;
+    }
+    .progress-bar i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--forest-soft), #6db344);
+      transition: width .25s ease;
+      border-radius: 999px;
+    }
+    .progress-meta {
+      margin-top: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--forest-soft);
+    }
+
+    .preview {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 14px;
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+      text-align: center;
+    }
+    .preview-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .preview-cell {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 128px;
+      height: 92px;
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      margin: 0.5rem auto 0.35rem;
+    }
+    .preview-fill {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 0%;
+      opacity: 0.72;
+    }
+    .preview-cell span {
+      position: relative;
+      z-index: 1;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.12;
+    }
+
+    /* ── Historial ── */
+    .history-list { display: flex; flex-direction: column; gap: 0.45rem; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+    }
+    .history-item b { font-size: 0.82rem; display: block; }
+    .history-item small {
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .history-tag {
+      flex-shrink: 0;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.45rem;
+      border-radius: 999px;
+    }
+    .history-tag.synced { background: #ecfdf5; color: #047857; }
+    .history-tag.pending { background: #eff6ff; color: #1d4ed8; }
+    .history-empty {
+      text-align: center;
+      padding: 1.25rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    /* ── Dock fijo ── */
+    .dock {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 60;
+      padding: 0.7rem 1rem calc(0.7rem + var(--safe-b));
+      background: rgba(255,255,255,0.94);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .dock-inner {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 0.55rem;
+    }
+    .btn {
+      height: var(--btn-h);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font: inherit;
+      font-size: calc(var(--fs-body) * 0.9);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--forest);
+      border-color: var(--forest);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(15,51,39,0.2);
+    }
+    .btn-primary.saved { background: #047857; border-color: #047857; }
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+
+    /* ── FAB mapa ── */
+    .fab-map {
+      position: fixed;
+      right: 1rem;
+      bottom: calc(5.9rem + var(--safe-b));
+      z-index: 65;
+      width: 54px;
+      height: 54px;
+      border-radius: 17px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(145deg, #2f8a58 0%, #0f3327 100%);
+      color: #fff;
+      box-shadow:
+        0 10px 28px rgba(15, 51, 39, 0.32),
+        0 2px 8px rgba(15, 51, 39, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fab-map:hover {
+      box-shadow:
+        0 12px 32px rgba(15, 51, 39, 0.36),
+        0 4px 12px rgba(15, 51, 39, 0.16);
+    }
+    .fab-map:active {
+      transform: scale(0.94);
+    }
+    .fab-map.fab-map--enter {
+      animation: fabMapIn 0.32s ease;
+    }
+    @keyframes fabMapIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.88); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .fab-map svg {
+      width: 25px;
+      height: 25px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(5.75rem + var(--safe-b));
+      transform: translateX(-50%) translateY(130%);
+      z-index: 70;
+      background: var(--forest);
+      color: #fff;
+      padding: 0.8rem 1.1rem;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 16px 40px rgba(15,51,39,0.28);
+      opacity: 0;
+      transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s;
+      max-width: calc(100% - 2rem);
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.error { background: var(--qb-red); }
+    .toast.offline { background: #b45309; }
+
+    @media (min-width: 768px) {
+      :root {
+        --app-max: 680px;
+        --input-h: 58px;
+        --pick-min-h: 58px;
+        --btn-h: 58px;
+        --fs-body: 1.08rem;
+        --fs-pick: 1.05rem;
+        --fs-title: 1.65rem;
+        --space: 1.35rem;
+      }
+      body {
+        background: #eef2f0;
+        padding-bottom: calc(6.5rem + var(--safe-b));
+      }
+      .app-head {
+        padding: calc(1.1rem + var(--safe-t)) 1.5rem 1.1rem;
+      }
+      .logo-plate {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        padding: 8px;
+      }
+      .app-eyebrow { font-size: 0.72rem; }
+      .app-sub { font-size: 1rem; }
+      .status-pill {
+        font-size: 0.78rem;
+        padding: 0.38rem 0.72rem;
+      }
+      .status-pill .dot { width: 8px; height: 8px; }
+      .status-pill svg { width: 15px; height: 15px; }
+      .card {
+        padding: 1.45rem 1.5rem;
+        border-radius: 20px;
+        margin-bottom: 1rem;
+      }
+      .card-head h2 { font-size: 1rem; }
+      .card-head-sub { font-size: 0.88rem; }
+      .field label { font-size: 0.92rem; margin-bottom: 0.55rem; }
+      .field { margin-bottom: 1.05rem; }
+      .mpick-text small { font-size: 0.82rem; }
+      .mpick-chevron { width: 20px; height: 20px; }
+      .mpick-trigger { padding: 0.75rem 1rem; border-radius: 16px; }
+      .row2 { gap: 0.85rem; }
+      .form-meta {
+        padding: 1.1rem 1.25rem;
+        border-radius: 18px;
+        margin-bottom: 1.15rem;
+      }
+      .meta-v { font-size: 1.22rem; }
+      .meta-v.is-date { font-size: 1.05rem; }
+      .progress-bar { height: 10px; }
+      .progress-meta { font-size: 0.88rem; }
+      .preview { padding: 1.25rem; border-radius: 16px; }
+      .preview-cell {
+        width: 156px;
+        height: 112px;
+        border-radius: 12px;
+      }
+      .preview-cell span { font-size: 0.82rem; }
+      .history-item { padding: 0.85rem 1rem; border-radius: 14px; }
+      .history-item b { font-size: 0.95rem; }
+      .history-item small { font-size: 0.78rem; }
+      .dock { padding: 0.85rem 1.5rem calc(0.85rem + var(--safe-b)); }
+      .toast { font-size: 0.95rem; padding: 0.9rem 1.25rem; bottom: calc(6.5rem + var(--safe-b)); }
+
+      /* Picker centrado y más grande en tablet */
+      .picker-sheet {
+        left: 50%;
+        right: auto;
+        width: min(640px, calc(100% - 2.5rem));
+        transform: translateX(-50%) translateY(105%);
+      }
+      .picker-sheet.open {
+        transform: translateX(-50%) translateY(0);
+      }
+      .picker-sheet-inner {
+        border-radius: 24px 24px 0 0;
+        padding: 1.25rem 1.35rem calc(1.25rem + var(--safe-b));
+        max-height: min(74vh, 760px);
+      }
+      .picker-head h3 { font-size: 1.28rem; }
+      .picker-close {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        font-size: 1.35rem;
+      }
+      .picker-search-wrap input {
+        height: 52px;
+        font-size: 1.05rem;
+        border-radius: 16px;
+      }
+      .picker-search-wrap svg { width: 18px; height: 18px; left: 1rem; }
+      .picker-list { gap: 0.55rem; }
+      .picker-option {
+        padding: 1rem 1.15rem;
+        border-radius: 16px;
+      }
+      .picker-option b { font-size: 1.06rem; }
+      .picker-option small { font-size: 0.88rem; margin-top: 0.22rem; }
+    }
+
+    @media (min-width: 1024px) {
+      :root {
+        --app-max: 820px;
+        --input-h: 64px;
+        --pick-min-h: 64px;
+        --btn-h: 62px;
+        --fs-body: 1.12rem;
+        --fs-pick: 1.1rem;
+        --fs-title: 1.85rem;
+        --space: 1.65rem;
+      }
+      .logo-plate {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+      }
+      .app-head { padding: calc(1.25rem + var(--safe-t)) 2rem 1.25rem; }
+      main { padding: var(--space) 2rem; }
+      .card { padding: 1.65rem 1.75rem; border-radius: 24px; }
+      .field input,
+      .mpick-trigger { border-radius: 18px; }
+      .btn { border-radius: 16px; font-size: 1.02rem; }
+      .preview-cell {
+        width: 180px;
+        height: 128px;
+      }
+      .preview-cell span { font-size: 0.9rem; }
+      .picker-sheet { width: min(720px, calc(100% - 3rem)); }
+      .picker-sheet-inner {
+        padding: 1.45rem 1.55rem calc(1.45rem + var(--safe-b));
+        max-height: min(70vh, 820px);
+      }
+      .picker-head h3 { font-size: 1.4rem; }
+      .picker-search-wrap input { height: 56px; font-size: 1.1rem; }
+      .picker-option { padding: 1.1rem 1.25rem; }
+      .picker-option b { font-size: 1.12rem; }
+      .dock { padding: 1rem 2rem calc(1rem + var(--safe-b)); }
+      .dock-inner { gap: 0.75rem; }
+      .fab-map {
+        right: 1.35rem;
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        bottom: calc(6.25rem + var(--safe-b));
+      }
+      .fab-map svg { width: 27px; height: 27px; }
+    }
+
+    @media (min-width: 1280px) {
+      .fab-map { display: none !important; }
+    }
+
+    /* Solo celular / tablet — ocultar en escritorio ancho */
+    @media (min-width: 1280px) {
+      body::before {
+        content: "QB Labores · Abre en celular o tablet, o instala la app PWA";
+        display: block;
+        text-align: center;
+        padding: 0.65rem 1rem;
+        background: #fffbeb;
+        border-bottom: 1px solid #fde68a;
+        color: #92400e;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-head">
+    <div class="app-head-row">
+      <div class="app-brand">
+        <div class="logo-plate">
+          <img src="assets/logo-qberries.png" alt="Q Berries" width="40" height="40" />
+        </div>
+        <div class="app-titles">
+          <p class="app-eyebrow">Q Berries</p>
+          <h1>Reporte de labores</h1>
+          <p class="app-sub" id="subTitle">Evaluaciones de campo</p>
+        </div>
+      </div>
+      <div class="app-status">
+        <span class="status-pill online" id="netPill">
+          <span class="dot"></span>
+          En línea
+        </span>
+        <span class="status-pill sync" id="queuePill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 16V4m0 0l-4 4m4-4l4 4"/>
+            <path d="M4 20h16"/>
+          </svg>
+          <span id="queueText">0 pend.</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="install-card" id="installBanner">
+      <p id="installBannerText">Instala la app en tu celular o tablet para usarla sin navegador, incluso sin internet.</p>
+      <p class="install-ios-hint" id="installIosHint" hidden>En iPhone/iPad: toca <strong>Compartir</strong> (↑) y elige <strong>Agregar a pantalla de inicio</strong>.</p>
+      <button type="button" id="installBtn">Agregar a pantalla de inicio</button>
+    </div>
+
+    <form id="laborForm" class="card" novalidate>
+      <div class="card-head">
+        <div class="card-head-accent" aria-hidden="true"></div>
+        <div class="card-head-text">
+          <h2>Detalle</h2>
+          <p class="card-head-sub">Complete los datos del lote y la labor.</p>
+        </div>
+        <span class="draft-badge" id="draftBadge">Borrador guardado</span>
+      </div>
+
+      <div class="form-meta" aria-label="Semana y fecha de hoy">
+        <div class="meta-cell">
+          <span class="meta-k">Semana</span>
+          <span class="meta-v" id="fSemText">—</span>
+          <input type="hidden" id="fSem" />
+        </div>
+        <div class="meta-cell">
+          <span class="meta-k">Fecha</span>
+          <span class="meta-v is-date" id="fFechaText">—</span>
+          <input type="hidden" id="fFecha" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fLoteTrigger">Lote <span class="req">*</span></label>
+        <input type="hidden" id="fLote" value="" />
+        <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false">
+          <span class="mpick-text is-empty" id="fLoteLabel">Seleccionar lote...</span>
+          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="fModulo">Módulo</label>
+          <input id="fModulo" type="text" readonly placeholder="—" />
+        </div>
+        <div class="field">
+          <label for="fTurno">Turno</label>
+          <input id="fTurno" type="text" readonly placeholder="—" />
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="fVariedadTrigger">Variedad</label>
+          <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+          <button type="button" class="mpick-trigger" id="fVariedadTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text" id="fVariedadLabel">S. Pop<small>Variedad</small></span>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="field">
+          <label for="fArea">Área (ha)</label>
+          <input id="fArea" type="text" readonly placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fLaborPptoTrigger">Labor ppto</label>
+        <input type="hidden" id="fLaborPpto" value="" />
+        <button type="button" class="mpick-trigger" id="fLaborPptoTrigger" aria-haspopup="dialog" aria-expanded="false">
+          <span class="mpick-text is-empty" id="fLaborPptoLabel">Seleccionar labor ppto...</span>
+          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
+        <input type="hidden" id="fLaborReal" value="" />
+        <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
+          <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor real...</span>
+          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="fAvance">Avance (ha)</label>
+          <input id="fAvance" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />
+          <p class="field-hint" id="fAvanceHint">Máx. según área del lote</p>
+        </div>
+        <div class="field">
+          <label for="fTotalJr">Total (JR)</label>
+          <input id="fTotalJr" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
+        </div>
+      </div>
+
+      <div class="field progress-wrap">
+        <label>Progreso del lote</label>
+        <div class="progress-bar"><i id="fAvanceBar"></i></div>
+        <div class="progress-meta" id="progressMeta">0%</div>
+      </div>
+
+      <div class="preview">
+        <div class="preview-label">Vista previa</div>
+        <div class="preview-cell" id="previewCell">
+          <div class="preview-fill" id="previewFill"></div>
+          <span class="t" id="previewT">—</span>
+          <span class="l" id="previewL">LOTE —</span>
+          <span class="h" id="previewH">—</span>
+        </div>
+        <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
+      </div>
+    </form>
+
+    <section class="card" id="historyCard">
+      <div class="card-head">
+        <div class="card-head-accent" aria-hidden="true"></div>
+        <div class="card-head-text">
+          <h2>Recientes</h2>
+          <p class="card-head-sub">Últimos reportes guardados en el celular.</p>
+        </div>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+  </main>
+
+  <a href="index.html" class="fab-map" id="fabMap" aria-label="Abrir mapa" title="Ver mapa">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13V7m0 0l6-3m-6 3l6 3m0 0v10m0-10l5.447-2.724A1 1 0 0 1 21 5.618v10.764a1 1 0 0 1-1.447.894L15 17"/>
+    </svg>
+  </a>
+
+  <div class="dock">
+    <div class="dock-inner">
+      <button type="button" class="btn" id="resetBtn">Limpiar</button>
+      <button type="button" class="btn btn-primary" id="saveBtn">Guardar avance</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="picker-backdrop" id="pickerBackdrop"></div>
+  <div class="picker-sheet" id="pickerSheet" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="picker-sheet-inner">
+      <div class="picker-head">
+        <h3 id="pickerTitle">Elegir</h3>
+        <button type="button" class="picker-close" id="pickerClose" aria-label="Cerrar">×</button>
+      </div>
+      <div class="picker-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="pickerSearch" placeholder="Buscar..." autocomplete="off" />
+      </div>
+      <div class="picker-list" id="pickerList"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="data.js?v=8"></script>
+  <script>
+    const DRAFT_KEY = "qb-form-draft";
+    const data = window.MAP_DATA;
+    const lots = data.lots || [];
+    const modules = data.modules || [];
+    const modById = Object.fromEntries(modules.map(m => [m.id, m]));
+    const byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+    const LABOR = (window.QB_CONFIG && QB_CONFIG.LABOR_OPTS) || { labor_ppto: [], labor_real: [] };
+
+    function getCurrentWeek(d = new Date()) {
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+      const week1 = new Date(date.getFullYear(), 0, 4);
+      return 1 + Math.round(((date - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    }
+
+    function hoyIso() {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Lima",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+    }
+
+    function formatFechaDisplay(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso + "T12:00:00");
+      return d.toLocaleDateString("es-PE", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "America/Lima"
+      }).replace(/\./g, "");
+    }
+
+    function setFechaHoy() {
+      const hoy = hoyIso();
+      const sem = getCurrentWeek(new Date(hoy + "T12:00:00"));
+      els.fFecha.value = hoy;
+      els.fSem.value = sem;
+      if (els.fSemText) els.fSemText.textContent = "SEM " + sem;
+      if (els.fFechaText) els.fFechaText.textContent = formatFechaDisplay(hoy);
+    }
+
+    const currentWeek = getCurrentWeek(new Date(hoyIso() + "T12:00:00"));
+
+    const els = {
+      fLote: document.getElementById("fLote"),
+      fLoteTrigger: document.getElementById("fLoteTrigger"),
+      fLoteLabel: document.getElementById("fLoteLabel"),
+      fModulo: document.getElementById("fModulo"),
+      fTurno: document.getElementById("fTurno"),
+      fArea: document.getElementById("fArea"),
+      fVariedad: document.getElementById("fVariedad"),
+      fVariedadTrigger: document.getElementById("fVariedadTrigger"),
+      fVariedadLabel: document.getElementById("fVariedadLabel"),
+      fLaborPpto: document.getElementById("fLaborPpto"),
+      fLaborPptoTrigger: document.getElementById("fLaborPptoTrigger"),
+      fLaborPptoLabel: document.getElementById("fLaborPptoLabel"),
+      fLaborReal: document.getElementById("fLaborReal"),
+      fLaborRealTrigger: document.getElementById("fLaborRealTrigger"),
+      fLaborRealLabel: document.getElementById("fLaborRealLabel"),
+      fAvance: document.getElementById("fAvance"),
+      fAvanceHint: document.getElementById("fAvanceHint"),
+      fTotalJr: document.getElementById("fTotalJr"),
+      fSem: document.getElementById("fSem"),
+      fSemText: document.getElementById("fSemText"),
+      fFecha: document.getElementById("fFecha"),
+      fFechaText: document.getElementById("fFechaText"),
+      fAvanceBar: document.getElementById("fAvanceBar"),
+      progressMeta: document.getElementById("progressMeta"),
+      previewCell: document.getElementById("previewCell"),
+      previewFill: document.getElementById("previewFill"),
+      previewT: document.getElementById("previewT"),
+      previewL: document.getElementById("previewL"),
+      previewH: document.getElementById("previewH"),
+      previewStatus: document.getElementById("previewStatus"),
+      toast: document.getElementById("toast"),
+      netPill: document.getElementById("netPill"),
+      queuePill: document.getElementById("queuePill"),
+      queueText: document.getElementById("queueText"),
+      saveBtn: document.getElementById("saveBtn"),
+      draftBadge: document.getElementById("draftBadge"),
+      historyList: document.getElementById("historyList"),
+      pickerBackdrop: document.getElementById("pickerBackdrop"),
+      pickerSheet: document.getElementById("pickerSheet"),
+      pickerTitle: document.getElementById("pickerTitle"),
+      pickerSearch: document.getElementById("pickerSearch"),
+      pickerList: document.getElementById("pickerList"),
+      pickerClose: document.getElementById("pickerClose")
+    };
+
+    setFechaHoy();
+
+    let toastTimer = null;
+    let draftTimer = null;
+    let activePicker = null;
+
+    function showToast(msg, type) {
+      els.toast.textContent = msg;
+      els.toast.className = "toast show" + (type === "error" ? " error" : type === "offline" ? " offline" : "");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), type === "error" ? 4500 : 3500);
+    }
+
+    function laborDisplay(s) {
+      return String(s || "")
+        .toLowerCase()
+        .replace(/\b\w/g, m => m.toUpperCase());
+    }
+
+    const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
+    const loteOptions = sortedLots.map(lot => {
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      const tunel = String(lot.tunel || "").toUpperCase();
+      const ha = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "";
+      return {
+        value: `${lot.r},${lot.c}`,
+        title: `LOTE ${lot.lote}`,
+        sub: [tunel, mod?.label, ha].filter(Boolean).join(" · "),
+        search: `lote ${lot.lote} ${tunel} m${lot.modulo} ${mod?.label || ""}`.toLowerCase()
+      };
+    });
+
+    const variedadOptions = [
+      { value: "SEKOYA POP", title: "S. Pop", sub: "Variedad", search: "sekoya pop s pop" },
+      { value: "MAGICA", title: "Mágica", sub: "Variedad", search: "magica magica" }
+    ];
+
+    const laborPptoOptions = LABOR.labor_ppto.map(s => ({
+      value: s,
+      title: laborDisplay(s),
+      sub: "Labor ppto",
+      search: s.toLowerCase()
+    }));
+
+    const laborRealOptions = LABOR.labor_real.map(s => ({
+      value: s,
+      title: laborDisplay(s),
+      sub: "Labor real",
+      search: s.toLowerCase()
+    }));
+
+    function setPickLabel(labelEl, item, placeholder) {
+      if (!item || !item.value) {
+        labelEl.className = "mpick-text is-empty";
+        labelEl.textContent = placeholder;
+        return;
+      }
+      labelEl.className = "mpick-text";
+      labelEl.innerHTML = item.sub
+        ? `${item.title}<small>${item.sub}</small>`
+        : item.title;
+    }
+
+    function setPickValue(picker, value, silent) {
+      const item = picker.items.find(i => i.value === value) || null;
+      picker.hidden.value = value || "";
+      setPickLabel(picker.labelEl, item, picker.placeholder);
+      if (!silent && picker.onChange) picker.onChange(value, item);
+    }
+
+    function renderPickerList(q) {
+      if (!activePicker) return;
+      const query = (q || "").trim().toLowerCase();
+      const filtered = query
+        ? activePicker.items.filter(i =>
+            i.search.includes(query) ||
+            i.title.toLowerCase().includes(query) ||
+            (i.sub && i.sub.toLowerCase().includes(query))
+          )
+        : activePicker.items;
+
+      if (!filtered.length) {
+        els.pickerList.innerHTML = '<div class="picker-empty">Sin resultados</div>';
+        return;
+      }
+
+      els.pickerList.innerHTML = filtered.map(item => {
+        const sel = item.value === activePicker.hidden.value ? " selected" : "";
+        return `<button type="button" class="picker-option${sel}" data-value="${item.value.replace(/"/g, "&quot;")}">
+          <b>${item.title}</b>
+          ${item.sub ? `<small>${item.sub}</small>` : ""}
+        </button>`;
+      }).join("");
+
+      els.pickerList.querySelectorAll(".picker-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          setPickValue(activePicker, btn.dataset.value);
+          closePicker();
+          saveDraft();
+        });
+      });
+    }
+
+    function openPicker(picker) {
+      activePicker = picker;
+      picker.trigger.setAttribute("aria-expanded", "true");
+      els.pickerTitle.textContent = picker.sheetTitle;
+      els.pickerSearch.placeholder = picker.searchPlaceholder;
+      els.pickerSearch.value = "";
+      renderPickerList("");
+      els.pickerBackdrop.classList.add("open");
+      els.pickerSheet.classList.add("open");
+      els.pickerSheet.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => els.pickerSearch.focus(), 280);
+    }
+
+    function closePicker() {
+      if (activePicker) {
+        activePicker.trigger.setAttribute("aria-expanded", "false");
+        activePicker = null;
+      }
+      els.pickerBackdrop.classList.remove("open");
+      els.pickerSheet.classList.remove("open");
+      els.pickerSheet.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    const fabMapEl = document.getElementById("fabMap");
+    const fabMapMq = window.matchMedia("(max-width: 1279px)");
+
+    function showMapFab(animate) {
+      if (!fabMapEl) return;
+      closePicker();
+      if (!fabMapMq.matches) {
+        fabMapEl.style.display = "none";
+        fabMapEl.classList.remove("fab-map--enter");
+        return;
+      }
+      fabMapEl.style.display = "flex";
+      fabMapEl.style.visibility = "visible";
+      fabMapEl.style.pointerEvents = "auto";
+      fabMapEl.removeAttribute("hidden");
+      fabMapEl.setAttribute("aria-hidden", "false");
+      if (animate) {
+        fabMapEl.classList.remove("fab-map--enter");
+        void fabMapEl.offsetWidth;
+        fabMapEl.classList.add("fab-map--enter");
+      }
+    }
+
+    fabMapEl?.addEventListener("click", () => closePicker());
+    window.addEventListener("pageshow", () => showMapFab(true));
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") showMapFab(true);
+    });
+    fabMapMq.addEventListener("change", () => showMapFab(false));
+
+    function createPicker({ hidden, trigger, labelEl, items, placeholder, sheetTitle, searchPlaceholder, onChange }) {
+      const picker = {
+        hidden, trigger, labelEl, items, placeholder,
+        sheetTitle: sheetTitle || "Elegir",
+        searchPlaceholder: searchPlaceholder || "Buscar...",
+        onChange
+      };
+      trigger.addEventListener("click", () => openPicker(picker));
+      return picker;
+    }
+
+    const pickers = {
+      lote: createPicker({
+        hidden: els.fLote,
+        trigger: els.fLoteTrigger,
+        labelEl: els.fLoteLabel,
+        items: loteOptions,
+        placeholder: "Seleccionar lote...",
+        sheetTitle: "Elegir lote",
+        searchPlaceholder: "Buscar lote, túnel o módulo...",
+        onChange: () => onLoteChange()
+      }),
+      variedad: createPicker({
+        hidden: els.fVariedad,
+        trigger: els.fVariedadTrigger,
+        labelEl: els.fVariedadLabel,
+        items: variedadOptions,
+        placeholder: "Seleccionar variedad...",
+        sheetTitle: "Elegir variedad",
+        searchPlaceholder: "Buscar variedad...",
+        onChange: () => saveDraft()
+      }),
+      laborPpto: createPicker({
+        hidden: els.fLaborPpto,
+        trigger: els.fLaborPptoTrigger,
+        labelEl: els.fLaborPptoLabel,
+        items: laborPptoOptions,
+        placeholder: "Seleccionar labor ppto...",
+        sheetTitle: "Elegir labor ppto",
+        searchPlaceholder: "Buscar labor ppto...",
+        onChange: () => saveDraft()
+      }),
+      laborReal: createPicker({
+        hidden: els.fLaborReal,
+        trigger: els.fLaborRealTrigger,
+        labelEl: els.fLaborRealLabel,
+        items: laborRealOptions,
+        placeholder: "Seleccionar labor real...",
+        sheetTitle: "Elegir labor real",
+        searchPlaceholder: "Buscar labor real...",
+        onChange: () => { updatePreview(); saveDraft(); }
+      })
+    };
+
+    els.pickerClose.addEventListener("click", closePicker);
+    els.pickerBackdrop.addEventListener("click", closePicker);
+    els.pickerSearch.addEventListener("input", () => renderPickerList(els.pickerSearch.value));
+
+    function getFormState() {
+      return {
+        lote: els.fLote.value,
+        variedad: els.fVariedad.value,
+        laborPpto: els.fLaborPpto.value,
+        laborReal: els.fLaborReal.value,
+        avance: els.fAvance.value,
+        totalJr: els.fTotalJr.value
+      };
+    }
+
+    function applyFormState(s) {
+      if (!s) return;
+      setPickValue(pickers.lote, s.lote || "", true);
+      setPickValue(pickers.variedad, s.variedad || "SEKOYA POP", true);
+      setPickValue(pickers.laborPpto, s.laborPpto || "", true);
+      setPickValue(pickers.laborReal, s.laborReal || "", true);
+      els.fAvance.value = s.avance ? formatHa(s.avance) : "";
+      els.fTotalJr.value = s.totalJr || "";
+      setFechaHoy();
+      onLoteChange();
+      updatePreview();
+    }
+
+    function saveDraft() {
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => {
+        const state = getFormState();
+        const empty = !state.lote && !state.laborReal && !state.avance;
+        if (empty) {
+          localStorage.removeItem(DRAFT_KEY);
+          els.draftBadge.classList.remove("show");
+          return;
+        }
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+        els.draftBadge.classList.add("show");
+      }, 400);
+    }
+
+    function loadDraft() {
+      try {
+        const s = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+        if (s) {
+          applyFormState(s);
+          els.draftBadge.classList.add("show");
+        }
+      } catch { /* ignore */ }
+    }
+
+    let avanceWarned = false;
+
+    function roundHa(v) {
+      const n = parseFloat(v);
+      if (isNaN(n) || n < 0) return 0;
+      return Math.round(n * 100) / 100;
+    }
+
+    function formatHa(v) {
+      return roundHa(v).toFixed(2);
+    }
+
+    function getLotArea() {
+      const lot = byPos.get(els.fLote.value);
+      return lot ? roundHa(lot.ha) : 0;
+    }
+
+    function updateAvanceHint(area, capped) {
+      if (!els.fAvanceHint) return;
+      if (area <= 0) {
+        els.fAvanceHint.textContent = "Selecciona un lote";
+        els.fAvanceHint.classList.remove("warn");
+        return;
+      }
+      els.fAvanceHint.textContent = capped
+        ? "Máximo " + area.toFixed(2) + " ha (área del lote)"
+        : "Máx. " + area.toFixed(2) + " ha";
+      els.fAvanceHint.classList.toggle("warn", capped);
+    }
+
+    /** Avance: máx 2 decimales y nunca supera el área del lote */
+    function clampAvance(opts) {
+      opts = opts || {};
+      const area = getLotArea();
+      if (area <= 0) {
+        els.fAvance.removeAttribute("max");
+        els.fAvance.classList.remove("avance-capped");
+        updateAvanceHint(0, false);
+        return 0;
+      }
+
+      els.fAvance.max = area;
+      let av = roundHa(els.fAvance.value);
+      let capped = false;
+      if (av > area) {
+        av = area;
+        capped = true;
+        if (opts.toast && !avanceWarned) {
+          showToast("Avance no puede superar " + formatHa(area) + " ha", "error");
+          avanceWarned = true;
+          setTimeout(() => { avanceWarned = false; }, 2500);
+        }
+      }
+
+      if (opts.format !== false && (els.fAvance.value !== "" || av > 0)) {
+        els.fAvance.value = formatHa(av);
+      }
+
+      els.fAvance.classList.toggle("avance-capped", capped);
+      updateAvanceHint(area, capped);
+      return av;
+    }
+
+    function onLoteChange() {
+      const lot = byPos.get(els.fLote.value);
+      if (!lot) {
+        els.fModulo.value = "";
+        els.fTurno.value = "";
+        els.fArea.value = "";
+        els.fAvance.removeAttribute("max");
+        els.fAvance.classList.remove("avance-capped");
+        updateAvanceHint(0, false);
+        els.previewStatus.textContent = "Selecciona un lote";
+        return;
+      }
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      els.fModulo.value = mod ? mod.label : "";
+      els.fTurno.value = String(lot.tunel || "").toUpperCase();
+      els.fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
+      els.fAvance.max = Number(lot.ha) || 0;
+      clampAvance({ toast: false });
+      els.previewCell.style.borderColor = mod?.badge || "#d1d5db";
+      els.previewFill.style.background = mod?.badge || mod?.fill || "#94a3b8";
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const lot = byPos.get(els.fLote.value);
+      if (!lot) return;
+      const area = getLotArea();
+      const av = clampAvance({ toast: false, format: false });
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      els.fAvanceBar.style.width = pct + "%";
+      els.progressMeta.textContent = pct.toFixed(0) + "% · " + av.toFixed(2) + " / " + area.toFixed(2) + " ha";
+      els.previewT.textContent = String(lot.tunel || "").toUpperCase();
+      els.previewL.textContent = "LOTE " + lot.lote;
+      els.previewH.textContent = lot.ha != null ? Number(lot.ha).toFixed(2) : "—";
+      els.previewFill.style.height = pct + "%";
+      const labor = els.fLaborReal.value;
+      els.previewStatus.textContent = labor
+        ? (pct >= 98 ? "Completado" : pct > 0 ? "En progreso" : "Pendiente") + " · " + labor
+        : "Selecciona labor real";
+    }
+
+    ["input", "change"].forEach(ev => {
+      els.fAvance.addEventListener(ev, () => {
+        clampAvance({ toast: false, format: false });
+        updatePreview();
+        saveDraft();
+      });
+    });
+    els.fAvance.addEventListener("blur", () => {
+      clampAvance({ toast: true, format: true });
+      updatePreview();
+      saveDraft();
+    });
+    els.fTotalJr.addEventListener("input", saveDraft);
+    els.fTotalJr.addEventListener("change", saveDraft);
+
+    function resetForm(clearDraft) {
+      setPickValue(pickers.lote, "", true);
+      setPickValue(pickers.variedad, "SEKOYA POP", true);
+      setPickValue(pickers.laborPpto, "", true);
+      setPickValue(pickers.laborReal, "", true);
+      els.fModulo.value = "";
+      els.fTurno.value = "";
+      els.fArea.value = "";
+      els.fAvance.value = "";
+      els.fTotalJr.value = "";
+      setFechaHoy();
+      if (clearDraft) {
+        localStorage.removeItem(DRAFT_KEY);
+        els.draftBadge.classList.remove("show");
+      }
+      updatePreview();
+    }
+
+    function renderHistory() {
+      const items = QBApi.getHistory().slice(0, 12);
+      if (!items.length) {
+        els.historyList.innerHTML = '<div class="history-empty">Sin reportes aún · todo se guarda en el celular</div>';
+        return;
+      }
+      els.historyList.innerHTML = items.map(h => {
+        const when = new Date(h.savedAt).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        const tag = h.synced ? '<span class="history-tag synced">Enviado</span>' : '<span class="history-tag pending">Pendiente</span>';
+        return `<div class="history-item">
+          <div><b>LOTE ${h.lote} · ${h.laborReal || "—"}</b><small>${when} · ${Number(h.avance || 0).toFixed(2)} ha</small></div>
+          ${tag}
+        </div>`;
+      }).join("");
+    }
+
+    async function saveForm() {
+      if (!els.fLote.value) { showToast("Selecciona un lote", "error"); openPicker(pickers.lote); return; }
+      if (!els.fLaborReal.value) { showToast("Selecciona la labor real", "error"); openPicker(pickers.laborReal); return; }
+      const lot = byPos.get(els.fLote.value);
+      if (!lot) return;
+
+      const area = roundHa(lot.ha);
+      const avance = roundHa(clampAvance({ toast: true, format: true }));
+
+      const record = {
+        posKey: els.fLote.value,
+        sem: Number(els.fSem.value) || currentWeek,
+        fecha: els.fFecha.value,
+        laborPpto: els.fLaborPpto.value,
+        laborReal: els.fLaborReal.value,
+        modulo: els.fModulo.value,
+        turno: els.fTurno.value,
+        lote: lot.lote,
+        variedad: els.fVariedad.value,
+        area,
+        avance,
+        totalJr: Number(els.fTotalJr.value) || 0
+      };
+
+      els.saveBtn.disabled = true;
+      els.saveBtn.textContent = "Guardando...";
+
+      const res = await QBApi.saveLabor(record);
+      updateStatus();
+      renderHistory();
+
+      els.saveBtn.disabled = false;
+      if (res.ok) {
+        els.saveBtn.classList.add("saved");
+        els.saveBtn.textContent = "✓ Guardado";
+        localStorage.removeItem(DRAFT_KEY);
+        els.draftBadge.classList.remove("show");
+        if (res.queued) {
+          showToast("Guardado en el celular · se sube al tener señal", "offline");
+        } else if (res.synced) {
+          showToast("Guardado y enviado correctamente", null);
+        } else {
+          showToast("Guardado en el celular", null);
+        }
+        setTimeout(() => {
+          els.saveBtn.classList.remove("saved");
+          els.saveBtn.textContent = "Guardar avance";
+          resetForm(false);
+        }, 1600);
+      } else {
+        els.saveBtn.textContent = "Guardar avance";
+        showToast(res.error || "Error al guardar", "error");
+      }
+    }
+
+    function updateStatus() {
+      const online = navigator.onLine;
+      els.netPill.className = "status-pill " + (online ? "online" : "offline");
+      els.netPill.innerHTML = `<span class="dot"></span>${online ? "En línea" : "Sin conexión"}`;
+      const q = QBApi.queueCount();
+      els.queueText.textContent = q + " pend.";
+      els.queuePill.classList.toggle("has-pending", q > 0);
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", saveForm);
+    document.getElementById("resetBtn").addEventListener("click", () => resetForm(true));
+    window.addEventListener("online", () => { updateStatus(); QBApi.flushQueue().then(n => { if (n) showToast(n + " reporte(s) enviados", null); renderHistory(); updateStatus(); }); });
+    window.addEventListener("offline", updateStatus);
+    window.QB_onQueueFlushed = n => { showToast(n + " reporte(s) enviados", null); renderHistory(); updateStatus(); };
+    window.QB_onStatusChange = updateStatus;
+
+    // PWA — banner visible en móvil/tablet hasta que esté instalada
+    let deferredPrompt = null;
+    const installBanner = document.getElementById("installBanner");
+    const installBtn = document.getElementById("installBtn");
+    const installIosHint = document.getElementById("installIosHint");
+    const installTargetMq = window.matchMedia("(max-width: 1279px)");
+
+    function isInstalledPwa() {
+      return window.matchMedia("(display-mode: standalone)").matches
+        || window.matchMedia("(display-mode: fullscreen)").matches
+        || window.navigator.standalone === true;
+    }
+
+    function isIosDevice() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function syncInstallBanner() {
+      if (!installBanner) return;
+      const show = !isInstalledPwa() && installTargetMq.matches;
+      installBanner.classList.toggle("show", show);
+      if (!show) return;
+
+      const ios = isIosDevice();
+      if (installIosHint) installIosHint.hidden = !ios;
+
+      if (installBtn) {
+        if (ios) {
+          installBtn.textContent = "Agregar a pantalla de inicio";
+          installBtn.disabled = false;
+        } else if (deferredPrompt) {
+          installBtn.textContent = "Agregar a pantalla de inicio";
+          installBtn.disabled = false;
+        } else {
+          installBtn.textContent = "Agregar a pantalla de inicio";
+          installBtn.disabled = true;
+        }
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      syncInstallBanner();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      syncInstallBanner();
+    });
+
+    installBtn?.addEventListener("click", async () => {
+      if (isIosDevice()) {
+        installIosHint?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if (choice.outcome === "accepted") syncInstallBanner();
+      else syncInstallBanner();
+    });
+
+    installTargetMq.addEventListener("change", syncInstallBanner);
+    window.addEventListener("pageshow", syncInstallBanner);
+    syncInstallBanner();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").then(() => {
+        if (!navigator.onLine) showToast("Modo sin conexión · app lista", "offline");
+      }).catch(() => {});
+    }
+
+    loadDraft();
+    setFechaHoy();
+    updateStatus();
+    renderHistory();
+    showMapFab(false);
+    if (QBApi.hasApi() && navigator.onLine) QBApi.flushQueue().then(() => { renderHistory(); updateStatus(); });
+  </script>
+</body>
+</html>
