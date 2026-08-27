@@ -5,6 +5,9 @@
  *  SEM | FECHA | LABOR PPTO | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
  *  AREA LOTE | AVANCE | TOTAL (JR) | HORA GUARDADO
  *
+ * Formatos:
+ *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
+ *
  * Acciones: ping · guardar · consultar · get · dashboard
  * Deploy: Web app · Execute as Me · Anyone
  * Opcional: Script property API_TOKEN
@@ -82,12 +85,16 @@ function procesar_(e, metodo) {
       return getMapa_(body.data || body, e);
     }
 
+    if (action === 'filtros' || action === 'filters') {
+      return filtrosOpciones_();
+    }
+
     if (action === 'dashboard') {
       var semDash = body.sem || param_(e, 'sem') || semIso_();
       return dashboard_(semDash);
     }
 
-    return { ok: false, message: 'Acción no válida. Use: ping, guardar, consultar, get o dashboard' };
+    return { ok: false, message: 'Acción no válida. Use: ping, guardar, consultar, get, filtros o dashboard' };
   } catch (err) {
     return { ok: false, message: String(err.message || err) };
   }
@@ -152,11 +159,11 @@ function guardar_(d) {
     var fila = [
       sem,
       formatFechaSheet_(fechaIso),
-      titleCase_(d.laborPpto || d.labor_ppto || ''),
-      titleCase_(laborReal),
+      texto_(d.laborPpto || d.labor_ppto || ''),
+      laborReal,
       modulo,
       turno,
-      formatLoteLabel_(turno, loteNum),
+      loteNum,
       formatVariedad_(d.variedad),
       areaHa,
       avanceHa,
@@ -231,8 +238,14 @@ function getMapa_(d, e) {
   var laborReal = norm_(d.laborReal || d.labor_real || param_(e, 'laborReal') || '');
   var laborPpto = norm_(d.laborPpto || d.labor_ppto || param_(e, 'laborPpto') || '');
   var modulo = normMod_(d.modulo || d.md || param_(e, 'modulo') || '');
+  var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
+  if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
+  var fechaFiltro = String(d.fecha || param_(e, 'fecha') || '').trim();
 
-  var cacheKey = 'map_v3_' + [sem || 'all', laborReal || '-', laborPpto || '-', modulo || '-'].join('_');
+  var cacheKey = 'map_v6_' + [
+    sem || 'all', laborReal || '-', laborPpto || '-', modulo || '-',
+    variedad || '-', fechaFiltro || '-'
+  ].join('_');
   try {
     var cached = CacheService.getScriptCache().get(cacheKey);
     if (cached) {
@@ -249,6 +262,7 @@ function getMapa_(d, e) {
   var rows = leerFilas_(hoja);
   var records = {};
   var list = [];
+  var fechaIsoFiltro = fechaFiltro ? normalizarFecha_(fechaFiltro) : '';
 
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
@@ -256,6 +270,13 @@ function getMapa_(d, e) {
     if (laborReal && norm_(r.laborReal) !== laborReal) continue;
     if (laborPpto && norm_(r.laborPpto) !== laborPpto) continue;
     if (modulo && normMod_(r.modulo) !== modulo) continue;
+    if (variedad && formatVariedad_(r.variedad) !== variedad) continue;
+    if (fechaFiltro) {
+      var rIso = r.fechaIso || normalizarFecha_(r.fecha);
+      var rRaw = String(r.fecha || '').trim();
+      var rDisp = formatFechaSheet_(rIso);
+      if (rIso !== fechaIsoFiltro && rRaw !== fechaFiltro && rDisp !== fechaFiltro) continue;
+    }
 
     var key = claveLote_(r.turno, r.loteNum);
     if (!key) continue;
@@ -272,7 +293,14 @@ function getMapa_(d, e) {
   var result = {
     ok: true,
     count: list.length,
-    filters: { sem: sem, laborReal: laborReal || null, laborPpto: laborPpto || null, modulo: modulo || null },
+    filters: {
+      sem: sem,
+      laborReal: laborReal || null,
+      laborPpto: laborPpto || null,
+      modulo: modulo || null,
+      variedad: variedad || null,
+      fecha: fechaFiltro || null
+    },
     records: {},
     list: list,
     fromCache: false
@@ -289,6 +317,59 @@ function getMapa_(d, e) {
   } catch (ex2) { /* payload grande */ }
 
   return result;
+}
+
+/** Valores únicos de la hoja para el panel de filtros */
+function filtrosOpciones_() {
+  var hoja = obtenerHoja_();
+  asegurarEncabezados_(hoja);
+  var rows = leerFilas_(hoja);
+  var semMap = {};
+  var fechaMap = {};
+  var mdMap = {};
+  var laborMap = {};
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var s = num_(r.sem);
+    if (s) semMap[s] = true;
+
+    var fDisp = formatFechaSheet_(r.fechaIso || r.fecha);
+    var fRaw = String(r.fecha || '').trim();
+    if (fDisp) fechaMap[fDisp] = true;
+    else if (fRaw) fechaMap[fRaw] = true;
+
+    var md = normMod_(r.modulo);
+    if (md && md.indexOf('REF') < 0 && md !== 'M') mdMap[md] = true;
+
+    var lab = norm_(r.laborReal);
+    if (lab) laborMap[lab] = true;
+  }
+
+  var sem = Object.keys(semMap).map(function (x) { return parseInt(x, 10); });
+  sem.sort(function (a, b) { return a - b; });
+
+  var fecha = Object.keys(fechaMap);
+  fecha.sort(function (a, b) {
+    return String(normalizarFecha_(a)).localeCompare(String(normalizarFecha_(b)));
+  });
+
+  var md = Object.keys(mdMap);
+  md.sort(function (a, b) {
+    return num_(String(a).replace(/\D/g, '')) - num_(String(b).replace(/\D/g, ''));
+  });
+
+  var laborReal = Object.keys(laborMap);
+  laborReal.sort();
+
+  return {
+    ok: true,
+    sem: sem,
+    fecha: fecha,
+    md: md,
+    laborReal: laborReal,
+    count: rows.length
+  };
 }
 
 // ─── DASHBOARD resumen por semana ───────────────────────────────────────────
@@ -423,13 +504,14 @@ function filaToCliente_(r) {
   return {
     sem: num_(r.sem),
     fecha: r.fechaIso || r.fecha,
+    fechaIso: r.fechaIso || '',
     laborPpto: r.laborPpto,
     laborReal: r.laborReal,
     modulo: r.modulo,
     turno: r.turno,
     lote: r.loteNum,
     loteLabel: r.loteLabel,
-    variedad: r.variedad,
+    variedad: formatVariedad_(r.variedad),
     area: r.area,
     avance: r.avance,
     totalJr: r.totalJr,
@@ -550,52 +632,42 @@ function responder_(obj) {
 // ─── Formato ────────────────────────────────────────────────────────────────
 
 function horaGuardado_() {
-  return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
-}
-
-function formatLoteLabel_(turno, loteNum) {
-  var t = String(turno || '').toUpperCase().replace(/\s+/g, '');
-  var n = String(loteNum).replace(/\D/g, '');
-  while (n.length < 3) n = '0' + n;
-  var turn = t.match(/T\d+/i);
-  var turnStr = turn ? turn[0].toUpperCase() : (t || 'T00');
-  return turnStr + 'L' + n + '-';
+  return Utilities.formatDate(new Date(), TZ, 'HH:mm:ss');
 }
 
 function parseLoteNum_(label) {
-  var m = String(label || '').match(/L(\d+)/i);
-  return m ? parseInt(m[1], 10) : null;
+  if (typeof label === 'number' && isFinite(label)) return Math.round(label);
+  var s = String(label || '').trim();
+  if (!s) return null;
+  var m = s.match(/L(\d+)/i);
+  if (m) return parseInt(m[1], 10);
+  var n = parseInt(s.replace(/[^\d]/g, ''), 10);
+  return isNaN(n) ? null : n;
 }
 
 function numLote_(v) {
-  var n = parseInt(v, 10);
-  return isNaN(n) ? 0 : n;
+  var n = parseLoteNum_(v);
+  return n == null ? 0 : n;
 }
 
 function formatVariedad_(v) {
-  var s = String(v || '').toUpperCase();
-  if (s.indexOf('MAGICA') >= 0) return 'Magica';
-  if (s.indexOf('SEKOYA') >= 0 || s.indexOf('SECOYA') >= 0) return 'Secoya Pop';
-  return titleCase_(v);
-}
-
-function titleCase_(s) {
-  s = String(s || '').trim().toLowerCase();
-  if (!s) return '';
-  return s.replace(/\b([a-záéíóúñ])/gi, function (m) { return m.toUpperCase(); });
+  var s = String(v || '').toUpperCase().trim();
+  if (!s) return 'SEKOYA POP';
+  if (s.indexOf('MAGICA') >= 0 || s.indexOf('MÁGICA') >= 0) return 'MAGICA';
+  if (s.indexOf('SEKOYA') >= 0 || s.indexOf('SECOYA') >= 0) return 'SEKOYA POP';
+  return s;
 }
 
 function formatFechaSheet_(iso) {
-  if (!iso) return '';
-  var d = iso;
-  if (typeof iso === 'string' && iso.match(/^\d{4}-\d{2}-\d{2}/)) {
-    d = new Date(iso + 'T12:00:00');
-  }
-  if (Object.prototype.toString.call(d) === '[object Date]' && !isNaN(d.getTime())) {
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return d.getDate() + '-' + months[d.getMonth()];
-  }
-  return String(iso);
+  var isoNorm = normalizarFecha_(iso);
+  var m = String(isoNorm || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1];
+  return Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy');
+}
+
+function pad2_(n) {
+  n = String(n);
+  return n.length < 2 ? '0' + n : n;
 }
 
 function normalizarFecha_(v) {
@@ -616,6 +688,19 @@ function normalizarFecha_(v) {
   if (!s) return hoy_();
   var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
+  var dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return dmy[3] + '-' + pad2_(dmy[2]) + '-' + pad2_(dmy[1]);
+  var eng = s.match(/^(\d{1,2})-([A-Za-z]{3})(?:-(\d{2,4}))?$/);
+  if (eng) {
+    var months = { JAN:0, FEB:1, MAR:2, APR:3, MAY:4, JUN:5, JUL:6, AUG:7, SEP:8, OCT:9, NOV:10, DEC:11 };
+    var mi = months[String(eng[2]).toUpperCase()];
+    if (mi != null) {
+      var yy = eng[3] ? parseInt(eng[3], 10) : new Date().getFullYear();
+      if (yy < 100) yy += 2000;
+      var dd = new Date(yy, mi, parseInt(eng[1], 10));
+      return Utilities.formatDate(dd, ssTz, 'yyyy-MM-dd');
+    }
+  }
   var parsed = new Date(s);
   if (!isNaN(parsed.getTime())) {
     return Utilities.formatDate(parsed, ssTz, 'yyyy-MM-dd');

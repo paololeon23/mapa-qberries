@@ -1111,8 +1111,8 @@
       <div class="row2">
         <div class="field">
           <label for="fAvance">Avance (ha)</label>
-          <input id="fAvance" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />
-          <p class="field-hint" id="fAvanceHint">Máx. según área del lote</p>
+          <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 0.50" />
+          <p class="field-hint" id="fAvanceHint">Escribe el avance manualmente</p>
         </div>
         <div class="field">
           <label for="fTotalJr">Total (JR)</label>
@@ -1546,7 +1546,7 @@
     let avanceWarned = false;
 
     function roundHa(v) {
-      const n = parseFloat(v);
+      const n = parseFloat(String(v ?? "").replace(",", "."));
       if (isNaN(n) || n < 0) return 0;
       return Math.round(n * 100) / 100;
     }
@@ -1560,34 +1560,42 @@
       return lot ? roundHa(lot.ha) : 0;
     }
 
+    /** Lee lo que escribió el usuario, sin forzar el input */
+    function readAvanceTyped() {
+      const raw = String(els.fAvance.value || "").trim().replace(",", ".");
+      if (raw === "" || raw === "." || raw === "-") return null;
+      const n = parseFloat(raw);
+      return isNaN(n) ? null : n;
+    }
+
     function updateAvanceHint(area, capped) {
       if (!els.fAvanceHint) return;
       if (area <= 0) {
-        els.fAvanceHint.textContent = "Selecciona un lote";
+        els.fAvanceHint.textContent = "Escribe el avance manualmente";
         els.fAvanceHint.classList.remove("warn");
         return;
       }
       els.fAvanceHint.textContent = capped
         ? "Máximo " + area.toFixed(2) + " ha (área del lote)"
-        : "Máx. " + area.toFixed(2) + " ha";
+        : "Puedes escribir el avance · máx. " + area.toFixed(2) + " ha";
       els.fAvanceHint.classList.toggle("warn", capped);
     }
 
-    /** Avance: máx 2 decimales y nunca supera el área del lote */
-    function clampAvance(opts) {
+    /** Solo al salir del campo o al guardar: 2 decimales y tope del lote */
+    function finalizeAvance(opts) {
       opts = opts || {};
       const area = getLotArea();
-      if (area <= 0) {
-        els.fAvance.removeAttribute("max");
+      els.fAvance.removeAttribute("max");
+      let typed = readAvanceTyped();
+      if (typed == null) {
         els.fAvance.classList.remove("avance-capped");
-        updateAvanceHint(0, false);
+        updateAvanceHint(area, false);
+        if (opts.format) els.fAvance.value = "";
         return 0;
       }
-
-      els.fAvance.max = area;
-      let av = roundHa(els.fAvance.value);
+      let av = roundHa(typed);
       let capped = false;
-      if (av > area) {
+      if (area > 0 && av > area) {
         av = area;
         capped = true;
         if (opts.toast && !avanceWarned) {
@@ -1596,11 +1604,7 @@
           setTimeout(() => { avanceWarned = false; }, 2500);
         }
       }
-
-      if (opts.format !== false && (els.fAvance.value !== "" || av > 0)) {
-        els.fAvance.value = formatHa(av);
-      }
-
+      if (opts.format !== false) els.fAvance.value = formatHa(av);
       els.fAvance.classList.toggle("avance-capped", capped);
       updateAvanceHint(area, capped);
       return av;
@@ -1622,8 +1626,8 @@
       els.fModulo.value = mod ? mod.label : "";
       els.fTurno.value = String(lot.tunel || "").toUpperCase();
       els.fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
-      els.fAvance.max = Number(lot.ha) || 0;
-      clampAvance({ toast: false });
+      els.fAvance.removeAttribute("max");
+      finalizeAvance({ toast: false, format: false });
       els.previewCell.style.borderColor = mod?.badge || "#d1d5db";
       els.previewFill.style.background = mod?.badge || mod?.fill || "#94a3b8";
       updatePreview();
@@ -1633,7 +1637,9 @@
       const lot = byPos.get(els.fLote.value);
       if (!lot) return;
       const area = getLotArea();
-      const av = clampAvance({ toast: false, format: false });
+      const typed = readAvanceTyped();
+      let av = typed == null ? 0 : roundHa(typed);
+      if (area > 0 && av > area) av = area;
       const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
       els.fAvanceBar.style.width = pct + "%";
       els.progressMeta.textContent = pct.toFixed(0) + "% · " + av.toFixed(2) + " / " + area.toFixed(2) + " ha";
@@ -1641,21 +1647,23 @@
       els.previewL.textContent = "LOTE " + lot.lote;
       els.previewH.textContent = lot.ha != null ? Number(lot.ha).toFixed(2) : "—";
       els.previewFill.style.height = pct + "%";
+      updateAvanceHint(area, typed != null && area > 0 && typed > area);
       const labor = els.fLaborReal.value;
       els.previewStatus.textContent = labor
         ? (pct >= 98 ? "Completado" : pct > 0 ? "En progreso" : "Pendiente") + " · " + labor
         : "Selecciona labor real";
     }
 
-    ["input", "change"].forEach(ev => {
-      els.fAvance.addEventListener(ev, () => {
-        clampAvance({ toast: false, format: false });
-        updatePreview();
-        saveDraft();
-      });
+    els.fAvance.addEventListener("input", () => {
+      updatePreview();
+      saveDraft();
+    });
+    els.fAvance.addEventListener("change", () => {
+      updatePreview();
+      saveDraft();
     });
     els.fAvance.addEventListener("blur", () => {
-      clampAvance({ toast: true, format: true });
+      finalizeAvance({ toast: true, format: true });
       updatePreview();
       saveDraft();
     });
@@ -1703,7 +1711,7 @@
       if (!lot) return;
 
       const area = roundHa(lot.ha);
-      const avance = roundHa(clampAvance({ toast: true, format: true }));
+      const avance = finalizeAvance({ toast: true, format: true });
 
       const record = {
         posKey: els.fLote.value,

@@ -115,9 +115,22 @@
     const url = apiUrl();
     if (!url) return null;
     const params = new URLSearchParams({ action: "get" });
-    if (filters.sem != null) params.set("sem", filters.sem);
+    if (filters.sem != null && filters.sem !== "") params.set("sem", filters.sem);
     if (filters.laborReal) params.set("laborReal", filters.laborReal);
+    if (filters.laborPpto) params.set("laborPpto", filters.laborPpto);
     if (filters.modulo) params.set("modulo", filters.modulo);
+    if (filters.variedad) params.set("variedad", filters.variedad);
+    if (filters.fecha) params.set("fecha", filters.fecha);
+    const token = (window.QB_CONFIG && QB_CONFIG.API_TOKEN) || "";
+    if (token) params.set("token", token);
+    const res = await fetch(url + "?" + params.toString());
+    return res.json();
+  }
+
+  async function getFiltros() {
+    const url = apiUrl();
+    if (!url) return null;
+    const params = new URLSearchParams({ action: "filtros" });
     const token = (window.QB_CONFIG && QB_CONFIG.API_TOKEN) || "";
     if (token) params.set("token", token);
     const res = await fetch(url + "?" + params.toString());
@@ -189,6 +202,7 @@
   window.QBApi = {
     postLabor,
     getLabors,
+    getFiltros,
     saveLabor,
     flushQueue,
     queueCount,
