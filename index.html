@@ -3,10 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-title" content="QB Labores" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <title>Q Berries · Plano de Cosecha Etapa I</title>
+  <script>
+    /* App real en celular = form.html (QB Labores). El mapa solo en PWA o con ?mapa=1 */
+    (function () {
+      try {
+        var mobile = window.matchMedia("(max-width: 900px), ((max-height: 520px) and (max-width: 1024px))").matches;
+        var pwa = window.matchMedia("(display-mode: standalone)").matches
+          || window.matchMedia("(display-mode: fullscreen)").matches
+          || window.navigator.standalone === true;
+        var allowMap = /(?:\?|&)mapa=1\b/.test(location.search) || /(?:\?|&)from=app\b/.test(location.search);
+        if (mobile && !pwa && !allowMap) {
+          location.replace("./form.html");
+        }
+      } catch (e) { /* ok */ }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -268,6 +287,7 @@
     }
     .side-block.mod-block {
       min-width: 0;
+      overflow: visible;
     }
     .side-block h2 {
       margin: 0;
@@ -298,6 +318,33 @@
       font-size: 0.64rem;
       gap: 0.25rem;
     }
+    .kpi-refresh.loading {
+      opacity: 0.75;
+      pointer-events: none;
+    }
+    .kpi-refresh.loading svg {
+      animation: deskRefreshSpin 0.7s linear infinite;
+    }
+    @keyframes deskRefreshSpin { to { transform: rotate(360deg); } }
+    .kpi-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .pend-chip-desk {
+      display: none;
+      align-items: center;
+      height: 28px;
+      padding: 0 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 0.62rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .pend-chip-desk.show { display: inline-flex; }
 
     .kpis {
       display: flex;
@@ -341,23 +388,25 @@
 
     .mod-list {
       display: flex;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 0.35rem;
       align-items: center;
       min-width: 0;
-      overflow: hidden;
+      overflow: visible;
     }
     .leg-item {
       display: inline-flex;
       align-items: center;
       gap: 0.32rem;
-      padding: 0.28rem 0.5rem;
+      padding: 0.28rem 0.55rem;
       border-radius: 999px;
       border: 1px solid #e2ebe6;
       background: #f7fbf8;
       cursor: pointer;
-      transition: background .15s, border-color .15s, box-shadow .15s;
+      transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
       white-space: nowrap;
+      flex: 0 0 auto;
+      user-select: none;
     }
     .leg-item:hover {
       background: #fff;
@@ -366,8 +415,11 @@
     .leg-item.active {
       background: #ecfdf3;
       border-color: var(--qb-green);
-      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.14);
+      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.18);
+      color: #14532d;
     }
+    .leg-item.active b { color: #14532d; }
+    .leg-item.active .ha { color: #3f7a52; }
     .leg-swatch {
       width: 9px;
       height: 9px;
@@ -387,6 +439,19 @@
       font-variant-numeric: tabular-nums;
     }
     @media (max-width: 1280px) {
+      .mod-list {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 0.1rem;
+      }
+      .mod-list::-webkit-scrollbar { height: 3px; }
+      .mod-list::-webkit-scrollbar-thumb {
+        background: #c5d4cc;
+        border-radius: 99px;
+      }
       .leg-item .ha { display: none; }
     }
     @media (max-width: 980px) {
@@ -538,55 +603,6 @@
       flex-direction: column;
       gap: 0.75rem;
     }
-    .filter-block {
-      background: #fff;
-      border: 1px solid #d6e0da;
-      border-radius: 12px;
-      padding: 0.65rem 0.7rem 0.75rem;
-    }
-    .filter-block h3 {
-      margin: 0 0 0.45rem;
-      font-size: 0.62rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #64748b;
-    }
-    .filter-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      max-height: 140px;
-      overflow-y: auto;
-    }
-    .filter-chip {
-      border: 1px solid #e2ebe6;
-      background: #f7fbf8;
-      color: #0f3327;
-      border-radius: 9px;
-      padding: 0.32rem 0.55rem;
-      font: inherit;
-      font-size: 0.72rem;
-      font-weight: 700;
-      cursor: pointer;
-      line-height: 1.2;
-    }
-    .filter-chip:hover { border-color: #2f8a58; background: #fff; }
-    .filter-chip.active {
-      background: #ecfdf3;
-      border-color: #2f8a58;
-      box-shadow: 0 0 0 2px rgba(47, 138, 88, 0.12);
-    }
-    .filter-chip.is-fecha {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-      color: #1d4ed8;
-    }
-    .filter-chip.is-fecha.active {
-      background: #dbeafe;
-      border-color: #3b82f6;
-      color: #1e3a8a;
-    }
     .filter-empty {
       font-size: 0.75rem;
       color: #64748b;
@@ -726,6 +742,22 @@
       box-shadow: inset 0 0 0 2px var(--forest), 0 0 0 3px rgba(15, 61, 46, 0.16);
       z-index: 4;
     }
+    .cell.multi-selected {
+      outline: 2.5px solid var(--multi-color, #1E88E5);
+      box-shadow: inset 0 0 0 1px var(--multi-color, #1E88E5);
+      z-index: 5;
+      background: #fff !important;
+    }
+    .cell.multi-selected.labor-done,
+    .cell.multi-selected.labor-progress {
+      box-shadow: inset 0 0 0 1px var(--multi-color, #1E88E5);
+    }
+    /* Pintura intensa desde abajo = avance (colores vivos tipo módulos) */
+    .cell.multi-selected .cell-fill {
+      background: var(--multi-color, #1E88E5) !important;
+      opacity: 0.88;
+      transition: height .2s ease;
+    }
     .cell.dim {
       opacity: 0.16;
       filter: grayscale(0.55);
@@ -843,7 +875,7 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       box-shadow: 0 20px 50px rgba(22, 101, 52, 0.45);
-      z-index: 9999;
+      z-index: 20000;
       transition: transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
       pointer-events: none;
       opacity: 0;
@@ -905,6 +937,19 @@
       box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12);
     }
     .drawer-save-msg.show { display: block; animation: savePulse .35s ease; }
+    .drawer-save-msg.is-error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+      box-shadow: 0 4px 14px rgba(185, 28, 28, 0.12);
+    }
+    .drawer-save-msg.is-error span { color: #dc2626; }
+    .drawer-save-msg.is-wait {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .drawer-save-msg.is-wait span { color: #2563eb; }
     @keyframes savePulse {
       from { transform: scale(0.96); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -918,6 +963,15 @@
       letter-spacing: 0;
       color: #15803d;
       line-height: 1.35;
+    }
+    .multi-summary.needs-lots {
+      animation: needsLotsPulse 0.9s ease 2;
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    }
+    @keyframes needsLotsPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
     }
 
     /* Confirm clear modal */
@@ -991,6 +1045,109 @@
       border-color: #b91c1c;
     }
 
+    /* Modal Actualizar: datos o app */
+    .refresh-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .refresh-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .refresh-card {
+      width: min(400px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d6e0da;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.22);
+      overflow: hidden;
+      transform: translateY(10px) scale(0.97);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .refresh-modal.open .refresh-card {
+      transform: translateY(0) scale(1);
+    }
+    .refresh-card-head {
+      padding: 1rem 1.15rem 0.75rem;
+      background: #0f3327;
+      color: #fff;
+    }
+    .refresh-card-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .refresh-card-head p {
+      margin: 0.35rem 0 0;
+      font-size: 0.78rem;
+      opacity: 0.8;
+      font-weight: 500;
+    }
+    .refresh-card-body {
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      background: #f4f7f5;
+    }
+    .refresh-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid #d6e0da;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      font: inherit;
+      color: #0f3327;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .refresh-opt:hover {
+      border-color: #2f8a58;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.1);
+    }
+    .refresh-opt:active { transform: scale(0.99); }
+    .refresh-opt svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+      color: #0f3327;
+    }
+    .refresh-opt strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+    .refresh-opt span {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    .refresh-opt.is-app svg { color: #c4191f; }
+    .refresh-card-foot {
+      padding: 0.65rem 1rem 0.9rem;
+      background: #fff;
+      border-top: 1px solid #eef3f0;
+      display: flex;
+      justify-content: flex-end;
+    }
+
     /* --- Labor drawer --- */
     .drawer-backdrop {
       display: none;
@@ -1059,11 +1216,302 @@
     .field-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.45rem 0.55rem;
+      gap: 0.8rem 0.55rem;
       align-content: start;
     }
     .field { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
     .field.full { grid-column: 1 / -1; }
+    .lote-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.28rem;
+    }
+    .lote-label-row label { margin: 0; }
+    .multi-toggle {
+      border: 1.5px solid #c5d4cc;
+      background: #f7fbf8;
+      color: #4b6358;
+      border-radius: 999px;
+      padding: 0.22rem 0.7rem;
+      font: inherit;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .multi-toggle:hover {
+      border-color: #0e7490;
+      color: #0e7490;
+    }
+    .multi-toggle.is-on {
+      background: #0e7490;
+      border-color: #0e7490;
+      color: #fff;
+    }
+    .multi-summary {
+      width: 100%;
+      height: auto;
+      min-height: 34px;
+      padding: 0.45rem 2rem 0.45rem 0.6rem;
+      white-space: normal;
+      line-height: 1.25;
+    }
+    .multi-summary.has-lots {
+      color: #0e7490;
+      border-color: #0e7490;
+      background: #ecfeff;
+    }
+    .multi-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10060;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .multi-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .multi-card {
+      width: min(420px, 100%);
+      max-height: min(80vh, 560px);
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d6e0da;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(8px) scale(0.98);
+      transition: transform .2s ease;
+    }
+    .multi-modal.open .multi-card { transform: none; }
+    .multi-card-head {
+      padding: 1rem 1.15rem 0.75rem;
+      background: #0f3327;
+      color: #fff;
+    }
+    .multi-card-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .multi-card-head p {
+      margin: 0.3rem 0 0;
+      font-size: 0.76rem;
+      opacity: 0.82;
+      font-weight: 500;
+    }
+    .multi-card-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0.75rem 0.9rem;
+      background: #f4f7f5;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .multi-lot-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 0.45rem 0.55rem;
+      padding: 0.65rem 0.75rem;
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 10px;
+    }
+    .multi-lot-row strong {
+      display: block;
+      font-size: 0.84rem;
+      color: #0f3327;
+      font-weight: 800;
+    }
+    .multi-lot-row .meta {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .multi-lot-avance {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.15rem;
+      min-width: 96px;
+    }
+    .multi-lot-avance label {
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .multi-lot-avance input {
+      width: 88px;
+      height: 32px;
+      border: 1.5px solid #c5d4cc;
+      border-radius: 8px;
+      background: #f7fbf8;
+      color: #0f3327;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: right;
+      padding: 0 0.45rem;
+      outline: none;
+    }
+    .multi-lot-avance input:focus {
+      border-color: #2f8a58;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.14);
+    }
+    .multi-lot-avance .cap {
+      font-size: 0.62rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .multi-lot-row .rm {
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .multi-palette {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+      padding: 0.45rem 0.55rem;
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 10px;
+      margin-bottom: 0.15rem;
+    }
+    .multi-palette-label {
+      width: 100%;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .multi-palette-row {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.48rem;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 0.12rem 0.05rem 0.18rem;
+    }
+    .multi-palette-row::-webkit-scrollbar { display: none; }
+    .swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.9);
+      cursor: pointer;
+      padding: 0;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .swatch:hover { opacity: 1; }
+    .multi-palette-row .swatch:not(.is-on) {
+      opacity: 0.55;
+    }
+    .swatch-custom {
+      position: relative;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 2px dashed #94a3b8;
+      background:
+        conic-gradient(from 0deg, #e53935, #f9a825, #43a047, #1e88e5, #8e24aa, #e53935);
+      cursor: pointer;
+      flex-shrink: 0;
+      overflow: hidden;
+      padding: 0;
+      margin-left: 0.1rem;
+    }
+    .swatch-custom input[type="color"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+    .swatch-custom.is-on {
+      border-style: solid;
+      border-color: #94a3b8;
+      opacity: 1;
+    }
+    .multi-palette-row .swatch-custom:not(.is-on) {
+      opacity: 0.55;
+    }
+    .multi-palette-inline {
+      margin-top: 0.4rem;
+      padding: 0.45rem 0.5rem 0.5rem;
+      background: #f7fbf8;
+      border: 1px solid #d6e0da;
+      border-radius: 10px;
+    }
+    .multi-palette-inline .multi-palette {
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    .multi-empty {
+      text-align: center;
+      padding: 1.5rem 0.75rem;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .multi-card-foot {
+      padding: 0.7rem 0.9rem 0.9rem;
+      border-top: 1px solid #eef3f0;
+      background: #fff;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .multi-card-foot .multi-total {
+      flex: 1;
+      min-width: 120px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0f3327;
+    }
+    .multi-card-foot .btn { height: 36px; }
     .field label {
       font-size: 0.62rem;
       font-weight: 700;
@@ -1099,7 +1547,10 @@
     .field select {
       appearance: none;
       -webkit-appearance: none;
+      -moz-appearance: none;
       padding-right: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
       background-color: #f7fbf8;
       background-image:
         linear-gradient(45deg, transparent 50%, #1a5c40 50%),
@@ -1126,6 +1577,36 @@
       border-color: #2f8a58;
       background-color: #fff;
       box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.16);
+    }
+
+    /* Filtros del mapa = mismo look que cselect / campos del drawer (PC y móvil) */
+    .filter-block {
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 12px;
+      padding: 0.65rem 0.7rem 0.75rem;
+    }
+    .filter-block h3 {
+      margin: 0 0 0.45rem;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #4b6358;
+    }
+    .filter-cselect {
+      width: 100%;
+    }
+    .filter-cselect .cselect-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .filter-cselect .cselect-panel {
+      z-index: 90;
+    }
+    .filter-cselect .cselect-trigger:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
     .field input::placeholder,
     .cselect-search input::placeholder {
@@ -1584,7 +2065,8 @@
 
     /* Celular: mapa + panel operativo (resumen, módulos, actualizar) */
     .mob-chrome,
-    .mob-detail {
+    .mob-detail,
+    .mob-filters {
       display: none;
     }
     /* Móvil: portrait ≤768px o landscape de celular (poco alto + ancho ≤1024) */
@@ -1604,9 +2086,12 @@
       .labor-drawer,
       .drawer-backdrop,
       .progress-modal,
-      .confirm-modal,
-      .save-toast {
+      .confirm-modal {
         display: none !important;
+      }
+      /* Toast visible también en móvil */
+      .save-toast {
+        display: block !important;
       }
       .workspace {
         flex: 1;
@@ -1682,6 +2167,27 @@
       .mob-refresh svg { width: 15px; height: 15px; flex-shrink: 0; }
       .mob-refresh:active { transform: scale(0.97); }
       .mob-refresh.loading svg { animation: mobSpin 0.8s linear infinite; }
+      .mob-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .pend-chip {
+        display: none;
+        align-items: center;
+        height: 36px;
+        padding: 0 0.65rem;
+        border-radius: 11px;
+        border: 1px solid #f59e0b;
+        background: #fffbeb;
+        color: #92400e;
+        font-size: 0.68rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pend-chip.show { display: inline-flex; }
+      .pend-chip strong { font-variant-numeric: tabular-nums; }
       @keyframes mobSpin { to { transform: rotate(360deg); } }
       .mob-resumen {
         padding: 0 0.85rem 0.4rem;
@@ -1790,13 +2296,29 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.5rem;
-        padding: 0.35rem 0.85rem 0.45rem;
+        gap: 0.4rem;
+        padding: 0.28rem 0.75rem 0.35rem;
         border-top: 1px solid #eef3f0;
         background: rgba(255,255,255,0.72);
-        font-size: 0.68rem;
+        font-size: 0.58rem;
         font-weight: 600;
+        line-height: 1.25;
         color: #64748b;
+      }
+      .mob-foot-bar span {
+        min-width: 0;
+        white-space: nowrap;
+      }
+      #mobFilterInfo {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #mobSyncTime {
+        flex-shrink: 0;
+        font-size: 0.54rem;
       }
       .mob-foot-bar strong { color: #0f3327; font-weight: 800; }
       .map-wrap {
@@ -1814,9 +2336,9 @@
       }
       .map-wrap.dragging { cursor: grabbing; }
       .scaler, .stage {
-        position: absolute;
-        left: 0;
-        top: 0;
+        position: relative;
+        left: auto;
+        top: auto;
         z-index: 1;
       }
       .grid {
@@ -1911,11 +2433,68 @@
         gap: 0.55rem;
         position: fixed;
         right: 0.85rem;
-        bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--mob-filters-h, 7.75rem) + 0.65rem + env(safe-area-inset-bottom, 0px));
         z-index: 80;
         pointer-events: none;
       }
       .map-mobile-ui > * { pointer-events: auto; }
+      .mob-filters {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 72;
+        --mob-filters-h: 7.75rem;
+        padding: 0.55rem 0.85rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+        background: rgba(255, 255, 255, 0.97);
+        border-top: 1px solid #e2ebe6;
+        box-shadow: 0 -8px 28px rgba(15, 51, 39, 0.1);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      .mob-filters-label {
+        margin: 0 0 0.35rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+      .mob-filter-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+      }
+      .mob-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        min-width: 0;
+      }
+      .mob-filter-field span {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #475569;
+      }
+      .mob-filter-field .cselect-trigger {
+        width: 100%;
+        height: 36px;
+        min-height: 36px;
+        padding: 0 2rem 0 0.55rem;
+        font-size: 0.72rem;
+        border-radius: 10px;
+      }
+      .mob-filters .filter-cselect .cselect-panel {
+        top: auto;
+        bottom: calc(100% + 4px);
+        max-height: min(240px, 42vh);
+      }
+      .mob-filters .filter-cselect .cselect-list {
+        max-height: min(220px, 40vh);
+      }
       .mob-zoom {
         display: flex;
         flex-direction: column;
@@ -1966,6 +2545,12 @@
       body.mob-chrome-hidden .mob-fab-panel svg {
         transform: rotate(180deg);
       }
+      body.mob-chrome-hidden .mob-filters {
+        display: none !important;
+      }
+      body.mob-chrome-hidden .map-mobile-ui {
+        bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+      }
       .mob-fab-form {
         width: 52px;
         height: 52px;
@@ -1984,6 +2569,7 @@
 
     @media (min-width: 769px) and (min-height: 521px), (min-width: 1025px) {
       .map-mobile-ui { display: none !important; }
+      .mob-filters { display: none !important; }
     }
   </style>
 </head>
@@ -2039,20 +2625,35 @@
           <input id="fFecha" type="date" required />
         </div>
         <div class="field full">
-          <label>Lote</label>
-          <div class="cselect" id="loteSelect" data-cselect>
-            <input type="hidden" id="fLote" value="" required />
-            <button type="button" class="cselect-trigger is-empty" id="fLoteTrigger" aria-haspopup="listbox" aria-expanded="false">
-              Seleccionar lote...
-            </button>
-            <div class="cselect-panel" role="listbox">
-              <div class="cselect-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-                </svg>
-                <input id="fLoteSearch" type="search" placeholder="Buscar lote..." autocomplete="off" />
+          <div class="lote-label-row">
+            <label for="fLoteTrigger">Lote</label>
+            <button type="button" class="multi-toggle" id="multiLotToggle" aria-pressed="false" title="Seleccionar varios lotes en el mapa">Múltiple</button>
+          </div>
+          <div id="loteSingleWrap">
+            <div class="cselect" id="loteSelect" data-cselect>
+              <input type="hidden" id="fLote" value="" required />
+              <button type="button" class="cselect-trigger is-empty" id="fLoteTrigger" aria-haspopup="listbox" aria-expanded="false">
+                Seleccionar lote...
+              </button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-search">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                  </svg>
+                  <input id="fLoteSearch" type="search" placeholder="Buscar lote..." autocomplete="off" />
+                </div>
+                <div class="cselect-list" id="fLoteList"></div>
               </div>
-              <div class="cselect-list" id="fLoteList"></div>
+            </div>
+          </div>
+          <div id="loteMultiWrap" hidden>
+            <button type="button" class="cselect-trigger multi-summary is-empty" id="multiLotSummary" aria-haspopup="dialog">
+              Selecciona lotes en el mapa...
+            </button>
+            <div class="multi-palette-inline" id="multiPaletteInline">
+              <div class="multi-palette" role="group" aria-label="Pincel de colores">
+                <div class="multi-palette-label">Pincel de colores · elige y pinta en el mapa</div>
+              </div>
             </div>
           </div>
         </div>
@@ -2070,12 +2671,6 @@
             <input type="hidden" id="fVariedad" value="SEKOYA POP" />
             <button type="button" class="cselect-trigger" aria-haspopup="listbox" aria-expanded="false">SEKOYA POP</button>
             <div class="cselect-panel" role="listbox">
-              <div class="cselect-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-                </svg>
-                <input type="search" placeholder="Buscar..." autocomplete="off" />
-              </div>
               <div class="cselect-list"></div>
             </div>
           </div>
@@ -2090,12 +2685,6 @@
             <input type="hidden" id="fLaborPpto" value="" />
             <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor ppto...</button>
             <div class="cselect-panel" role="listbox">
-              <div class="cselect-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-                </svg>
-                <input type="search" placeholder="Buscar labor..." autocomplete="off" />
-              </div>
               <div class="cselect-list"></div>
             </div>
           </div>
@@ -2106,12 +2695,6 @@
             <input type="hidden" id="fLaborReal" value="" />
             <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor real...</button>
             <div class="cselect-panel" role="listbox">
-              <div class="cselect-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-                </svg>
-                <input type="search" placeholder="Buscar labor..." autocomplete="off" />
-              </div>
               <div class="cselect-list"></div>
             </div>
           </div>
@@ -2119,7 +2702,6 @@
         <div class="field">
           <label for="fAvance">Avance (ha)</label>
           <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="" placeholder="Ej. 0.50" />
-          <p class="field-hint">Escribe el avance manualmente</p>
         </div>
         <div class="field">
           <label for="fTotalJr">Total (JR)</label>
@@ -2150,6 +2732,26 @@
     </div>
   </aside>
 
+  <div class="multi-modal" id="multiLotModal" aria-hidden="true">
+    <div class="multi-card" role="dialog" aria-labelledby="multiLotTitle">
+      <div class="multi-card-head">
+        <h3 id="multiLotTitle">Lotes seleccionados</h3>
+        <p id="multiLotSub">Color · avance por lote · áreas</p>
+      </div>
+      <div class="multi-card-body">
+        <div class="multi-palette" id="multiPaletteModal" role="group" aria-label="Pincel de colores">
+          <div class="multi-palette-label">Pincel de colores</div>
+        </div>
+        <div id="multiLotList"></div>
+      </div>
+      <div class="multi-card-foot">
+        <div class="multi-total" id="multiLotTotal">0 lotes · 0.00 ha</div>
+        <button type="button" class="btn" id="multiLotClearBtn">Quitar todos</button>
+        <button type="button" class="btn btn-primary" id="multiLotCloseBtn">Listo</button>
+      </div>
+    </div>
+  </div>
+
   <div class="confirm-modal" id="confirmClearModal" aria-hidden="true">
     <div class="confirm-card" role="dialog" aria-labelledby="confirmClearTitle">
       <div class="confirm-card-head">
@@ -2161,6 +2763,38 @@
       <div class="confirm-card-actions">
         <button type="button" class="btn" id="confirmClearCancel">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmClearOk">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh-modal" id="refreshModal" aria-hidden="true" inert>
+    <div class="refresh-card" role="dialog" aria-labelledby="refreshTitle">
+      <div class="refresh-card-head">
+        <h3 id="refreshTitle">¿Qué deseas actualizar?</h3>
+        <p>Elige una opción para continuar</p>
+      </div>
+      <div class="refresh-card-body">
+        <button type="button" class="refresh-opt" id="refreshDataBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+          </svg>
+          <div>
+            <strong>Actualizar datos</strong>
+            <span>Trae labores y avances desde la hoja de Google Sheets y pinta el mapa.</span>
+          </div>
+        </button>
+        <button type="button" class="refresh-opt is-app" id="refreshAppBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          <div>
+            <strong>Actualizar app</strong>
+            <span>Descarga la última versión de la aplicación (limpia caché y recarga).</span>
+          </div>
+        </button>
+      </div>
+      <div class="refresh-card-foot">
+        <button type="button" class="btn" id="refreshCancelBtn">Cancelar</button>
       </div>
     </div>
   </div>
@@ -2196,19 +2830,43 @@
       <div class="filter-body">
         <div class="filter-block">
           <h3>SEM</h3>
-          <div class="filter-chips" id="filterSemChips"></div>
+          <div class="cselect filter-cselect" id="filterSemC">
+            <input type="hidden" id="filterSemSelect" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">—</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list"></div>
+            </div>
+          </div>
         </div>
         <div class="filter-block">
           <h3>Fecha</h3>
-          <div class="filter-chips" id="filterFechaChips"></div>
+          <div class="cselect filter-cselect" id="filterFechaC">
+            <input type="hidden" id="filterFechaSelect" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las fechas</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list"></div>
+            </div>
+          </div>
         </div>
         <div class="filter-block">
           <h3>MD</h3>
-          <div class="filter-chips" id="filterMdChips"></div>
+          <div class="cselect filter-cselect" id="filterMdC">
+            <input type="hidden" id="filterMdSelect" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todos los módulos</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list"></div>
+            </div>
+          </div>
         </div>
         <div class="filter-block">
           <h3>Labor real</h3>
-          <div class="filter-chips" id="filterLaborChips"></div>
+          <div class="cselect filter-cselect" id="filterLaborC">
+            <input type="hidden" id="filterLaborSelect" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list"></div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="filter-foot">
@@ -2229,12 +2887,15 @@
               <strong id="mobTitle">—</strong>
             </div>
           </div>
-          <button type="button" class="mob-refresh" id="mobRefreshBtn" title="Traer datos de la hoja">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-              <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
-            </svg>
-            Actualizar
-          </button>
+          <div class="mob-head-actions">
+            <span class="pend-chip" id="mobPendChip" title="Reportes en cola sin enviar"><strong id="mobPendCount">0</strong>&nbsp;pend.</span>
+            <button type="button" class="mob-refresh" id="mobRefreshBtn" title="Traer datos de la hoja">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
         </div>
         <div class="mob-resumen">
           <p class="mob-resumen-label">Resumen · filtro activo</p>
@@ -2286,11 +2947,56 @@
           <div class="mod-pill" id="dPill">M—</div>
           <h3 id="dTitle">Lote</h3>
           <dl>
-            <dt>Túnel</dt><dd id="dTunel">—</dd>
-            <dt>Lote</dt><dd id="dLote">—</dd>
             <dt>Área</dt><dd id="dHa">—</dd>
+            <dt>Trabajado</dt><dd id="dAvance">—</dd>
+            <dt>Falta</dt><dd id="dFalta">—</dd>
             <dt>Módulo</dt><dd id="dMod">—</dd>
           </dl>
+        </div>
+      </div>
+      <div class="mob-filters" id="mobFilters">
+        <p class="mob-filters-label">Filtros</p>
+        <div class="mob-filter-grid">
+          <label class="mob-filter-field">
+            <span>Semana</span>
+            <div class="cselect filter-cselect" id="mobFilterSemC">
+              <input type="hidden" id="mobFilterSem" value="" />
+              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por semana">—</button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-list"></div>
+              </div>
+            </div>
+          </label>
+          <label class="mob-filter-field">
+            <span>Fecha</span>
+            <div class="cselect filter-cselect" id="mobFilterFechaC">
+              <input type="hidden" id="mobFilterFecha" value="" />
+              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por fecha">Todas las fechas</button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-list"></div>
+              </div>
+            </div>
+          </label>
+          <label class="mob-filter-field">
+            <span>Módulo</span>
+            <div class="cselect filter-cselect" id="mobFilterMdC">
+              <input type="hidden" id="mobFilterMd" value="" />
+              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por módulo">Todos</button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-list"></div>
+              </div>
+            </div>
+          </label>
+          <label class="mob-filter-field">
+            <span>Labor real</span>
+            <div class="cselect filter-cselect" id="mobFilterLaborC">
+              <input type="hidden" id="mobFilterLabor" value="" />
+              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por labor real">Todas</button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-list"></div>
+              </div>
+            </div>
+          </label>
         </div>
       </div>
       <div class="mob-detail" id="mobDetail" aria-hidden="true">
@@ -2303,9 +3009,9 @@
             <button type="button" class="mob-detail-close" id="mobDetailClose" aria-label="Cerrar">×</button>
           </div>
           <dl class="mob-detail-grid">
-            <div><dt>Túnel</dt><dd id="mobDTunel">—</dd></div>
-            <div><dt>Lote</dt><dd id="mobDLote">—</dd></div>
             <div><dt>Área</dt><dd id="mobDHa">—</dd></div>
+            <div><dt>Trabajado</dt><dd id="mobDAvance">—</dd></div>
+            <div><dt>Falta</dt><dd id="mobDFalta">—</dd></div>
             <div><dt>Labor</dt><dd id="mobDLabor">—</dd></div>
           </dl>
         </div>
@@ -2378,6 +3084,7 @@
 
     function setActiveMod(modId) {
       activeMod = modId == null ? null : modId;
+      mapQuery.modulo = activeMod == null ? "" : ("M" + activeMod);
       document.querySelectorAll("#modList .leg-item").forEach(el => {
         el.classList.toggle("active", activeMod != null && Number(el.dataset.mod) === activeMod);
       });
@@ -2387,6 +3094,14 @@
           el.classList.toggle("active", chipMod === activeMod);
         });
       }
+      const want = mapQuery.modulo || "";
+      const mdDeskReg = filterCSelectRegistry.filterMdSelect;
+      const mdMobReg = filterCSelectRegistry.mobFilterMd;
+      const mdValues = (filterOptions.md || []).map(String);
+      const mdOk = want === "" || mdValues.includes(want);
+      if (mdDeskReg && mdOk) mdDeskReg.inst.setValue(want, true);
+      if (mdMobReg && mdOk) mdMobReg.inst.setValue(want, true);
+      syncFilterBtnState();
       applyFilter();
     }
 
@@ -2436,34 +3151,165 @@
       if (mobSyncTime) mobSyncTime.textContent = lastSyncLabel;
     }
 
-    async function refreshMapData(showFeedback) {
+    async function refreshMapData(showFeedback, opts = {}) {
+      if (mapSyncBusy) return lastAutoCount;
+      mapSyncBusy = true;
+      const soft = !!opts.soft;
+      const fast = !!opts.fast;
       const btn = document.getElementById("mobRefreshBtn");
-      if (btn) {
-        btn.classList.add("loading");
-        btn.disabled = true;
+      const deskBtn = document.getElementById("deskRefreshBtn");
+      const showBusy = !soft || fast;
+      if (showBusy) {
+        if (btn && !fast) {
+          btn.classList.add("loading");
+          btn.disabled = true;
+        }
+        if (deskBtn) {
+          deskBtn.classList.add("loading");
+          deskBtn.disabled = true;
+        }
       }
       let n = 0;
-      if (API_URL) {
-        const filters = currentMapFilters();
-        n = await syncLaborsFromSheet(filters, { replace: true });
-        await QBApi.flushQueue();
-        const n2 = await syncLaborsFromSheet(filters, { replace: true });
-        if (n2 > n) n = n2;
-        lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
-      } else {
-        lastSyncLabel = "Sin API configurada";
-      }
-      updateMobileChrome();
-      applyFilter();
-      if (showFeedback) {
-        showToast(n > 0 ? "Datos actualizados" : "Mapa al día", false, n > 0 ? `${n} lotes desde la hoja` : "Sin cambios nuevos");
-      }
-      if (btn) {
-        btn.classList.remove("loading");
-        btn.disabled = false;
+      try {
+        if (API_URL) {
+          const filters = currentMapFilters();
+          // Rápido: GET primero (sin esperar cola). Flush en segundo plano.
+          if (!soft && !fast && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
+            const flushed = await QBApi.flushQueue();
+            if (flushed > 0 && showFeedback) {
+              showToast("Cola enviada", false, flushed + " pendiente(s) subidos");
+            }
+          }
+          n = await syncLaborsFromSheet(filters, {
+            replace: !soft && !fast && !!showFeedback,
+            fullPaint: !soft && !fast && !!showFeedback
+          });
+          lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+          updatePendingChips();
+          if (fast && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
+            QBApi.flushQueue().then(flushed => {
+              if (flushed > 0) updatePendingChips();
+            }).catch(() => {});
+          }
+        } else {
+          lastSyncLabel = "Sin API configurada";
+        }
+        updateMobileChrome();
+        if (!soft || fast) applyFilter();
+        const sig = laborSnapshot();
+        const changed = sig !== lastLaborSig;
+        if (showFeedback) {
+          showToast(
+            n > 0 ? (fast ? "Cambios traídos" : "Datos actualizados") : "Mapa al día",
+            false,
+            n > 0 ? `${n} lotes desde la hoja` : "Sin labores en este filtro"
+          );
+        } else if (changed && lastLaborSig !== null && n > 0) {
+          showToast("Mapa actualizado", false, `${n} lote(s) detectados`);
+        }
+        lastLaborSig = sig;
+        lastAutoCount = n;
+      } finally {
+        mapSyncBusy = false;
+        if (showBusy) {
+          if (btn) {
+            btn.classList.remove("loading");
+            btn.disabled = false;
+          }
+          if (deskBtn) {
+            deskBtn.classList.remove("loading");
+            deskBtn.disabled = false;
+          }
+        }
       }
       return n;
     }
+
+    function laborSnapshot() {
+      return Object.keys(laborRecords).sort().map(k => {
+        const r = laborRecords[k];
+        return k + ":" + (r?.avance ?? 0) + ":" + (r?.laborReal || "");
+      }).join("|");
+    }
+
+    let mapSyncBusy = false;
+    let lastAutoCount = 0;
+    let lastLaborSig = null;
+    let autoSyncTimer = null;
+    let savingLabor = false;
+
+    async function autoSyncFromSheet() {
+      if (!API_URL || !navigator.onLine || document.hidden || mapSyncBusy || savingLabor) return;
+      if (multiLotMode && multiLotKeys.size) return;
+      await refreshMapData(false, { soft: true });
+    }
+
+    function startAutoSync() {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      autoSyncTimer = setInterval(autoSyncFromSheet, 8000);
+    }
+
+    function scheduleSoftSync(delayMs) {
+      setTimeout(() => {
+        if (!mapSyncBusy && !savingLabor) refreshMapData(false, { soft: true });
+      }, delayMs || 600);
+    }
+
+    function openRefreshModal() {
+      const modal = document.getElementById("refreshModal");
+      if (!modal) return;
+      modal.removeAttribute("inert");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeRefreshModal() {
+      const modal = document.getElementById("refreshModal");
+      if (!modal) return;
+      const focused = document.activeElement;
+      if (focused && modal.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
+      modal.classList.remove("open");
+      modal.setAttribute("inert", "");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    async function updateAppVersion() {
+      closeRefreshModal();
+      showToast("Actualizando app...", false, "Limpiando caché");
+      try {
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (err) {
+        console.warn("updateApp:", err);
+      }
+      const url = new URL(location.href);
+      url.searchParams.set("_v", String(Date.now()));
+      location.replace(url.toString());
+    }
+
+    document.getElementById("mobRefreshBtn")?.addEventListener("click", openRefreshModal);
+    document.getElementById("refreshDataBtn")?.addEventListener("click", () => {
+      closeRefreshModal();
+      refreshMapData(true);
+    });
+    document.getElementById("refreshAppBtn")?.addEventListener("click", updateAppVersion);
+    document.getElementById("refreshCancelBtn")?.addEventListener("click", closeRefreshModal);
+    document.getElementById("refreshModal")?.addEventListener("click", e => {
+      if (e.target.id === "refreshModal") closeRefreshModal();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      const modal = document.getElementById("refreshModal");
+      if (modal?.classList.contains("open")) closeRefreshModal();
+    });
 
     function buildMobModChips() {
       if (!mobModScroll) return;
@@ -2487,7 +3333,6 @@
     }
     buildMobModChips();
 
-    document.getElementById("mobRefreshBtn")?.addEventListener("click", () => refreshMapData(true));
     document.getElementById("mobSearch")?.addEventListener("input", e => {
       searchTerm = e.target.value;
       const deskSearch = document.getElementById("search");
@@ -2501,12 +3346,15 @@
     kpiBlock.innerHTML = `
       <div class="kpi-head-row">
         <h2>Resumen</h2>
-        <button type="button" class="btn btn-outline kpi-refresh" id="deskRefreshBtn" title="Traer datos de la hoja">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
-          </svg>
-          Actualizar
-        </button>
+        <div class="kpi-actions">
+          <span class="pend-chip-desk" id="deskPendChip" title="Reportes en cola sin enviar"><strong id="deskPendCount">0</strong>&nbsp;pend.</span>
+          <button type="button" class="btn btn-outline kpi-refresh" id="deskRefreshBtn" title="Traer datos de la hoja">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
       </div>
       <div class="kpis">
         <div class="kpi"><span>Lotes</span><strong>${uniqueLotes}</strong></div>
@@ -2515,7 +3363,9 @@
         <div class="kpi"><span>Semana</span><strong>${currentWeek}</strong></div>
       </div>`;
     sidebar.appendChild(kpiBlock);
-    document.getElementById("deskRefreshBtn")?.addEventListener("click", () => refreshMapData(true));
+    document.getElementById("deskRefreshBtn")?.addEventListener("click", () => {
+      refreshMapData(true, { fast: true });
+    });
 
     const modBlock = document.createElement("div");
     modBlock.className = "side-block mod-block";
@@ -2606,6 +3456,25 @@
     let laborRecords = {};
     try { laborRecords = JSON.parse(localStorage.getItem("qb-labores") || "{}"); } catch { laborRecords = {}; }
 
+    let multiLotMode = false;
+    /** @type {Map<string, { avance: number }>} */
+    const multiLotKeys = new Map();
+    /* Pincel: colores intensos (módulos + extras) */
+    const MULTI_COLORS = [
+      "#1E88E5", /* azul */
+      "#43A047", /* verde */
+      "#8E24AA", /* morado */
+      "#F9A825", /* amarillo */
+      "#E64A19", /* naranja */
+      "#00695C", /* teal */
+      "#C62828", /* rojo */
+      "#6A1B9A", /* violeta */
+      "#00838F", /* cian */
+      "#2E7D32"  /* verde fuerte */
+    ];
+    let multiPaintColor = MULTI_COLORS[0];
+    document.documentElement.style.setProperty("--multi-color", multiPaintColor);
+
     function saveLaborRecords() {
       localStorage.setItem("qb-labores", JSON.stringify(laborRecords));
     }
@@ -2632,9 +3501,10 @@
       return lot ? `${lot.r},${lot.c}` : null;
     }
 
-    function applyApiRecords(records) {
+    function applyApiRecords(records, opts = {}) {
       if (!records) return 0;
       let n = 0;
+      const changed = [];
       const entries = Array.isArray(records)
         ? records.map(r => [null, r])
         : Object.entries(records);
@@ -2642,7 +3512,7 @@
         if (!rec || !rec.laborReal) return;
         const posKey = posKeyFromRecord(rec);
         if (!posKey) return;
-        laborRecords[posKey] = {
+        const next = {
           sem: Number(rec.sem) || currentWeek,
           fecha: rec.fechaIso || rec.fecha || "",
           laborPpto: String(rec.laborPpto || "").toUpperCase(),
@@ -2655,11 +3525,29 @@
           avance: roundHa(rec.avance),
           totalJr: Number(rec.totalJr) || 0
         };
+        const prev = laborRecords[posKey];
+        const same = prev &&
+          Number(prev.avance) === next.avance &&
+          String(prev.laborReal || "") === next.laborReal &&
+          Number(prev.sem) === next.sem &&
+          String(prev.fecha || "") === String(next.fecha || "");
+        if (prev && prev.color && !next.color) next.color = prev.color;
+        laborRecords[posKey] = next;
         n++;
+        if (!same) changed.push(posKey);
       });
       saveLaborRecords();
-      refreshAllLaborVisuals();
-      updateMobileChrome();
+      if (opts.fullPaint || changed.length > 60) {
+        refreshAllLaborVisuals();
+      } else if (changed.length) {
+        changed.forEach(key => {
+          const cell = getCellByKey(key);
+          const lot = byPos.get(key);
+          if (cell && lot) applyLaborVisual(cell, lot);
+        });
+        if (multiLotMode && multiLotKeys.size) syncMultiLotMapPaint();
+        updateMobileChrome();
+      }
       return n;
     }
 
@@ -2667,14 +3555,15 @@
       try {
         const json = await QBApi.getLabors(filters);
         if (!json?.ok) throw new Error(json?.error || json?.message || "Error al cargar");
-        const payload = (Array.isArray(json.list) && json.list.length)
+        const payload = Array.isArray(json.list)
           ? json.list
-          : json.records;
+          : (json.records || []);
         if (opts.replace) {
           laborRecords = {};
           saveLaborRecords();
+          return applyApiRecords(payload, { fullPaint: true });
         }
-        return applyApiRecords(payload);
+        return applyApiRecords(payload, { fullPaint: !!opts.fullPaint });
       } catch (err) {
         console.warn("API GET:", err);
         return 0;
@@ -2723,32 +3612,84 @@
       if (btn) btn.classList.toggle("has-active", hasActiveMapFilters());
     }
 
-    function renderFilterChips(containerId, values, selected, key, chipClass) {
-      const el = document.getElementById(containerId);
-      if (!el) return;
-      if (!values.length) {
-        el.innerHTML = '<div class="filter-empty">Sin datos en la hoja aún</div>';
-        return;
+    function buildFilterItems(values, emptyLabel) {
+      const items = [];
+      if (emptyLabel != null) {
+        items.push({ value: "", label: emptyLabel });
       }
-      el.innerHTML = values.map(v => {
-        const val = String(v);
-        const active = String(selected ?? "") === val ? " active" : "";
-        const extra = chipClass ? ` ${chipClass}` : "";
-        return `<button type="button" class="filter-chip${extra}${active}" data-key="${key}" data-value="${val.replace(/"/g, "&quot;")}">${val}</button>`;
-      }).join("");
+      if (!values.length && emptyLabel == null) {
+        items.push({ value: "", label: "Sin datos en la hoja aún" });
+      } else {
+        values.forEach(v => {
+          const val = String(v);
+          items.push({ value: val, label: val });
+        });
+      }
+      return items;
+    }
+
+    const filterCSelectRegistry = {};
+
+    function initFilterCSelect(rootId, hiddenId, placeholder, onPick) {
+      const root = document.getElementById(rootId);
+      if (!root) return;
+      const inst = createCustomSelect(root, {
+        items: [],
+        placeholder,
+        onChange: () => onPick()
+      });
+      filterCSelectRegistry[hiddenId] = { inst, rootId, placeholder };
+    }
+
+    function renderFilterCSelect(hiddenId, values, selected, emptyLabel) {
+      const reg = filterCSelectRegistry[hiddenId];
+      if (!reg) return;
+      const root = document.getElementById(reg.rootId);
+      const trigger = root?.querySelector(".cselect-trigger");
+      const items = buildFilterItems(values, emptyLabel);
+      reg.inst.updateItems(items);
+      const want = selected == null || selected === "" ? "" : String(selected);
+      if (want && items.some(it => it.value === want)) {
+        reg.inst.setValue(want, true);
+      } else if (emptyLabel != null) {
+        reg.inst.setValue("", true);
+      } else if (items.length) {
+        reg.inst.setValue(items[0].value, true);
+      }
+      if (trigger) {
+        trigger.disabled = !values.length && emptyLabel == null;
+      }
     }
 
     function refreshFilterPanelUI() {
-      renderFilterChips("filterSemChips", filterOptions.sem, mapQuery.sem, "sem");
-      renderFilterChips("filterFechaChips", filterOptions.fecha, mapQuery.fecha, "fecha", "is-fecha");
-      renderFilterChips("filterMdChips", filterOptions.md, mapQuery.modulo, "modulo");
-      renderFilterChips("filterLaborChips", filterOptions.laborReal, mapQuery.laborReal, "laborReal");
+      renderFilterCSelect("filterSemSelect", filterOptions.sem, mapQuery.sem, null);
+      renderFilterCSelect("filterFechaSelect", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
+      renderFilterCSelect("filterMdSelect", filterOptions.md, mapQuery.modulo, "Todos los módulos");
+      renderFilterCSelect("filterLaborSelect", filterOptions.laborReal, mapQuery.laborReal, "Todas las labores");
+      renderFilterCSelect("mobFilterSem", filterOptions.sem, mapQuery.sem, null);
+      renderFilterCSelect("mobFilterFecha", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
+      renderFilterCSelect("mobFilterMd", filterOptions.md, mapQuery.modulo, "Todos");
+      renderFilterCSelect("mobFilterLabor", filterOptions.laborReal, mapQuery.laborReal, "Todas");
       syncFilterBtnState();
+    }
+
+    function syncMapQueryFromSelects(source) {
+      const fromMob = source === "mob";
+      const semEl = document.getElementById(fromMob ? "mobFilterSem" : "filterSemSelect");
+      const fechaEl = document.getElementById(fromMob ? "mobFilterFecha" : "filterFechaSelect");
+      const mdEl = document.getElementById(fromMob ? "mobFilterMd" : "filterMdSelect");
+      const laborEl = document.getElementById(fromMob ? "mobFilterLabor" : "filterLaborSelect");
+      const semVal = semEl?.value ?? "";
+      mapQuery.sem = semVal === "" ? currentWeek : (Number(semVal) || semVal);
+      mapQuery.fecha = fechaEl?.value || "";
+      mapQuery.modulo = mdEl?.value || "";
+      mapQuery.laborReal = laborEl?.value || "";
     }
 
     async function loadFilterOptions() {
       if (!API_URL || !QBApi.getFiltros) {
         refreshFilterPanelUI();
+        if (isMobileMap()) requestAnimationFrame(() => fitToScreen());
         return;
       }
       try {
@@ -2769,6 +3710,9 @@
         console.warn("API filtros:", err);
       }
       refreshFilterPanelUI();
+      if (isMobileMap()) {
+        requestAnimationFrame(() => fitToScreen());
+      }
     }
 
     function openFilterModal() {
@@ -2841,7 +3785,7 @@
       return grid.querySelector(`.cell[data-key="${posKey}"]`);
     }
 
-    function paintCellProgress(cell, lot, avance, laborReal) {
+    function paintCellProgress(cell, lot, avance, laborReal, fillColor) {
       if (!cell || !lot) return;
       const area = roundHa(lot.ha) || 1;
       let av = roundHa(avance);
@@ -2854,7 +3798,7 @@
         cell.insertBefore(fill, cell.firstChild);
       }
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      fill.style.background = mod?.badge || mod?.fill || "#64748b";
+      fill.style.background = fillColor || mod?.badge || mod?.fill || "#64748b";
       fill.style.height = pct + "%";
       const fakeRec = { avance: av, laborReal: laborReal || "" };
       const st = laborStatus(fakeRec, area);
@@ -2867,9 +3811,15 @@
     }
 
     function applyLaborVisual(cell, lot) {
+      if (!cell || !lot) return;
       const key = cell.dataset.key;
+      // No pisar pintura múltiple activa
+      if (multiLotMode && multiLotKeys.has(key)) {
+        paintOneMultiCell(key);
+        return;
+      }
       const rec = laborRecords[key];
-      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal);
+      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, rec?.color);
       if (rec?.laborPpto && rec?.laborReal) {
         cell.title += ` · Ppto: ${rec.laborPpto}`;
       } else if (!rec?.laborReal) {
@@ -2907,6 +3857,10 @@
     }
 
     function previewFromForm() {
+      if (multiLotMode) {
+        previewMultiLots();
+        return;
+      }
       const posKey = fLote.value;
       if (!posKey) {
         updateDrawerPreview(null);
@@ -2947,14 +3901,35 @@
       toastTimer = setTimeout(() => toast.classList.remove("show"), isError ? 3500 : 5000);
     }
 
-    function showDrawerSavedMsg(detail) {
+    function showDrawerSavedMsg(detail, kind) {
       const msg = document.getElementById("drawerSaveMsg");
       if (!msg) return;
-      msg.innerHTML = `✓ Se guardó correctamente<span>${detail || ""}</span>`;
+      const mode = kind || "ok";
+      msg.classList.remove("is-error", "is-wait");
+      if (mode === "error") {
+        msg.classList.add("is-error");
+        msg.innerHTML = `No se guardó<span>${detail || "Revisa los datos"}</span>`;
+      } else if (mode === "wait") {
+        msg.classList.add("is-wait");
+        msg.innerHTML = `Guardando…<span>${detail || "Enviando a la hoja"}</span>`;
+      } else {
+        msg.innerHTML = `✓ Se guardó correctamente<span>${detail || ""}</span>`;
+      }
       msg.classList.add("show");
-      msg.title = "Se guardó correctamente";
+      msg.title = mode === "error" ? "Error al guardar" : "Guardado";
       clearTimeout(drawerMsgTimer);
-      drawerMsgTimer = setTimeout(() => msg.classList.remove("show"), 5000);
+      if (mode !== "wait") {
+        drawerMsgTimer = setTimeout(() => msg.classList.remove("show", "is-error", "is-wait"), mode === "error" ? 6000 : 5500);
+      }
+    }
+
+    function pulseMultiSummary() {
+      const btn = document.getElementById("multiLotSummary");
+      if (!btn) return;
+      btn.classList.remove("needs-lots");
+      void btn.offsetWidth;
+      btn.classList.add("needs-lots");
+      setTimeout(() => btn.classList.remove("needs-lots"), 2000);
     }
 
     function flashSavedCell(posKey) {
@@ -2970,6 +3945,7 @@
         const lot = byPos.get(cell.dataset.key);
         if (lot) applyLaborVisual(cell, lot);
       });
+      if (multiLotMode && multiLotKeys.size) syncMultiLotMapPaint();
       updateMobileChrome();
     }
 
@@ -3001,12 +3977,17 @@
 
     function syncMobChromeVisibility() {
       const mobChrome = document.getElementById("mobChrome");
+      const mobFilters = document.getElementById("mobFilters");
       const panelBtn = document.getElementById("mobPanelToggle");
       const mobile = isMobileMap();
       const show = mobile && mobChromeOpen;
       if (mobChrome) {
         mobChrome.style.display = show ? "flex" : "none";
         mobChrome.setAttribute("aria-hidden", show ? "false" : "true");
+      }
+      if (mobFilters) {
+        mobFilters.style.display = show ? "block" : "none";
+        mobFilters.setAttribute("aria-hidden", show ? "false" : "true");
       }
       document.body.classList.toggle("mob-chrome-hidden", mobile && !mobChromeOpen);
       if (panelBtn) {
@@ -3036,10 +4017,20 @@
       const pr = parseFloat(s.paddingRight) || 0;
       const pt = parseFloat(s.paddingTop) || 0;
       const pb = parseFloat(s.paddingBottom) || 0;
-      return {
-        w: Math.max(1, viewport.clientWidth - pl - pr),
-        h: Math.max(1, viewport.clientHeight - pt - pb)
-      };
+      let w = Math.max(1, viewport.clientWidth - pl - pr);
+      let h = Math.max(1, viewport.clientHeight - pt - pb);
+
+      // Móvil: la barra de filtros es fixed y tapa el mapa → centrar en el hueco visible
+      if (isMobileMap() && mobChromeOpen) {
+        const filters = document.getElementById("mobFilters");
+        const fh = filters && getComputedStyle(filters).display !== "none"
+          ? (filters.offsetHeight || 0)
+          : 0;
+        if (fh > 0) {
+          h = Math.max(1, viewport.clientHeight - pt - fh);
+        }
+      }
+      return { w, h };
     }
 
     function applyTransform() {
@@ -3065,8 +4056,10 @@
       const { w: vw, h: vh } = getViewportSize();
       const inset = MAP_BORDER_INSET * 2;
       if (mobile) {
-        cellW = 34;
-        cellH = 30;
+        // Celdas según viewport para que el plano quepa y se centre
+        const pad = 16;
+        cellW = Math.max(22, Math.min(36, (vw - pad) / cols));
+        cellH = Math.max(20, Math.min(32, (vh - pad) / rowsCount));
       } else {
         cellW = Math.max(22, (vw - inset) / cols);
         cellH = Math.max(20, (vh - inset) / rowsCount);
@@ -3092,9 +4085,10 @@
       const scaledW = mapW * scale;
       const scaledH = mapH * scale;
       const edge = MAP_BORDER_INSET;
-      if (scaledW <= w) panX = (w - scaledW) / 2;
+      // Si cabe (o casi), siempre centrar — evita sesgo a la izquierda
+      if (scaledW <= w + 1) panX = (w - scaledW) / 2;
       else panX = Math.max(w - scaledW - edge, Math.min(edge, panX));
-      if (scaledH <= h) panY = (h - scaledH) / 2;
+      if (scaledH <= h + 1) panY = (h - scaledH) / 2;
       else panY = Math.max(h - scaledH - edge, Math.min(edge, panY));
     }
 
@@ -3130,16 +4124,18 @@
       applyZoomAt(s, focalX, focalY);
     }
 
-    /** Encaja el mapa con el mismo espacio en los 4 lados; deja ver todos los bordes */
+    /** Encaja el mapa centrado con el mismo margen en los 4 lados */
     function fitToScreen() {
       rebuildMapMetrics();
       const { w, h } = getViewportSize();
-      const inset = MAP_BORDER_INSET * 2;
+      const inset = isMobileMap() ? 24 : MAP_BORDER_INSET * 2;
       minScale = Math.min((w - inset) / mapW, (h - inset) / mapH);
       if (!isFinite(minScale) || minScale <= 0) minScale = 0.15;
       maxScale = Math.max(minScale * 4, 2.5);
       scale = minScale;
-      centerMap();
+      panX = (w - mapW * scale) / 2;
+      panY = (h - mapH * scale) / 2;
+      clampPan();
       applyTransform();
     }
 
@@ -3164,9 +4160,16 @@
           <span class="t">${String(lot.tunel).toUpperCase()}</span>
           <span class="l">LT.${lot.lote}</span>
           <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>`;
-        cell.addEventListener("click", () => {
+        cell.addEventListener("click", e => {
+          const drawerOpen = document.getElementById("laborDrawer").classList.contains("open");
+          if (drawerOpen && multiLotMode) {
+            e.preventDefault();
+            e.stopPropagation();
+            addMultiLot(posKey, true);
+            return;
+          }
           selectLot(lot, cell);
-          if (document.getElementById("laborDrawer").classList.contains("open")) fillLaborForm(posKey);
+          if (drawerOpen) fillLaborForm(posKey);
         });
         applyLaborVisual(cell, lot);
         grid.appendChild(cell);
@@ -3179,6 +4182,16 @@
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       const posKey = `${lot.r},${lot.c}`;
       const rec = laborRecords[posKey];
+      const area = roundHa(lot.ha);
+      let trabajado = 0;
+      if (multiLotMode && multiLotKeys.has(posKey)) {
+        trabajado = getMultiLotAvance(posKey, lot);
+      } else if (rec?.avance != null && rec.avance !== "") {
+        trabajado = roundHa(rec.avance);
+      }
+      if (trabajado > area) trabajado = area;
+      const falta = roundHa(Math.max(0, area - trabajado));
+
       if (isMobileMap()) {
         const mobDetail = document.getElementById("mobDetail");
         const mobPill = document.getElementById("mobDPill");
@@ -3190,11 +4203,11 @@
           mobPill.style.display = "none";
         }
         document.getElementById("mobDTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
-        document.getElementById("mobDTunel").textContent = lot.tunel;
-        document.getElementById("mobDLote").textContent = "Lt. " + lot.lote;
-        document.getElementById("mobDHa").textContent = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "—";
+        document.getElementById("mobDHa").textContent = area ? formatHa(area) + " ha" : "—";
+        document.getElementById("mobDAvance").textContent = formatHa(trabajado) + " ha";
+        document.getElementById("mobDFalta").textContent = formatHa(falta) + " ha";
         document.getElementById("mobDLabor").textContent = rec?.laborReal
-          ? `${rec.laborReal} · ${formatHa(rec.avance)} ha`
+          ? String(rec.laborReal)
           : "Sin labor registrada";
         if (mobDetail) {
           mobDetail.classList.add("open");
@@ -3211,9 +4224,9 @@
         pill.style.display = "none";
       }
       document.getElementById("dTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
-      document.getElementById("dTunel").textContent = lot.tunel;
-      document.getElementById("dLote").textContent = "Lt. " + lot.lote;
-      document.getElementById("dHa").textContent = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "—";
+      document.getElementById("dHa").textContent = area ? formatHa(area) + " ha" : "—";
+      document.getElementById("dAvance").textContent = formatHa(trabajado) + " ha";
+      document.getElementById("dFalta").textContent = formatHa(falta) + " ha";
       document.getElementById("dMod").textContent = mod ? `${mod.label} · ${mod.ha} ha` : "—";
       detail.classList.add("open");
     }
@@ -3507,7 +4520,26 @@
         trigger.classList.add("is-empty");
       }
 
-      return { setValue, open, close, get value() { return hidden.value; } };
+      function updateItems(newItems) {
+        const mapped = (newItems || []).map(it => typeof it === "string"
+          ? { value: it, label: it }
+          : { value: String(it.value), label: String(it.label), search: it.search });
+        normalized.length = 0;
+        normalized.push(...mapped);
+        if (search) search.value = "";
+        render("");
+        if (hidden.value && normalized.some(it => it.value === hidden.value)) {
+          setValue(hidden.value, true);
+        } else if (hidden.value && normalized.length) {
+          setValue(normalized[0].value, true);
+        } else {
+          trigger.textContent = placeholder;
+          trigger.classList.add("is-empty");
+          hidden.value = "";
+        }
+      }
+
+      return { setValue, open, close, updateItems, get value() { return hidden.value; } };
     }
 
     document.addEventListener("click", e => {
@@ -3518,6 +4550,47 @@
           if (t) t.setAttribute("aria-expanded", "false");
         });
       }
+    });
+
+    initFilterCSelect("filterSemC", "filterSemSelect", "—", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      syncFilterBtnState();
+    });
+    initFilterCSelect("filterFechaC", "filterFechaSelect", "Todas las fechas", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      syncFilterBtnState();
+    });
+    initFilterCSelect("filterMdC", "filterMdSelect", "Todos los módulos", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      syncFilterBtnState();
+    });
+    initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      syncFilterBtnState();
+    });
+    initFilterCSelect("mobFilterSemC", "mobFilterSem", "—", () => {
+      syncMapQueryFromSelects("mob");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
+    });
+    initFilterCSelect("mobFilterFechaC", "mobFilterFecha", "Todas las fechas", () => {
+      syncMapQueryFromSelects("mob");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
+    });
+    initFilterCSelect("mobFilterMdC", "mobFilterMd", "Todos", () => {
+      syncMapQueryFromSelects("mob");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
+    });
+    initFilterCSelect("mobFilterLaborC", "mobFilterLabor", "Todas", () => {
+      syncMapQueryFromSelects("mob");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
     });
 
     const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
@@ -3569,6 +4642,408 @@
     }
     function openLoteSelect() { loteCSelect.open(); }
 
+    function getMultiLots() {
+      return [...multiLotKeys.entries()]
+        .map(([k, meta]) => ({ key: k, lot: byPos.get(k), avance: roundHa(meta?.avance) }))
+        .filter(x => x.lot)
+        .sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
+    }
+
+    function multiLotsTotalHa() {
+      return roundHa(getMultiLots().reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+    }
+
+    function multiLotsTotalAvance() {
+      return roundHa(getMultiLots().reduce((s, x) => {
+        const area = roundHa(x.lot.ha);
+        let av = roundHa(x.avance);
+        if (av > area) av = area;
+        return s + av;
+      }, 0));
+    }
+
+    function getMultiLotAvance(posKey, lot) {
+      const meta = multiLotKeys.get(posKey);
+      const area = roundHa(lot?.ha);
+      let av = meta && meta.avance != null && meta.avance !== ""
+        ? roundHa(meta.avance)
+        : area;
+      if (av > area) av = area;
+      return av;
+    }
+
+    function setMultiPaintColor(color, fromCustom) {
+      const next = String(color || MULTI_COLORS[0]).trim();
+      if (!/^#[0-9A-Fa-f]{6}$/.test(next)) return;
+      multiPaintColor = next.toUpperCase();
+      document.documentElement.style.setProperty("--multi-color", multiPaintColor);
+      document.querySelectorAll(".swatch").forEach(btn => {
+        btn.classList.toggle("is-on", (btn.dataset.color || "").toUpperCase() === multiPaintColor);
+      });
+      document.querySelectorAll(".swatch-custom").forEach(el => {
+        el.classList.toggle("is-on", !!fromCustom || !MULTI_COLORS.map(c => c.toUpperCase()).includes(multiPaintColor));
+        const inp = el.querySelector('input[type="color"]');
+        if (inp) inp.value = multiPaintColor;
+      });
+      syncMultiLotMapPaint();
+    }
+
+    function renderColorPalettes() {
+      const swatches = MULTI_COLORS.map(c =>
+        `<button type="button" class="swatch${c.toUpperCase() === multiPaintColor.toUpperCase() ? " is-on" : ""}" data-color="${c}" style="background:${c}" title="${c}" aria-label="Color ${c}"></button>`
+      ).join("");
+      const customOn = !MULTI_COLORS.map(c => c.toUpperCase()).includes(multiPaintColor.toUpperCase());
+      const custom = `<label class="swatch-custom${customOn ? " is-on" : ""}" title="Pincel · elegir otro color">
+        <input type="color" value="${multiPaintColor}" aria-label="Color personalizado" />
+      </label>`;
+      const row = `<div class="multi-palette-row">${swatches}${custom}</div>`;
+
+      document.querySelectorAll(".multi-palette").forEach(el => {
+        let label = el.querySelector(".multi-palette-label");
+        if (!label) {
+          label = document.createElement("div");
+          label.className = "multi-palette-label";
+          label.textContent = "Pincel de colores";
+          el.prepend(label);
+        } else {
+          label.textContent = el.id === "multiPaletteModal"
+            ? "Pincel de colores"
+            : "Pincel de colores · elige y pinta en el mapa";
+        }
+        el.querySelectorAll(".multi-palette-row, .swatch, .swatch-custom, .brush-current").forEach(s => s.remove());
+        el.insertAdjacentHTML("beforeend", row);
+      });
+      document.documentElement.style.setProperty("--multi-color", multiPaintColor);
+    }
+
+    function syncMultiLotSummary() {
+      const btn = document.getElementById("multiLotSummary");
+      const n = multiLotKeys.size;
+      const totalArea = multiLotsTotalHa();
+      const totalAv = multiLotsTotalAvance();
+      if (!btn) return;
+      if (!n) {
+        btn.textContent = "Selecciona lotes en el mapa...";
+        btn.classList.add("is-empty");
+        btn.classList.remove("has-lots");
+      } else {
+        btn.textContent = `${n} lote${n === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha · ver lista`;
+        btn.classList.remove("is-empty");
+        btn.classList.add("has-lots");
+      }
+      fArea.value = n ? formatHa(totalArea) : "";
+      fModulo.value = n ? "VARIOS" : "";
+      fTurno.value = n ? "VARIOS" : "";
+      fAvance.value = n ? formatHa(totalAv) : "";
+      updateAvanceBar();
+      const status = document.getElementById("lotPreviewStatus");
+      if (status) {
+        status.textContent = n
+          ? `${n} lotes · avance ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`
+          : "Clic en el mapa para seleccionar lotes";
+      }
+    }
+
+    let multiListBusy = false;
+
+    function syncMultiLotMapPaint() {
+      const selected = new Set(multiLotKeys.keys());
+      document.querySelectorAll(".cell.multi-selected").forEach(c => {
+        const key = c.dataset.key;
+        if (selected.has(key)) return;
+        c.classList.remove("multi-selected");
+        c.style.removeProperty("--multi-color");
+        const lot = byPos.get(key);
+        if (!lot) return;
+        const rec = laborRecords[key];
+        paintCellProgress(c, lot, rec?.avance, rec?.laborReal, rec?.color);
+      });
+      selected.forEach(key => paintOneMultiCell(key));
+    }
+
+    function paintOneMultiCell(posKey) {
+      const lot = byPos.get(posKey);
+      const cell = getCellByKey(posKey);
+      if (!lot || !cell || !multiLotKeys.has(posKey)) return;
+      const area = roundHa(lot.ha) || 1;
+      let av = getMultiLotAvance(posKey, lot);
+      if (av > area) av = area;
+      const laborReal = fLaborReal.value || "MULTI";
+      cell.style.setProperty("--multi-color", multiPaintColor);
+      cell.classList.remove("dim", "active");
+      cell.classList.add("multi-selected");
+      // Pinta solo la altura del avance (barra desde abajo), no el celda entera “tosca”
+      paintCellProgress(cell, lot, av, laborReal, multiPaintColor);
+      cell.classList.add("multi-selected");
+      cell.classList.remove("labor-done"); // evita borde doble / aspecto pesado
+    }
+
+    function updateMultiLotTotalsOnly() {
+      const n = multiLotKeys.size;
+      const totalArea = multiLotsTotalHa();
+      const totalAv = multiLotsTotalAvance();
+      const btn = document.getElementById("multiLotSummary");
+      if (btn) {
+        if (!n) {
+          btn.textContent = "Selecciona lotes en el mapa...";
+          btn.classList.add("is-empty");
+          btn.classList.remove("has-lots");
+        } else {
+          btn.textContent = `${n} lote${n === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha · ver lista`;
+          btn.classList.remove("is-empty");
+          btn.classList.add("has-lots");
+        }
+      }
+      fArea.value = n ? formatHa(totalArea) : "";
+      fModulo.value = n ? "VARIOS" : "";
+      fTurno.value = n ? "VARIOS" : "";
+      fAvance.value = n ? formatHa(totalAv) : "";
+      updateAvanceBar();
+      const totalEl = document.getElementById("multiLotTotal");
+      if (totalEl) {
+        totalEl.textContent = `${n} lote${n === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`;
+      }
+      const sub = document.getElementById("multiLotSub");
+      if (sub) {
+        sub.textContent = n
+          ? `${n} lote${n === 1 ? "" : "s"} · avance ${formatHa(totalAv)} ha`
+          : "Aún no hay lotes · clic en el mapa";
+      }
+      const status = document.getElementById("lotPreviewStatus");
+      if (status) {
+        status.textContent = n
+          ? `${n} lotes · avance ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`
+          : "Clic en el mapa para seleccionar lotes";
+      }
+    }
+
+    function commitMultiLotAvanceInput(inp, { paint, format }) {
+      // Al rearmar la lista, inputs destruidos disparan change="" y dejaban avance 0 en todos
+      if (multiListBusy || !inp || !inp.isConnected) return;
+      const key = inp.getAttribute("data-avance");
+      const lot = byPos.get(key);
+      if (!lot || !multiLotKeys.has(key)) return;
+      const area = roundHa(lot.ha);
+      const raw = String(inp.value || "").trim().replace(",", ".");
+      // Mientras escribe: no tocar el valor (ni tope, ni toast, ni formato)
+      const incomplete = raw === "" || raw === "." || raw === "-" || /\.$/.test(raw);
+      if (incomplete && !format) return;
+
+      let av = incomplete ? 0 : roundHa(raw);
+      if (isNaN(av) || !isFinite(av)) av = getMultiLotAvance(key, lot);
+      if (av < 0) av = 0;
+
+      if (format) {
+        if (area > 0 && av > area) {
+          av = area;
+          showToast("Tope del lote", true, "Máximo " + formatHa(area) + " ha");
+        }
+        inp.value = formatHa(av);
+      } else if (area > 0 && av > area) {
+        // Preview/mapa con tope, pero el texto del input queda libre
+        av = area;
+      }
+
+      multiLotKeys.set(key, { avance: av });
+      if (paint) paintOneMultiCell(key);
+      updateMultiLotTotalsOnly();
+    }
+
+    function previewMultiLots() {
+      syncMultiLotSummary();
+      syncMultiLotMapPaint();
+      const items = getMultiLots();
+      if (!items.length) {
+        updateDrawerPreview(null);
+        return;
+      }
+      const first = items[0].lot;
+      const av = getMultiLotAvance(items[0].key, first);
+      updateDrawerPreview(first, av, fLaborReal.value);
+      const lotPreviewFill = document.getElementById("lotPreviewFill");
+      if (lotPreviewFill) lotPreviewFill.style.background = multiPaintColor;
+      const status = document.getElementById("lotPreviewStatus");
+      if (status) {
+        status.textContent = `${items.length} lotes · avance ${formatHa(multiLotsTotalAvance())} / ${formatHa(multiLotsTotalHa())} ha`;
+      }
+    }
+
+    function renderMultiLotModalList() {
+      const list = document.getElementById("multiLotList");
+      const totalEl = document.getElementById("multiLotTotal");
+      const sub = document.getElementById("multiLotSub");
+      if (!list) return;
+      multiListBusy = true;
+      const scrollTop = list.scrollTop;
+      try {
+        const items = getMultiLots();
+        const totalArea = multiLotsTotalHa();
+        const totalAv = multiLotsTotalAvance();
+        if (sub) sub.textContent = items.length
+          ? `${items.length} lote${items.length === 1 ? "" : "s"} · avance ${formatHa(totalAv)} ha`
+          : "Aún no hay lotes · clic en el mapa";
+        if (!items.length) {
+          list.innerHTML = '<div class="multi-empty">Selecciona lotes en el mapa para reunirlos aquí</div>';
+        } else {
+          list.innerHTML = items.map(({ key, lot }) => {
+            const mod = lot.modulo != null ? modById[lot.modulo] : null;
+            const area = roundHa(lot.ha);
+            const av = getMultiLotAvance(key, lot);
+            return `<div class="multi-lot-row" data-key="${key}">
+            <div>
+              <strong>LOTE ${lot.lote}</strong>
+              <span class="meta">${String(lot.tunel || "").toUpperCase()}${mod ? " · " + mod.label : ""} · área ${formatHa(area)} ha</span>
+            </div>
+            <div class="multi-lot-avance">
+              <label>Avance (ha)</label>
+              <input type="text" inputmode="decimal" data-avance="${key}" data-max="${formatHa(area)}" value="${formatHa(Math.min(av, area))}" aria-label="Avance lote ${lot.lote}" />
+              <span class="cap">máx ${formatHa(area)}</span>
+            </div>
+            <button type="button" class="rm" data-remove="${key}" title="Quitar" aria-label="Quitar lote ${lot.lote}">×</button>
+          </div>`;
+          }).join("");
+        }
+        if (totalEl) {
+          totalEl.textContent = `${items.length} lote${items.length === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`;
+        }
+        renderColorPalettes();
+        list.scrollTop = scrollTop;
+      } finally {
+        setTimeout(() => { multiListBusy = false; }, 0);
+      }
+    }
+
+    let multiModalOpenedAt = 0;
+
+    function openMultiLotModal() {
+      renderMultiLotModalList();
+      const modal = document.getElementById("multiLotModal");
+      if (!modal) return;
+      multiModalOpenedAt = Date.now();
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeMultiLotModal() {
+      const modal = document.getElementById("multiLotModal");
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    /**
+     * Toggle en mapa:
+     * - 1er clic → selecciona ese lote
+     * - 2º clic → deselecciona SOLO ese lote (el resto queda)
+     * Otra forma de quitar: × en el modal
+     */
+    function addMultiLot(posKey, openModalIfNeeded) {
+      if (!posKey || !byPos.get(posKey)) return;
+
+      if (multiLotKeys.has(posKey)) {
+        removeMultiLot(posKey);
+        return;
+      }
+
+      const lot = byPos.get(posKey);
+      const existing = laborRecords[posKey];
+      const av = existing?.avance != null && existing.avance !== ""
+        ? roundHa(existing.avance)
+        : roundHa(lot.ha);
+      multiLotKeys.set(posKey, { avance: av });
+
+      syncMultiLotSummary();
+      paintOneMultiCell(posKey);
+      previewMultiLots();
+
+      const modal = document.getElementById("multiLotModal");
+      if (modal?.classList.contains("open")) {
+        renderMultiLotModalList();
+      }
+    }
+
+    function removeMultiLot(posKey) {
+      if (!posKey || !multiLotKeys.has(posKey)) return;
+      multiLotKeys.delete(posKey);
+
+      // Solo despinta ESE lote; el resto queda firme
+      const cell = getCellByKey(posKey);
+      if (cell) {
+        cell.classList.remove("multi-selected");
+        cell.style.removeProperty("--multi-color");
+        const lot = byPos.get(posKey);
+        if (lot) {
+          const rec = laborRecords[posKey];
+          paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, rec?.color);
+        }
+      }
+
+      updateMultiLotTotalsOnly();
+      previewMultiLots();
+
+      const list = document.getElementById("multiLotList");
+      if (list) {
+        multiListBusy = true;
+        try {
+          const row = list.querySelector(`.multi-lot-row[data-key="${posKey}"]`);
+          row?.remove();
+          if (!multiLotKeys.size) {
+            list.innerHTML = '<div class="multi-empty">Selecciona lotes en el mapa para reunirlos aquí</div>';
+          }
+        } finally {
+          setTimeout(() => { multiListBusy = false; }, 0);
+        }
+      }
+    }
+
+    function clearMultiLots(repaint) {
+      multiLotKeys.clear();
+      syncMultiLotSummary();
+      if (repaint !== false) syncMultiLotMapPaint();
+      if (document.getElementById("multiLotModal")?.classList.contains("open")) {
+        renderMultiLotModalList();
+      }
+    }
+
+    function setMultiLotMode(on) {
+      const next = !!on;
+      if (next === multiLotMode) return;
+      multiLotMode = next;
+      const toggle = document.getElementById("multiLotToggle");
+      const single = document.getElementById("loteSingleWrap");
+      const multi = document.getElementById("loteMultiWrap");
+      if (toggle) {
+        toggle.classList.toggle("is-on", multiLotMode);
+        toggle.setAttribute("aria-pressed", multiLotMode ? "true" : "false");
+      }
+      if (single) single.hidden = multiLotMode;
+      if (multi) multi.hidden = !multiLotMode;
+      const areaLabel = document.querySelector('label[for="fArea"]');
+      if (areaLabel) areaLabel.textContent = multiLotMode ? "Área total (ha)" : "Área lote (ha)";
+      if (multiLotMode) {
+        document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+        setLoteValue("", true);
+        renderColorPalettes();
+        setMultiPaintColor(multiPaintColor);
+        syncMultiLotSummary();
+        syncMultiLotMapPaint();
+        showToast("Modo múltiple", false, "Clic en el mapa para sumar lotes");
+      } else {
+        closeMultiLotModal();
+        // Conserva la selección en memoria; solo quita el resaltado visual
+        document.querySelectorAll(".cell.multi-selected").forEach(c => {
+          c.classList.remove("multi-selected");
+          c.style.removeProperty("--multi-color");
+          const key = c.dataset.key;
+          const lot = byPos.get(key);
+          if (!lot) return;
+          const rec = laborRecords[key];
+          paintCellProgress(c, lot, rec?.avance, rec?.laborReal, rec?.color);
+        });
+        syncMultiLotSummary();
+      }
+    }
+
     fSem.value = currentWeek;
     fFecha.value = new Date().toISOString().slice(0, 10);
 
@@ -3581,6 +5056,8 @@
 
     function fillLaborForm(posKey) {
       if (!posKey) return;
+      // No romper selección múltiple ni colores/avances ya armados
+      if (multiLotMode) return;
       setLoteValue(posKey, true);
       const lot = byPos.get(posKey);
       if (!lot) return;
@@ -3610,14 +5087,269 @@
       previewFromForm();
     }
 
-    function commitLaborFromForm(showFeedback) {
+    async function saveOneLaborRecord(posKey, lot, avance, showFeedback, fillColor) {
+      const area = roundHa(lot.ha);
+      let av = roundHa(avance);
+      if (av > area) av = area;
+      if (av < 0 || area < 0 || area > 500) {
+        if (showFeedback) showToast("Datos inválidos", true, "Área/avance fuera de rango");
+        return { queued: false, area, avance: 0, error: true };
+      }
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
+      const allow = (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase());
+      if (!laborReal || (allow.length && !allow.includes(laborReal))) {
+        if (showFeedback) showToast("Labor no permitida", true);
+        return { queued: false, area, avance: av, error: true };
+      }
+      laborRecords[posKey] = {
+        sem: Number(fSem.value) || currentWeek,
+        fecha: fFecha.value,
+        laborPpto: String(fLaborPpto.value || "").toUpperCase(),
+        laborReal,
+        modulo: String(mod?.label || fModulo.value || "").toUpperCase(),
+        turno: String(lot.tunel || fTurno.value || "").toUpperCase(),
+        lote: lot.lote,
+        variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
+        area,
+        avance: av,
+        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0))
+      };
+      if (fillColor) laborRecords[posKey].color = String(fillColor).slice(0, 20);
+      else delete laborRecords[posKey].color;
+      saveLaborRecords();
+
+      // Pintar ya — no esperar al POST
+      const cellEager = getCellByKey(posKey);
+      if (cellEager) {
+        cellEager.classList.remove("multi-selected");
+        cellEager.style.removeProperty("--multi-color");
+        applyLaborVisual(cellEager, lot);
+      }
+
+      if (QBApi.validateRecord) {
+        const v = QBApi.validateRecord(Object.assign({ posKey }, laborRecords[posKey]));
+        if (!v.ok) {
+          if (showFeedback) showToast("No se puede guardar", true, v.errors.join(" · "));
+          return { queued: false, area, avance: av, error: true };
+        }
+      }
+
+      let queued = false;
+      if (API_URL) {
+        try {
+          const payload = Object.assign({ posKey }, laborRecords[posKey]);
+          const res = await QBApi.saveLabor(payload);
+          if (res && res.ok === false && !res.queued) {
+            if (showFeedback) showToast("Rechazado", true, res.message || "Validación");
+            return { queued: false, area, avance: av, error: true };
+          }
+          queued = !!res.queued;
+          updatePendingChips();
+        } catch (err) {
+          console.warn("API POST:", err);
+          queued = true;
+        }
+      }
+      if (showFeedback) flashSavedCell(posKey);
+      if (API_URL) scheduleSoftSync(700);
+      return { queued, area, avance: av };
+    }
+
+    async function commitMultiLabors(showFeedback) {
+      const items = getMultiLots();
+      const maxBatch = Number((window.QB_CONFIG && QB_CONFIG.MAX_BATCH) || 40) || 40;
+      if (!items.length) {
+        if (showFeedback) {
+          showToast("Sin lotes marcados", true, "Haz clic en el mapa para seleccionar");
+          showDrawerSavedMsg("Marca lotes en el mapa (modo Múltiple)", "error");
+          pulseMultiSummary();
+        }
+        return false;
+      }
+      if (items.length > maxBatch) {
+        if (showFeedback) {
+          showToast("Demasiados lotes", true, "Máximo " + maxBatch + " por guardado");
+          showDrawerSavedMsg("Máximo " + maxBatch + " lotes", "error");
+        }
+        return false;
+      }
+      const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
+      const allow = (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase());
+      if (!laborReal || (allow.length && !allow.includes(laborReal))) {
+        if (showFeedback) {
+          showToast("Falta labor real", true, "Elige la labor antes de guardar");
+          showDrawerSavedMsg("Selecciona la labor real", "error");
+          laborRealCSelect.open();
+        }
+        return false;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fFecha.value || ""))) {
+        if (showFeedback) {
+          showToast("Fecha inválida", true);
+          showDrawerSavedMsg("Corrige la fecha", "error");
+        }
+        return false;
+      }
+
+      const totalAv = multiLotsTotalAvance();
+      if (totalAv <= 0) {
+        if (showFeedback) {
+          showToast("Avance en 0", true, "Pon avance (ha) en la lista de lotes");
+          showDrawerSavedMsg("Abre la lista y escribe el avance de cada lote", "error");
+          openMultiLotModal();
+        }
+        return false;
+      }
+
+      const saveBtn = document.getElementById("saveLaborBtn");
+      savingLabor = true;
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Guardando...";
+      }
+      if (showFeedback) {
+        showToast("Guardando grupo…", false, items.length + " lote(s)");
+        showDrawerSavedMsg(items.length + " lote(s) · " + formatHa(totalAv) + " ha", "wait");
+      }
+
+      const shared = {
+        sem: Number(fSem.value) || currentWeek,
+        fecha: fFecha.value,
+        laborPpto: String(fLaborPpto.value || "").toUpperCase(),
+        laborReal,
+        variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
+        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0))
+      };
+
+      const records = items.map(({ key, lot }) => {
+        const area = roundHa(lot.ha);
+        const av = getMultiLotAvance(key, lot);
+        const mod = lot.modulo != null ? modById[lot.modulo] : null;
+        const rec = {
+          posKey: key,
+          sem: shared.sem,
+          fecha: shared.fecha,
+          laborPpto: shared.laborPpto,
+          laborReal: shared.laborReal,
+          modulo: String(mod?.label || "").toUpperCase(),
+          turno: String(lot.tunel || "").toUpperCase(),
+          lote: lot.lote,
+          variedad: shared.variedad,
+          area,
+          avance: av,
+          totalJr: shared.totalJr,
+          color: multiPaintColor
+        };
+        laborRecords[key] = Object.assign({}, rec);
+        return rec;
+      });
+      saveLaborRecords();
+
+      // Pintar ya (optimista) antes del POST
+      records.forEach(rec => {
+        const cell = getCellByKey(rec.posKey);
+        const lot = byPos.get(rec.posKey);
+        if (cell && lot) {
+          cell.classList.remove("multi-selected");
+          cell.style.removeProperty("--multi-color");
+          applyLaborVisual(cell, lot);
+        }
+      });
+      multiLotKeys.clear();
+      syncMultiLotSummary();
+      closeMultiLotModal();
+
+      let queuedAny = false;
+      let ok = true;
+      let savedHa = records.reduce((s, r) => s + roundHa(r.avance), 0);
+      let errMsg = "";
+
+      if (API_URL && QBApi.saveLaborsBatch) {
+        try {
+          const res = await QBApi.saveLaborsBatch(records, shared);
+          if (res && res.ok === false && !res.queued) {
+            ok = false;
+            errMsg = res.message || "Validación";
+          } else {
+            queuedAny = !!res.queued;
+            updatePendingChips();
+          }
+        } catch (err) {
+          console.warn("API BATCH:", err);
+          queuedAny = true;
+        }
+      } else {
+        for (const rec of records) {
+          const lot = byPos.get(rec.posKey);
+          if (!lot) continue;
+          const r = await saveOneLaborRecord(rec.posKey, lot, rec.avance, false, multiPaintColor);
+          if (r.error) { ok = false; errMsg = "Error en un lote"; }
+          if (r.queued) queuedAny = true;
+        }
+      }
+
+      if (ok) {
+        records.forEach(rec => flashSavedCell(rec.posKey));
+        const first = records[0];
+        const firstLot = first && byPos.get(first.posKey);
+        if (firstLot) updateDrawerPreview(firstLot, first.avance, first.laborReal);
+        if (API_URL) scheduleSoftSync(500);
+      }
+
+      const detail = `${records.length} lote${records.length === 1 ? "" : "s"} · ${formatHa(savedHa)} ha · ${laborReal}`;
+      if (showFeedback) {
+        if (saveBtn) {
+          saveBtn.classList.add("saved");
+          saveBtn.textContent = !ok ? "Error" : (queuedAny ? "En cola" : "✓ Guardado");
+          setTimeout(() => {
+            saveBtn.classList.remove("saved");
+            saveBtn.textContent = "Guardar avance";
+            saveBtn.title = "Guardar avance";
+            saveBtn.disabled = false;
+            savingLabor = false;
+          }, 2200);
+        } else {
+          savingLabor = false;
+        }
+        if (ok) {
+          if (queuedAny) {
+            showToast("Guardado en cola", false, detail);
+            showDrawerSavedMsg("Sin señal · quedó pendiente · " + detail, "ok");
+          } else {
+            showToast("✓ Grupo guardado", false, detail);
+            showDrawerSavedMsg(detail, "ok");
+          }
+        } else {
+          showToast("No se guardó", true, errMsg || "Revisa los datos");
+          showDrawerSavedMsg(errMsg || "Revisa labor, avance y lotes", "error");
+        }
+      } else {
+        if (saveBtn) saveBtn.disabled = false;
+        savingLabor = false;
+      }
+      updateAvanceBar();
+      return ok;
+    }
+
+    async function commitLaborFromForm(showFeedback) {
+      if (savingLabor) return false;
+      if (multiLotMode) return commitMultiLabors(showFeedback);
       const posKey = fLote.value;
       if (!posKey) {
-        if (showFeedback) { showToast("Selecciona un lote", true); openLoteSelect(); }
+        if (showFeedback) {
+          showToast("Selecciona un lote", true);
+          showDrawerSavedMsg("Elige un lote en el formulario o en el mapa", "error");
+          openLoteSelect();
+        }
         return false;
       }
       if (!fLaborReal.value) {
-        if (showFeedback) { showToast("Selecciona la labor real", true); laborRealCSelect.open(); }
+        if (showFeedback) {
+          showToast("Selecciona la labor real", true);
+          showDrawerSavedMsg("Falta la labor real", "error");
+          laborRealCSelect.open();
+        }
         return false;
       }
       const lot = byPos.get(posKey);
@@ -3625,65 +5357,110 @@
       const area = roundHa(lot.ha);
       let avance = roundHa(fAvance.value);
       if (avance > area) avance = area;
-      fAvance.value = formatHa(avance);
-      laborRecords[posKey] = {
-        sem: Number(fSem.value) || currentWeek,
-        fecha: fFecha.value,
-        laborPpto: String(fLaborPpto.value || "").toUpperCase(),
-        laborReal: String(fLaborReal.value || "").toUpperCase(),
-        modulo: String(fModulo.value || "").toUpperCase(),
-        turno: String(fTurno.value || "").toUpperCase(),
-        lote: lot.lote,
-        variedad: fVariedad.value || "SEKOYA POP",
-        area,
-        avance,
-        totalJr: Number(fTotalJr.value) || 0
-      };
-      saveLaborRecords();
-      if (API_URL) {
-        QBApi.saveLabor(Object.assign({ posKey }, laborRecords[posKey])).catch(err => {
-          console.warn("API POST:", err);
-          showToast("Guardado local", true, "No se pudo enviar a la hoja");
-        });
+      if (avance <= 0) {
+        if (showFeedback) {
+          showToast("Pon el avance", true, "Avance debe ser mayor a 0");
+          showDrawerSavedMsg("Escribe el avance (ha) antes de guardar", "error");
+          fAvance.focus();
+        }
+        return false;
       }
-      const cell = getCellByKey(posKey);
-      if (cell) applyLaborVisual(cell, lot);
+      fAvance.value = formatHa(avance);
+
+      const saveBtn = document.getElementById("saveLaborBtn");
+      savingLabor = true;
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Guardando...";
+      }
+      if (showFeedback) {
+        showToast("Guardando…", false, "LOTE " + lot.lote);
+        showDrawerSavedMsg("LOTE " + lot.lote + " · " + formatHa(avance) + " ha", "wait");
+      }
+
+      let queued = false;
+      let failed = false;
+      try {
+        const res = await saveOneLaborRecord(posKey, lot, avance, showFeedback);
+        if (res && res.error) failed = true;
+        queued = !!res.queued;
+      } catch (err) {
+        console.warn("API POST:", err);
+        queued = true;
+        if (showFeedback) showToast("Guardado local", true, "Quedó en cola pendiente");
+      }
+
       if (showFeedback) {
         const pct = area > 0 ? Math.round((avance / area) * 100) : 0;
         const detail = `LOTE ${lot.lote} · ${pct}% · ${avance.toFixed(2)} ha`;
-        const saveBtn = document.getElementById("saveLaborBtn");
-        saveBtn.classList.add("saved");
-        saveBtn.textContent = "✓ Guardado";
-        saveBtn.title = "Se guardó correctamente";
-        setTimeout(() => {
-          saveBtn.classList.remove("saved");
-          saveBtn.textContent = "Guardar avance";
-          saveBtn.title = "Guardar avance";
-        }, 2000);
-        showToast("Se guardó correctamente", false, detail);
-        showDrawerSavedMsg(detail);
-        flashSavedCell(posKey);
+        if (saveBtn) {
+          saveBtn.classList.add("saved");
+          saveBtn.textContent = failed ? "Error" : (queued ? "En cola" : "✓ Guardado");
+          saveBtn.title = failed ? "Error" : (queued ? "Pendiente de envío" : "Se guardó correctamente");
+          setTimeout(() => {
+            saveBtn.classList.remove("saved");
+            saveBtn.textContent = "Guardar avance";
+            saveBtn.title = "Guardar avance";
+            saveBtn.disabled = false;
+            savingLabor = false;
+          }, 2200);
+        } else {
+          savingLabor = false;
+        }
+        if (failed) {
+          showToast("No se guardó", true, detail);
+          showDrawerSavedMsg("Revisa los datos del lote", "error");
+        } else if (queued) {
+          showToast("Sin señal · quedó pendiente", false, detail);
+          showDrawerSavedMsg(detail + " · en cola", "ok");
+        } else {
+          showToast("✓ Se guardó correctamente", false, detail);
+          showDrawerSavedMsg(detail, "ok");
+        }
+      } else {
+        if (saveBtn) saveBtn.disabled = false;
+        savingLabor = false;
       }
       requestAnimationFrame(() => {
         updateDrawerPreview(lot, avance, fLaborReal.value);
         updateAvanceBar();
       });
-      return true;
+      return !failed;
     }
 
     function openLaborDrawer(posKey) {
       laborDrawer.classList.add("open");
       laborDrawer.setAttribute("aria-hidden", "false");
-      if (posKey) fillLaborForm(posKey);
+      if (posKey && !multiLotMode) fillLaborForm(posKey);
       else previewFromForm();
     }
     function closeLaborDrawer() {
       laborDrawer.classList.remove("open");
       laborDrawer.setAttribute("aria-hidden", "true");
+      if (multiLotMode) {
+        // keep selection while drawer can reopen; clear multi paint if empty
+      }
     }
 
     fAvance.addEventListener("input", previewFromForm);
     fAvance.addEventListener("blur", () => {
+      if (multiLotMode) {
+        const total = multiLotsTotalHa();
+        const raw = String(fAvance.value || "").trim().replace(",", ".");
+        if (raw === "" || raw === ".") {
+          fAvance.value = total ? formatHa(total) : "";
+          previewFromForm();
+          return;
+        }
+        let av = roundHa(raw);
+        if (total > 0 && av > total) {
+          av = total;
+          showToast("Avance no puede superar " + formatHa(total) + " ha", true);
+        }
+        fAvance.value = formatHa(av);
+        previewFromForm();
+        return;
+      }
       const lot = byPos.get(fLote.value);
       const area = lot ? roundHa(lot.ha) : 0;
       const raw = String(fAvance.value || "").trim().replace(",", ".");
@@ -3703,12 +5480,82 @@
     fTotalJr.addEventListener("change", previewFromForm);
     fFecha.addEventListener("change", previewFromForm);
 
+    document.getElementById("multiLotToggle")?.addEventListener("click", () => {
+      setMultiLotMode(!multiLotMode);
+    });
+    document.getElementById("multiLotSummary")?.addEventListener("click", openMultiLotModal);
+    document.getElementById("multiLotCloseBtn")?.addEventListener("click", closeMultiLotModal);
+    document.getElementById("multiLotClearBtn")?.addEventListener("click", () => {
+      clearMultiLots(true);
+    });
+    document.getElementById("multiLotModal")?.addEventListener("click", e => {
+      if (e.target.id === "multiLotModal") {
+        if (Date.now() - multiModalOpenedAt < 350) return;
+        closeMultiLotModal();
+        return;
+      }
+      const sw = e.target.closest(".swatch");
+      if (sw?.dataset.color) {
+        e.preventDefault();
+        e.stopPropagation();
+        setMultiPaintColor(sw.dataset.color, false);
+        return;
+      }
+      const rm = e.target.closest("[data-remove]");
+      if (rm) {
+        e.preventDefault();
+        e.stopPropagation();
+        removeMultiLot(rm.getAttribute("data-remove"));
+      }
+    });
+    document.getElementById("multiLotModal")?.addEventListener("input", e => {
+      if (e.target.matches('input[type="color"]')) {
+        setMultiPaintColor(e.target.value, true);
+        return;
+      }
+      const inp = e.target.closest("input[data-avance]");
+      if (!inp) return;
+      commitMultiLotAvanceInput(inp, { paint: true, format: false });
+    });
+    document.getElementById("multiLotModal")?.addEventListener("change", e => {
+      const inp = e.target.closest("input[data-avance]");
+      if (!inp) return;
+      commitMultiLotAvanceInput(inp, { paint: true, format: true });
+    });
+    document.getElementById("multiLotModal")?.addEventListener("blur", e => {
+      const inp = e.target.closest("input[data-avance]");
+      if (!inp) return;
+      commitMultiLotAvanceInput(inp, { paint: true, format: true });
+    }, true);
+    document.getElementById("multiLotModal")?.addEventListener("focusin", e => {
+      const row = e.target.closest(".multi-lot-row");
+      if (!row) return;
+      // Mantener la fila visible sin reordenar ni re-renderizar la lista
+      row.scrollIntoView({ block: "nearest", behavior: "auto" });
+    });
+    document.getElementById("loteMultiWrap")?.addEventListener("click", e => {
+      const sw = e.target.closest(".swatch");
+      if (sw?.dataset.color) setMultiPaintColor(sw.dataset.color, false);
+    });
+    document.getElementById("loteMultiWrap")?.addEventListener("input", e => {
+      if (e.target.matches('input[type="color"]')) {
+        setMultiPaintColor(e.target.value, true);
+      }
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      const modal = document.getElementById("multiLotModal");
+      if (modal?.classList.contains("open")) closeMultiLotModal();
+    });
+    renderColorPalettes();
+
     document.getElementById("laborForm").addEventListener("submit", e => {
       e.preventDefault();
       commitLaborFromForm(true);
     });
     document.getElementById("saveLaborBtn").addEventListener("click", e => {
       e.preventDefault();
+      e.stopPropagation();
       commitLaborFromForm(true);
     });
     document.getElementById("openLaborBtn").onclick = () => openLaborDrawer();
@@ -3729,6 +5576,8 @@
     function clearAllShadedAreas() {
       laborRecords = {};
       saveLaborRecords();
+      if (multiLotMode) setMultiLotMode(false);
+      clearMultiLots(true);
       refreshAllLaborVisuals();
       setLoteValue("", true);
       fModulo.value = "";
@@ -3828,7 +5677,11 @@
     document.getElementById("openFilterBtn")?.addEventListener("click", openFilterModal);
     document.getElementById("closeFilterModal")?.addEventListener("click", closeFilterModal);
     document.getElementById("filterBackdrop")?.addEventListener("click", closeFilterModal);
-    document.getElementById("filterApplyBtn")?.addEventListener("click", () => applyMapFilters(true));
+    document.getElementById("filterApplyBtn")?.addEventListener("click", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
+    });
     document.getElementById("filterClearBtn")?.addEventListener("click", () => {
       mapQuery = { sem: currentWeek, fecha: "", modulo: "", laborReal: "" };
       activeMod = null;
@@ -3840,20 +5693,6 @@
       }
       refreshFilterPanelUI();
       applyMapFilters(true);
-    });
-    document.getElementById("filterModal")?.addEventListener("click", e => {
-      const chip = e.target.closest(".filter-chip");
-      if (!chip) return;
-      const key = chip.dataset.key;
-      const value = chip.dataset.value || "";
-      if (!key) return;
-      if (String(mapQuery[key] ?? "") === value) {
-        if (key === "sem") mapQuery.sem = currentWeek;
-        else mapQuery[key] = "";
-      } else {
-        mapQuery[key] = key === "sem" ? Number(value) || value : value;
-      }
-      refreshFilterPanelUI();
     });
     loadFilterOptions();
     document.getElementById("closeProgressModal").onclick = closeProgressModal;
@@ -3889,34 +5728,81 @@
       setTimeout(() => URL.revokeObjectURL(url), 1500);
     }
 
-    function buildMapCanvas() {
-      const cw = 78;
-      const ch = 58;
-      const pad = 28;
-      const headerH = 64;
-      const footerH = 36;
+    function buildMapCanvas(opts = {}) {
+      // Objetivo ~8K en el lado largo (con fallback si el navegador no aguanta)
+      const wanted = Math.max(3840, Math.min(Number(opts.targetLong) || 7680, 8192));
+      const attempts = [wanted, 6144, 4096, 3200];
+      let lastErr = null;
+      for (let ai = 0; ai < attempts.length; ai++) {
+        try {
+          return renderMapCanvasAt(attempts[ai]);
+        } catch (err) {
+          lastErr = err;
+          console.warn("Export canvas", attempts[ai], err);
+        }
+      }
+      throw lastErr || new Error("No se pudo generar el plano");
+    }
+
+    function renderMapCanvasAt(targetLong) {
+      const baseCw = 96;
+      const baseCh = 72;
+      const basePad = 48;
+      const baseHeaderH = 110;
+      const baseFooterH = 56;
+      const baseMapW = cols * baseCw;
+      const baseMapH = rowsCount * baseCh;
+      const baseTotalW = baseMapW + basePad * 2;
+      const baseTotalH = baseMapH + basePad * 2 + baseHeaderH + baseFooterH;
+      const scale = Math.max(1, targetLong / Math.max(baseTotalW, baseTotalH));
+
+      const cw = Math.max(48, Math.round(baseCw * scale));
+      const ch = Math.max(36, Math.round(baseCh * scale));
+      const pad = Math.max(24, Math.round(basePad * scale));
+      const headerH = Math.max(64, Math.round(baseHeaderH * scale));
+      const footerH = Math.max(36, Math.round(baseFooterH * scale));
       const mapW = cols * cw;
       const mapH = rowsCount * ch;
       const canvas = document.createElement("canvas");
       canvas.width = mapW + pad * 2;
       canvas.height = mapH + pad * 2 + headerH + footerH;
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx || !canvas.width || !canvas.height) throw new Error("Canvas demasiado grande");
+
+      ctx.imageSmoothingEnabled = true;
+      if ("imageSmoothingQuality" in ctx) ctx.imageSmoothingQuality = "high";
+
+      const fontTitle = Math.max(28, Math.round(36 * scale));
+      const fontSub = Math.max(16, Math.round(20 * scale));
+      const fontCellTop = Math.max(14, Math.round(15 * scale));
+      const fontCellMid = Math.max(13, Math.round(14 * scale));
+      const fontCellBot = Math.max(12, Math.round(13 * scale));
+      const fontFoot = Math.max(14, Math.round(16 * scale));
+      const strokeCell = Math.max(1.5, 2 * scale);
+      const fontStack = 'system-ui, "Segoe UI", Roboto, Arial, sans-serif';
 
       ctx.fillStyle = "#f4f7f5";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       ctx.fillStyle = "#0f3327";
-      ctx.font = "700 22px Inter, Arial, sans-serif";
-      ctx.fillText(pageTitle || "PLANO DE COSECHA ETAPA I", pad, 34);
-      ctx.fillStyle = "#64748b";
-      ctx.font = "600 13px Inter, Arial, sans-serif";
-      ctx.fillText(`Q Berries · Semana ${currentWeek} · ${uniqueLotes} lotes · ${Number(data.totalHa).toFixed(2)} ha`, pad, 54);
+      ctx.font = "800 " + fontTitle + "px " + fontStack;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(pageTitle || "PLANO DE COSECHA ETAPA I", pad, Math.round(pad * 0.55 + fontTitle));
+      ctx.fillStyle = "#475569";
+      ctx.font = "600 " + fontSub + "px " + fontStack;
+      ctx.fillText(
+        "Q Berries · Semana " + currentWeek + " · " + uniqueLotes + " lotes · " + Number(data.totalHa).toFixed(2) + " ha",
+        pad,
+        Math.round(pad * 0.55 + fontTitle + fontSub + 10 * scale)
+      );
 
       const ox = pad;
       const oy = pad + headerH;
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(ox, oy, mapW, mapH);
-      ctx.strokeStyle = "#cbd5e1";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = Math.max(1, scale);
       ctx.strokeRect(ox + 0.5, oy + 0.5, mapW - 1, mapH - 1);
 
       labelRows.forEach((r, ri) => {
@@ -3931,36 +5817,40 @@
           const av = Math.min(area, Math.max(0, Number(rec?.avance) || 0));
           const pct = area > 0 ? Math.min(1, av / area) : 0;
           const mod = lot.modulo != null ? modById[lot.modulo] : null;
-          const fillColor = mod?.badge || mod?.fill || "#94a3b8";
+          const fillColor = (rec && rec.color) || mod?.badge || mod?.fill || "#94a3b8";
 
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(x, y, cw, ch);
           if (pct > 0) {
             const fh = ch * pct;
             ctx.fillStyle = fillColor;
-            ctx.globalAlpha = 0.72;
+            ctx.globalAlpha = 0.78;
             ctx.fillRect(x, y + ch - fh, cw, fh);
             ctx.globalAlpha = 1;
           }
           ctx.strokeStyle = border;
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(x + 0.75, y + 0.75, cw - 1.5, ch - 1.5);
+          ctx.lineWidth = strokeCell;
+          const inset = strokeCell / 2;
+          ctx.strokeRect(x + inset, y + inset, cw - strokeCell, ch - strokeCell);
+
           ctx.fillStyle = "#0b0f0d";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.font = "800 11px Inter, Arial, sans-serif";
-          ctx.fillText(String(lot.tunel || "").toUpperCase(), x + cw / 2, y + ch * 0.28);
-          ctx.fillText("LT." + lot.lote, x + cw / 2, y + ch * 0.52);
-          ctx.font = "700 10px Inter, Arial, sans-serif";
-          ctx.fillText(lot.ha != null ? Number(lot.ha).toFixed(2) : "", x + cw / 2, y + ch * 0.76);
+          ctx.font = "800 " + fontCellTop + "px " + fontStack;
+          ctx.fillText(String(lot.tunel || "").toUpperCase(), x + cw / 2, y + ch * 0.26);
+          ctx.font = "800 " + fontCellMid + "px " + fontStack;
+          ctx.fillText("LT." + lot.lote, x + cw / 2, y + ch * 0.5);
+          ctx.font = "700 " + fontCellBot + "px " + fontStack;
+          ctx.fillText(lot.ha != null ? Number(lot.ha).toFixed(2) : "", x + cw / 2, y + ch * 0.74);
         }
       });
 
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      ctx.fillStyle = "#64748b";
-      ctx.font = "600 11px Inter, Arial, sans-serif";
-      ctx.fillText(modules.map(m => m.label + " " + m.ha + " ha").join("  ·  "), pad, canvas.height - 16);
+      ctx.fillStyle = "#475569";
+      ctx.font = "700 " + fontFoot + "px " + fontStack;
+      const legend = modules.map(m => m.label + " " + m.ha + " ha").join("   ·   ");
+      ctx.fillText(legend, pad, canvas.height - Math.round(pad * 0.45));
       return canvas;
     }
 
@@ -3983,17 +5873,20 @@
     }
 
     async function canvasToPdfBlob(canvas) {
-      const jpegBlob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+      // JPEG alta calidad + página grande (hasta ~A0) para que se vea nítido al zoom/imprimir
+      const jpegBlob = await canvasToBlob(canvas, "image/jpeg", 0.96);
       const jpg = new Uint8Array(await jpegBlob.arrayBuffer());
       const w = canvas.width;
       const h = canvas.height;
-      const pageW = 842;
-      const pageH = 595;
-      const scaleFit = Math.min(pageW / w, pageH / h) * 0.92;
-      const imgW = w * scaleFit;
-      const imgH = h * scaleFit;
-      const imgX = (pageW - imgW) / 2;
-      const imgY = (pageH - imgH) / 2;
+      const maxPage = 3370; // ~A0 en puntos
+      const scaleFit = Math.min(maxPage / w, maxPage / h);
+      const pageW = Math.max(1, Math.round(w * scaleFit));
+      const pageH = Math.max(1, Math.round(h * scaleFit));
+      const margin = Math.max(12, Math.round(Math.min(pageW, pageH) * 0.012));
+      const imgW = pageW - margin * 2;
+      const imgH = pageH - margin * 2;
+      const imgX = margin;
+      const imgY = margin;
       const content = "q\n" + imgW.toFixed(2) + " 0 0 " + imgH.toFixed(2) + " " + imgX.toFixed(2) + " " + imgY.toFixed(2) + " cm\n/Im0 Do\nQ";
       const objs = [
         "<< /Type /Catalog /Pages 2 0 R >>",
@@ -4097,15 +5990,19 @@
     }
 
     exportImageBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
-      const blob = await canvasToBlob(buildMapCanvas(), "image/png");
-      downloadBlob(blob, exportFileBase() + ".png");
-      showToast("Imagen descargada", false, "Mapa en formato PNG");
+      showToast("Generando imagen 8K…", false, "Alta resolución");
+      const canvas = buildMapCanvas({ targetLong: 7680 });
+      const blob = await canvasToBlob(canvas, "image/png");
+      downloadBlob(blob, exportFileBase() + "-8k.png");
+      showToast("Imagen descargada", false, canvas.width + "×" + canvas.height + " px");
     })));
 
     exportPdfBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
-      const blob = await canvasToPdfBlob(buildMapCanvas());
-      downloadBlob(blob, exportFileBase() + ".pdf");
-      showToast("PDF descargado", false, "Mapa en formato PDF");
+      showToast("Generando PDF HD…", false, "Página grande · alta calidad");
+      const canvas = buildMapCanvas({ targetLong: 7680 });
+      const blob = await canvasToPdfBlob(canvas);
+      downloadBlob(blob, exportFileBase() + "-hd.pdf");
+      showToast("PDF descargado", false, "Listo para zoom e impresión");
     })));
 
     exportExcelBtns.forEach(btn => btn.addEventListener("click", () => withExportBusy(async () => {
@@ -4114,17 +6011,43 @@
       showToast("Excel descargado", false, "Lotes y labores en hoja de cálculo");
     })));
 
+    function updatePendingChips() {
+      const n = QBApi.queueCount();
+      const mob = document.getElementById("mobPendChip");
+      const mobN = document.getElementById("mobPendCount");
+      const desk = document.getElementById("deskPendChip");
+      const deskN = document.getElementById("deskPendCount");
+      if (mobN) mobN.textContent = String(n);
+      if (deskN) deskN.textContent = String(n);
+      if (mob) mob.classList.toggle("show", n > 0);
+      if (desk) desk.classList.toggle("show", n > 0);
+    }
+
+    window.QB_onStatusChange = updatePendingChips;
+    window.QB_onQueueFlushed = n => {
+      updatePendingChips();
+      if (n > 0) {
+        showToast("Cola enviada", false, n + " pendiente(s) subidos a la hoja");
+        refreshMapData(false);
+      }
+    };
+    updatePendingChips();
+
     refreshAllLaborVisuals();
     updateMobileChrome();
     if (API_URL) {
-      syncLaborsFromSheet(currentMapFilters(), { replace: true }).then(n => {
-        if (n > 0) {
-          lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
-          updateMobileChrome();
-          showToast("Mapa actualizado", false, `${n} lotes desde la hoja`);
-        }
+      refreshMapData(false).then(n => {
+        if (n > 0) showToast("Mapa actualizado", false, `${n} lotes desde la hoja`);
       });
-      QBApi.flushQueue();
+      startAutoSync();
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") autoSyncFromSheet();
+      });
+      window.addEventListener("online", () => {
+        updatePendingChips();
+        autoSyncFromSheet();
+      });
+      window.addEventListener("pageshow", () => autoSyncFromSheet());
     }
 
     if ("serviceWorker" in navigator) {

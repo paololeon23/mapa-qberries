@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QB Labores" />
@@ -14,45 +15,133 @@
   <title>Q Berries · Labores</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --qb-red: #e31e24;
       --qb-orange: #f6921e;
+      --qb-slate: #334155;
       --forest: #0f3327;
       --forest-soft: #2f8a58;
-      --ink: #111827;
-      --muted: #6b7280;
+      --ink: #0f172a;
+      --muted: #64748b;
       --line: #e5e7eb;
       --panel: #fff;
       --canvas: #f9fafb;
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 0px);
+      --app-h: 100dvh;
       --app-max: 100%;
       --input-h: 50px;
-      --pick-min-h: 50px;
       --btn-h: 52px;
-      --fs-body: 1rem;
-      --fs-pick: 0.95rem;
-      --fs-title: 1.35rem;
+      --fs-body: 0.95rem;
+      --fs-pick: 0.9rem;
+      --fs-title: 1.28rem;
       --space: 1rem;
+      --font: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+      --tracking-tight: -0.025em;
+      --tracking-ui: -0.01em;
+      --tracking-label: 0.01em;
+      --tracking-caps: 0.08em;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html { height: 100%; }
+    html {
+      height: 100%;
+      height: 100dvh;
+      touch-action: manipulation;
+      overflow: hidden;
+      overscroll-behavior: none;
+      text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
     body {
       margin: 0;
-      min-height: 100%;
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      height: var(--app-h, 100dvh);
+      max-height: var(--app-h, 100dvh);
+      font-family: var(--font);
+      font-size: var(--fs-body);
+      font-weight: 500;
+      letter-spacing: var(--tracking-ui);
+      line-height: 1.45;
       color: var(--ink);
       background: var(--canvas);
       -webkit-font-smoothing: antialiased;
-      padding-bottom: calc(5.75rem + var(--safe-b));
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      font-feature-settings: "kern" 1, "liga" 1;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow: hidden;
+      overscroll-behavior: none;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 0;
     }
+    button, input, select, textarea {
+      font-family: inherit;
+      letter-spacing: inherit;
+    }
+    button, a, input, label, .mpick-trigger, .picker-option, .fab-options {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    img {
+      -webkit-user-drag: none;
+      user-select: none;
+      pointer-events: none;
+    }
+    a img { pointer-events: auto; }
 
-    /* ── App header (referencia) ── */
+    /* Bloqueo escritorio (pointer fino) — no se engaña achicando la ventana */
+    .desktop-gate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #f4f7f5;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    body.is-desktop-lock .desktop-gate { display: flex; }
+    html.is-desktop-lock,
+    body.is-desktop-lock {
+      overflow: hidden !important;
+      height: 100% !important;
+    }
+    body.is-desktop-lock > :not(.desktop-gate) {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .desktop-gate-card {
+      max-width: 420px;
+      background: #fff;
+      border: 1px solid #d6e0da;
+      border-radius: 18px;
+      padding: 2rem 1.5rem;
+      box-shadow: 0 12px 40px rgba(15, 51, 39, 0.1);
+    }
+    .desktop-gate-card h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
+      color: #0f3327;
+    }
+    .desktop-gate-card p {
+      margin: 0;
+      color: #64748b;
+      font-size: 0.92rem;
+      font-weight: 500;
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+    /* ── App header ── */
     .app-head {
-      position: sticky;
-      top: 0;
+      position: relative;
+      flex-shrink: 0;
       z-index: 50;
       background: #fff;
       padding: calc(0.85rem + var(--safe-t)) 1rem 0.85rem;
@@ -94,45 +183,51 @@
     }
     .app-titles { min-width: 0; flex: 1; }
     .app-eyebrow {
-      margin: 0 0 0.2rem;
-      font-size: 0.62rem;
+      margin: 0 0 0.18rem;
+      font-size: 0.64rem;
       font-weight: 800;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--qb-red);
+      line-height: 1.2;
     }
     .app-titles h1 {
       margin: 0;
       font-size: var(--fs-title);
       font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
+      line-height: 1.12;
+      letter-spacing: var(--tracking-tight);
       color: var(--ink);
     }
     .app-sub {
-      margin: 0.2rem 0 0;
-      font-size: 0.88rem;
+      margin: 0.22rem 0 0;
+      font-size: 0.82rem;
       font-weight: 500;
       color: var(--muted);
       line-height: 1.3;
+      letter-spacing: 0;
     }
 
     .app-status {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 0.4rem;
+      gap: 0.35rem;
       flex-shrink: 0;
     }
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.34rem 0.65rem;
+      justify-content: flex-start;
+      gap: 0.32rem;
+      width: auto;
+      max-width: max-content;
+      box-sizing: border-box;
+      padding: 0.28rem 0.55rem;
       border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       border: 1px solid var(--line);
       background: #fff;
       color: var(--muted);
@@ -175,7 +270,14 @@
 
     /* ── Main ── */
     main {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding: var(--space);
+      padding-bottom: calc(4.75rem + var(--safe-b) + var(--space));
       max-width: var(--app-max);
       margin: 0 auto;
       width: 100%;
@@ -209,7 +311,10 @@
       font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
+      transition: opacity .15s, background .15s;
     }
+    .install-card button:hover { background: #14532d; }
+    .install-card button:active { opacity: 0.88; }
     .install-card button:disabled {
       opacity: 0.55;
       cursor: not-allowed;
@@ -221,17 +326,18 @@
       border-radius: 18px;
       padding: 1.25rem 1.2rem;
       box-shadow: 0 2px 14px rgba(15, 51, 39, 0.05);
+      transition: border-color .2s, box-shadow .2s, background .2s;
       margin-bottom: 1rem;
     }
     .card-head {
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 1.15rem;
+      gap: 0.65rem;
+      margin-bottom: 1rem;
     }
     .card-head-accent {
-      width: 4px;
-      min-height: 2.35rem;
+      width: 3px;
+      min-height: 2.1rem;
       align-self: stretch;
       border-radius: 4px;
       background: linear-gradient(180deg, var(--qb-orange) 0%, var(--qb-red) 100%);
@@ -243,32 +349,35 @@
     }
     .card-head h2 {
       margin: 0;
-      font-size: 0.92rem;
+      font-size: 0.8rem;
       font-weight: 800;
-      letter-spacing: 0.05em;
+      letter-spacing: var(--tracking-caps);
       text-transform: uppercase;
       color: #1a3c34;
-      line-height: 1.2;
+      line-height: 1.25;
     }
     .card-head-sub {
-      margin: 0.28rem 0 0;
-      font-size: 0.82rem;
-      font-weight: 400;
+      margin: 0.22rem 0 0;
+      font-size: 0.78rem;
+      font-weight: 500;
       color: #757575;
-      line-height: 1.4;
+      line-height: 1.35;
+      letter-spacing: 0;
     }
     .card-head .draft-badge {
       align-self: flex-start;
-      margin-top: 0.15rem;
+      margin-top: 0.05rem;
+      flex-shrink: 0;
     }
     .draft-badge {
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       font-weight: 700;
       color: #047857;
       background: #ecfdf5;
-      padding: 0.2rem 0.45rem;
+      padding: 0.18rem 0.4rem;
       border-radius: 999px;
       display: none;
+      white-space: nowrap;
     }
     .draft-badge.show { display: inline-block; }
 
@@ -277,10 +386,10 @@
     .field label {
       display: block;
       margin-bottom: 0.5rem;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #1f2937;
-      letter-spacing: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--qb-slate);
+      letter-spacing: var(--tracking-label);
       text-transform: none;
     }
     .field label .req {
@@ -342,21 +451,33 @@
     /* ── Select personalizado (mobile picker) ── */
     .mpick-trigger {
       width: 100%;
-      min-height: var(--pick-min-h);
+      height: var(--input-h);
+      min-height: var(--input-h);
+      max-height: var(--input-h);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.65rem;
-      padding: 0.65rem 0.95rem;
+      padding: 0 0.95rem;
       border: 1px solid #e0e0e0;
       border-radius: 12px;
       background: #f9f9f9;
-      font: inherit;
+      font-family: inherit;
+      font-size: var(--fs-pick);
+      font-weight: 600;
+      letter-spacing: var(--tracking-ui);
+      line-height: 1.2;
       cursor: pointer;
       text-align: left;
-      transition: border-color .15s, box-shadow .15s, background .15s;
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s;
     }
-    .mpick-trigger:active { transform: scale(0.995); }
+    .mpick-trigger:hover {
+      border-color: #cbd5e1;
+      background: #fff;
+    }
+    .mpick-trigger:active { opacity: 0.88; }
     .mpick-trigger:focus-visible {
       outline: none;
       background: #fff;
@@ -366,22 +487,21 @@
     .mpick-text {
       flex: 1;
       min-width: 0;
-      font-size: var(--fs-pick);
-      font-weight: 700;
+      font-size: var(--fs-pick) !important;
+      font-weight: 600;
+      letter-spacing: var(--tracking-ui);
       color: var(--forest);
-      line-height: 1.2;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .mpick-text.is-empty {
       color: #bdbdbd;
       font-weight: 500;
     }
-    .mpick-text small {
-      display: block;
-      margin-top: 0.12rem;
-      font-size: 0.72rem;
-      font-weight: 500;
-      color: var(--muted);
-    }
+    /* Una sola línea en el botón = misma altura que inputs */
+    .mpick-text small { display: none !important; }
     .mpick-chevron {
       width: 18px;
       height: 18px;
@@ -438,10 +558,10 @@
     }
     .picker-head h3 {
       margin: 0;
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       font-weight: 800;
       color: var(--forest);
-      letter-spacing: -0.01em;
+      letter-spacing: var(--tracking-tight);
     }
     .picker-close {
       width: 36px;
@@ -503,24 +623,30 @@
       border-radius: 14px;
       background: #fff;
       cursor: pointer;
-      font: inherit;
-      transition: border-color .12s, background .12s;
+      font-family: inherit;
+      font-size: var(--fs-pick);
+      transition: border-color .12s, background .12s, opacity .12s;
     }
+    .picker-option:hover {
+      border-color: #cbd5e1;
+      background: #f9fafb;
+    }
+    .picker-option:active { opacity: 0.88; background: #f3f4f6; }
     .picker-option b {
       display: block;
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: var(--fs-pick);
+      font-weight: 600;
       color: var(--forest);
-      line-height: 1.2;
+      line-height: 1.25;
+      letter-spacing: var(--tracking-ui);
     }
     .picker-option small {
       display: block;
       margin-top: 0.18rem;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 500;
       color: var(--muted);
     }
-    .picker-option:active { background: #f9fafb; }
     .picker-option.selected {
       border-color: var(--forest-soft);
       background: #f0fdf4;
@@ -563,18 +689,18 @@
       border-left: 1px solid #e2ebe6;
     }
     .meta-k {
-      font-size: 0.62rem;
+      font-size: 0.64rem;
       font-weight: 800;
-      letter-spacing: 0.09em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: #64748b;
     }
     .meta-v {
-      font-size: 1.08rem;
+      font-size: 1.05rem;
       font-weight: 800;
       color: var(--forest);
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
+      letter-spacing: var(--tracking-tight);
       line-height: 1.2;
     }
     .meta-cell:first-child .meta-v {
@@ -683,6 +809,98 @@
 
     /* ── Historial ── */
     .history-list { display: flex; flex-direction: column; gap: 0.45rem; }
+    .hist-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.15rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .hist-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .hist-sheet {
+      width: min(400px, 100%);
+      max-height: min(82vh, 620px);
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.2);
+      display: flex;
+      flex-direction: column;
+      padding: 1.15rem 1.1rem 1rem;
+      transform: translateY(10px) scale(0.98);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .hist-modal.open .hist-sheet { transform: translateY(0) scale(1); }
+    .hist-sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      flex-shrink: 0;
+    }
+    .hist-sheet-head h3 {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
+      color: var(--forest);
+    }
+    .hist-sheet-head p {
+      margin: 0.2rem 0 0;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .hist-sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .history-pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-shrink: 0;
+    }
+    .history-pager .page-info {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .history-pager button {
+      height: 36px;
+      padding: 0 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--forest);
+      cursor: pointer;
+      transition: opacity .15s, border-color .15s, background .15s;
+    }
+    .history-pager button:hover { border-color: #cbd5e1; background: #f9fafb; }
+    .history-pager button:active { opacity: 0.88; }
+    .history-pager button:disabled { opacity: 0.4; cursor: default; }
     .history-item {
       display: flex;
       align-items: center;
@@ -693,17 +911,23 @@
       background: #f9fafb;
       border: 1px solid #f3f4f6;
     }
-    .history-item b { font-size: 0.82rem; display: block; }
+    .history-item b {
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: var(--tracking-ui);
+      display: block;
+    }
     .history-item small {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       color: var(--muted);
       font-weight: 500;
+      letter-spacing: 0;
     }
     .history-tag {
       flex-shrink: 0;
-      font-size: 0.58rem;
+      font-size: 0.6rem;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       padding: 0.22rem 0.45rem;
       border-radius: 999px;
@@ -742,64 +966,246 @@
       border: 1px solid var(--line);
       background: #fff;
       font: inherit;
-      font-size: calc(var(--fs-body) * 0.9);
+      font-size: 0.9rem;
       font-weight: 700;
+      letter-spacing: var(--tracking-ui);
       cursor: pointer;
-      transition: transform .1s;
+      transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s, color .15s;
     }
-    .btn:active { transform: scale(0.98); }
+    .btn:hover {
+      border-color: #cbd5e1;
+      background: #f9fafb;
+    }
+    .btn:active { opacity: 0.88; }
     .btn-primary {
       background: var(--forest);
       border-color: var(--forest);
       color: #fff;
       box-shadow: 0 4px 14px rgba(15,51,39,0.2);
     }
+    .btn-primary:hover {
+      background: #14532d;
+      border-color: #14532d;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(15,51,39,0.28);
+    }
+    .btn-primary:active { opacity: 0.88; }
     .btn-primary.saved { background: #047857; border-color: #047857; }
     .btn:disabled { opacity: 0.55; cursor: wait; }
 
-    /* ── FAB mapa ── */
-    .fab-map {
+    /* ── FAB opciones ── */
+    .fab-wrap {
       position: fixed;
       right: 1rem;
       bottom: calc(5.9rem + var(--safe-b));
       z-index: 65;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.55rem;
+    }
+    .fab-menu {
+      display: none;
+      min-width: 168px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+      overflow: hidden;
+    }
+    .fab-wrap.is-open .fab-menu { display: block; }
+    .fab-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 1.1rem;
+      border: 0;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fff;
+      color: #0f172a;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: var(--tracking-ui);
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+    .fab-menu button:last-child { border-bottom: 0; }
+    .fab-menu button:hover { background: #f8fafc; }
+    .fab-menu button:active { opacity: 0.88; }
+    .fab-options {
       width: 54px;
       height: 54px;
       border-radius: 17px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: linear-gradient(145deg, #2f8a58 0%, #0f3327 100%);
-      color: #fff;
-      box-shadow:
-        0 10px 28px rgba(15, 51, 39, 0.32),
-        0 2px 8px rgba(15, 51, 39, 0.14);
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
       display: flex;
       align-items: center;
       justify-content: center;
-      text-decoration: none;
       cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease;
-      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow .15s ease, opacity .15s ease, border-color .15s ease;
     }
-    .fab-map:hover {
-      box-shadow:
-        0 12px 32px rgba(15, 51, 39, 0.36),
-        0 4px 12px rgba(15, 51, 39, 0.16);
+    .fab-options:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
     }
-    .fab-map:active {
-      transform: scale(0.94);
+    .fab-options:active { opacity: 0.88; }
+    .fab-options[aria-expanded="true"] {
+      border-color: #cbd5e1;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
     }
-    .fab-map.fab-map--enter {
-      animation: fabMapIn 0.32s ease;
+    .fab-scrim {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 64;
+      background: transparent;
     }
-    @keyframes fabMapIn {
-      from { opacity: 0; transform: translateY(10px) scale(0.88); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    .fab-wrap.is-open + .fab-scrim { display: block; }
+
+    /* Modal Actualizar */
+    .upd-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
     }
-    .fab-map svg {
-      width: 25px;
-      height: 25px;
+    .upd-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .upd-card {
+      width: min(360px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.18);
+      padding: 1.25rem 1.2rem 1.15rem;
+    }
+    .upd-card-head {
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-start;
+      margin-bottom: 1.15rem;
+    }
+    .upd-card-accent {
+      width: 3px;
+      min-height: 2.4rem;
+      border-radius: 2px;
+      background: var(--qb-orange);
       flex-shrink: 0;
-      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+      margin-top: 0.15rem;
+    }
+    .upd-card-head h3 {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #0f172a;
+    }
+    .upd-card-head p {
+      margin: 0.28rem 0 0;
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.4;
+      letter-spacing: 0;
+    }
+    .upd-meta {
+      text-align: center;
+      margin: 0.25rem 0 1.15rem;
+    }
+    .upd-meta .ver {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #64748b;
+    }
+    .upd-meta .msg {
+      margin: 0.45rem 0 0;
+      font-size: 0.86rem;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.45;
+      letter-spacing: 0;
+    }
+    .upd-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .upd-actions .btn { width: 100%; }
+
+    /* Pantalla actualizando */
+    .upd-progress {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      background: #fff;
+      text-align: center;
+    }
+    .upd-progress.open { display: flex; }
+    .upd-progress .brand-mark {
+      width: 72px;
+      height: auto;
+      margin-bottom: 0.55rem;
+    }
+    .upd-progress .brand-name {
+      margin: 0 0 1.75rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--qb-red);
+    }
+    .upd-progress h2 {
+      margin: 0 0 0.45rem;
+      font-size: 1.38rem;
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
+      color: #0f172a;
+    }
+    .upd-progress .sub {
+      margin: 0 0 1.75rem;
+      font-size: 0.92rem;
+      color: #64748b;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .upd-bar {
+      width: min(280px, 100%);
+      height: 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+    .upd-bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--forest);
+      transition: width .2s linear;
+    }
+    .upd-pct {
+      margin: 0.75rem 0 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--forest);
     }
 
     .toast {
@@ -812,8 +1218,9 @@
       color: #fff;
       padding: 0.8rem 1.1rem;
       border-radius: 14px;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 700;
+      letter-spacing: var(--tracking-ui);
       box-shadow: 0 16px 40px rgba(15,51,39,0.28);
       opacity: 0;
       transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s;
@@ -828,10 +1235,9 @@
       :root {
         --app-max: 680px;
         --input-h: 58px;
-        --pick-min-h: 58px;
         --btn-h: 58px;
-        --fs-body: 1.08rem;
-        --fs-pick: 1.05rem;
+        --fs-body: 1rem;
+        --fs-pick: 0.95rem;
         --fs-title: 1.65rem;
         --space: 1.35rem;
       }
@@ -851,8 +1257,8 @@
       .app-eyebrow { font-size: 0.72rem; }
       .app-sub { font-size: 1rem; }
       .status-pill {
-        font-size: 0.78rem;
-        padding: 0.38rem 0.72rem;
+        font-size: 0.72rem;
+        padding: 0.3rem 0.58rem;
       }
       .status-pill .dot { width: 8px; height: 8px; }
       .status-pill svg { width: 15px; height: 15px; }
@@ -865,9 +1271,8 @@
       .card-head-sub { font-size: 0.88rem; }
       .field label { font-size: 0.92rem; margin-bottom: 0.55rem; }
       .field { margin-bottom: 1.05rem; }
-      .mpick-text small { font-size: 0.82rem; }
       .mpick-chevron { width: 20px; height: 20px; }
-      .mpick-trigger { padding: 0.75rem 1rem; border-radius: 16px; }
+      .mpick-trigger { padding: 0 1rem; border-radius: 16px; }
       .row2 { gap: 0.85rem; }
       .form-meta {
         padding: 1.1rem 1.25rem;
@@ -924,18 +1329,17 @@
         padding: 1rem 1.15rem;
         border-radius: 16px;
       }
-      .picker-option b { font-size: 1.06rem; }
-      .picker-option small { font-size: 0.88rem; margin-top: 0.22rem; }
+      .picker-option b { font-size: var(--fs-pick); }
+      .picker-option small { font-size: 0.78rem; margin-top: 0.22rem; }
     }
 
     @media (min-width: 1024px) {
       :root {
         --app-max: 820px;
         --input-h: 64px;
-        --pick-min-h: 64px;
         --btn-h: 62px;
-        --fs-body: 1.12rem;
-        --fs-pick: 1.1rem;
+        --fs-body: 1.05rem;
+        --fs-pick: 0.98rem;
         --fs-title: 1.85rem;
         --space: 1.65rem;
       }
@@ -963,40 +1367,32 @@
       .picker-head h3 { font-size: 1.4rem; }
       .picker-search-wrap input { height: 56px; font-size: 1.1rem; }
       .picker-option { padding: 1.1rem 1.25rem; }
-      .picker-option b { font-size: 1.12rem; }
+      .picker-option b { font-size: var(--fs-pick); }
       .dock { padding: 1rem 2rem calc(1rem + var(--safe-b)); }
       .dock-inner { gap: 0.75rem; }
-      .fab-map {
+      .fab-wrap {
         right: 1.35rem;
+        bottom: calc(6.25rem + var(--safe-b));
+      }
+      .fab-options {
         width: 58px;
         height: 58px;
         border-radius: 18px;
-        bottom: calc(6.25rem + var(--safe-b));
       }
-      .fab-map svg { width: 27px; height: 27px; }
     }
 
     @media (min-width: 1280px) {
-      .fab-map { display: none !important; }
-    }
-
-    /* Solo celular / tablet — ocultar en escritorio ancho */
-    @media (min-width: 1280px) {
-      body::before {
-        content: "QB Labores · Abre en celular o tablet, o instala la app PWA";
-        display: block;
-        text-align: center;
-        padding: 0.65rem 1rem;
-        background: #fffbeb;
-        border-bottom: 1px solid #fde68a;
-        color: #92400e;
-        font-size: 0.82rem;
-        font-weight: 600;
-      }
+      .fab-wrap, .fab-scrim { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <div class="desktop-gate" id="desktopGate" aria-hidden="true">
+    <div class="desktop-gate-card">
+      <h1>QB Labores es para celular</h1>
+      <p>Abre esta app en tu teléfono o tablet, o instálala como PWA. En computadora de escritorio no está disponible.</p>
+    </div>
+  </div>
   <header class="app-head">
     <div class="app-head-row">
       <div class="app-brand">
@@ -1005,8 +1401,8 @@
         </div>
         <div class="app-titles">
           <p class="app-eyebrow">Q Berries</p>
-          <h1>Reporte de labores</h1>
-          <p class="app-sub" id="subTitle">Evaluaciones de campo</p>
+          <h1>QB Labores</h1>
+          <p class="app-sub" id="subTitle">Reporte de labores · campo</p>
         </div>
       </div>
       <div class="app-status">
@@ -1019,7 +1415,7 @@
             <path d="M12 16V4m0 0l-4 4m4-4l4 4"/>
             <path d="M4 20h16"/>
           </svg>
-          <span id="queueText">0 pend.</span>
+          <span id="queueText">0 pend</span>
         </span>
       </div>
     </div>
@@ -1027,115 +1423,147 @@
 
   <main>
     <div class="install-card" id="installBanner">
-      <p id="installBannerText">Instala la app en tu celular o tablet para usarla sin navegador, incluso sin internet.</p>
+      <p id="installBannerText">La app real es <strong>QB Labores</strong>. Instálala en el celular para abrirla sola, sin navegador.</p>
       <p class="install-ios-hint" id="installIosHint" hidden>En iPhone/iPad: toca <strong>Compartir</strong> (↑) y elige <strong>Agregar a pantalla de inicio</strong>.</p>
       <button type="button" id="installBtn">Agregar a pantalla de inicio</button>
     </div>
 
-    <form id="laborForm" class="card" novalidate>
-      <div class="card-head">
-        <div class="card-head-accent" aria-hidden="true"></div>
-        <div class="card-head-text">
-          <h2>Detalle</h2>
-          <p class="card-head-sub">Complete los datos del lote y la labor.</p>
+    <form id="laborForm" novalidate>
+      <section class="card" id="dayCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Detalle del día</h2>
+            <p class="card-head-sub">Lote y datos · solo hoy</p>
+          </div>
+          <span class="draft-badge" id="draftBadge">Borrador guardado</span>
         </div>
-        <span class="draft-badge" id="draftBadge">Borrador guardado</span>
-      </div>
 
-      <div class="form-meta" aria-label="Semana y fecha de hoy">
-        <div class="meta-cell">
-          <span class="meta-k">Semana</span>
-          <span class="meta-v" id="fSemText">—</span>
-          <input type="hidden" id="fSem" />
+        <div class="form-meta" aria-label="Semana y fecha de hoy">
+          <div class="meta-cell">
+            <span class="meta-k">Semana</span>
+            <span class="meta-v" id="fSemText">—</span>
+            <input type="hidden" id="fSem" />
+          </div>
+          <div class="meta-cell">
+            <span class="meta-k">Fecha</span>
+            <span class="meta-v is-date" id="fFechaText">—</span>
+            <input type="hidden" id="fFecha" />
+          </div>
         </div>
-        <div class="meta-cell">
-          <span class="meta-k">Fecha</span>
-          <span class="meta-v is-date" id="fFechaText">—</span>
-          <input type="hidden" id="fFecha" />
-        </div>
-      </div>
 
-      <div class="field">
-        <label for="fLoteTrigger">Lote <span class="req">*</span></label>
-        <input type="hidden" id="fLote" value="" />
-        <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false">
-          <span class="mpick-text is-empty" id="fLoteLabel">Seleccionar lote...</span>
-          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-      </div>
-
-      <div class="row2">
         <div class="field">
-          <label for="fModulo">Módulo</label>
-          <input id="fModulo" type="text" readonly placeholder="—" />
-        </div>
-        <div class="field">
-          <label for="fTurno">Turno</label>
-          <input id="fTurno" type="text" readonly placeholder="—" />
-        </div>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label for="fVariedadTrigger">Variedad</label>
-          <input type="hidden" id="fVariedad" value="SEKOYA POP" />
-          <button type="button" class="mpick-trigger" id="fVariedadTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text" id="fVariedadLabel">S. Pop<small>Variedad</small></span>
+          <label for="fLoteTrigger">Lote <span class="req">*</span></label>
+          <input type="hidden" id="fLote" value="" />
+          <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fLoteLabel">Seleccionar lote...</span>
             <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="fModulo">Módulo</label>
+            <input id="fModulo" type="text" readonly placeholder="—" />
+          </div>
+          <div class="field">
+            <label for="fTurno">Turno</label>
+            <input id="fTurno" type="text" readonly placeholder="—" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="fVariedadTrigger">Variedad</label>
+            <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+            <button type="button" class="mpick-trigger" id="fVariedadTrigger" aria-haspopup="dialog" aria-expanded="false">
+              <span class="mpick-text" id="fVariedadLabel">S. Pop</span>
+              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="field">
+            <label for="fArea">Área (ha)</label>
+            <input id="fArea" type="text" readonly placeholder="0.00" />
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="laborCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Labor</h2>
+            <p class="card-head-sub">Presupuesto y labor real</p>
+          </div>
+        </div>
+
         <div class="field">
-          <label for="fArea">Área (ha)</label>
-          <input id="fArea" type="text" readonly placeholder="0.00" />
+          <label for="fLaborPptoTrigger">Labor ppto</label>
+          <input type="hidden" id="fLaborPpto" value="" />
+          <button type="button" class="mpick-trigger" id="fLaborPptoTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fLaborPptoLabel">Seleccionar labor ppto...</span>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
         </div>
-      </div>
 
-      <div class="field">
-        <label for="fLaborPptoTrigger">Labor ppto</label>
-        <input type="hidden" id="fLaborPpto" value="" />
-        <button type="button" class="mpick-trigger" id="fLaborPptoTrigger" aria-haspopup="dialog" aria-expanded="false">
-          <span class="mpick-text is-empty" id="fLaborPptoLabel">Seleccionar labor ppto...</span>
-          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-      </div>
-
-      <div class="field">
-        <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
-        <input type="hidden" id="fLaborReal" value="" />
-        <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
-          <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor real...</span>
-          <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-      </div>
-
-      <div class="row2">
         <div class="field">
-          <label for="fAvance">Avance (ha)</label>
-          <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 0.50" />
-          <p class="field-hint" id="fAvanceHint">Escribe el avance manualmente</p>
+          <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
+          <input type="hidden" id="fLaborReal" value="" />
+          <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor real...</span>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
         </div>
-        <div class="field">
-          <label for="fTotalJr">Total (JR)</label>
-          <input id="fTotalJr" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
-        </div>
-      </div>
+      </section>
 
-      <div class="field progress-wrap">
-        <label>Progreso del lote</label>
-        <div class="progress-bar"><i id="fAvanceBar"></i></div>
-        <div class="progress-meta" id="progressMeta">0%</div>
-      </div>
-
-      <div class="preview">
-        <div class="preview-label">Vista previa</div>
-        <div class="preview-cell" id="previewCell">
-          <div class="preview-fill" id="previewFill"></div>
-          <span class="t" id="previewT">—</span>
-          <span class="l" id="previewL">LOTE —</span>
-          <span class="h" id="previewH">—</span>
+      <section class="card" id="avanceCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Avance</h2>
+            <p class="card-head-sub">Hectáreas y jornales</p>
+          </div>
         </div>
-        <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
-      </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="fAvance">Avance (ha)</label>
+            <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 0.50" />
+            <p class="field-hint" id="fAvanceHint"></p>
+          </div>
+          <div class="field">
+            <label for="fTotalJr">Total (JR)</label>
+            <input id="fTotalJr" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="progressCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Progreso</h2>
+            <p class="card-head-sub">Vista del lote</p>
+          </div>
+        </div>
+
+        <div class="field progress-wrap">
+          <label>Progreso del lote</label>
+          <div class="progress-bar"><i id="fAvanceBar"></i></div>
+          <div class="progress-meta" id="progressMeta">0%</div>
+        </div>
+
+        <div class="preview">
+          <div class="preview-label">Vista previa</div>
+          <div class="preview-cell" id="previewCell">
+            <div class="preview-fill" id="previewFill"></div>
+            <span class="t" id="previewT">—</span>
+            <span class="l" id="previewL">LOTE —</span>
+            <span class="h" id="previewH">—</span>
+          </div>
+          <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
+        </div>
+      </section>
     </form>
 
     <section class="card" id="historyCard">
@@ -1143,18 +1571,71 @@
         <div class="card-head-accent" aria-hidden="true"></div>
         <div class="card-head-text">
           <h2>Recientes</h2>
-          <p class="card-head-sub">Últimos reportes guardados en el celular.</p>
+          <p class="card-head-sub">Último envío en este dispositivo</p>
         </div>
       </div>
       <div class="history-list" id="historyList"></div>
     </section>
   </main>
 
-  <a href="index.html" class="fab-map" id="fabMap" aria-label="Abrir mapa" title="Ver mapa">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13V7m0 0l6-3m-6 3l6 3m0 0v10m0-10l5.447-2.724A1 1 0 0 1 21 5.618v10.764a1 1 0 0 1-1.447.894L15 17"/>
-    </svg>
-  </a>
+  <div class="fab-wrap" id="fabWrap">
+    <div class="fab-menu" id="fabMenu" role="menu" hidden>
+      <button type="button" role="menuitem" data-fab="historial">Historial</button>
+      <button type="button" role="menuitem" data-fab="mapa">Mapa</button>
+      <button type="button" role="menuitem" data-fab="actualizar">Actualizar</button>
+    </div>
+    <button class="fab-options" id="fab-options-btn" type="button" data-act="toggle-fab" aria-label="Opciones rápidas" aria-expanded="false" aria-haspopup="menu">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+    </button>
+  </div>
+  <div class="fab-scrim" id="fabScrim" hidden></div>
+
+  <div class="hist-modal" id="histModal" aria-hidden="true" inert>
+    <div class="hist-sheet" role="dialog" aria-labelledby="histTitle">
+      <div class="hist-sheet-head">
+        <div>
+          <h3 id="histTitle">Historial</h3>
+          <p>7 registros por página</p>
+        </div>
+        <button type="button" class="picker-close" id="histClose" aria-label="Cerrar">×</button>
+      </div>
+      <div class="hist-sheet-body" id="histFullList"></div>
+      <div class="history-pager" id="histPager" hidden>
+        <button type="button" id="histPrev">Anterior</button>
+        <span class="page-info" id="histPageInfo">1 / 1</span>
+        <button type="button" id="histNext">Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upd-modal" id="updModal" aria-hidden="true" inert>
+    <div class="upd-card" role="dialog" aria-labelledby="updTitle">
+      <div class="upd-card-head">
+        <div class="upd-card-accent" aria-hidden="true"></div>
+        <div>
+          <h3 id="updTitle">ACTUALIZAR</h3>
+          <p>Baja la última versión y recarga la app.</p>
+        </div>
+      </div>
+      <div class="upd-meta">
+        <p class="ver" id="updVersion">Versión —</p>
+        <p class="msg" id="updMsg">Al día. Igual puede pulsar Actualizar app para bajar lo último.</p>
+      </div>
+      <div class="upd-actions">
+        <button type="button" class="btn" id="updClearCacheBtn">Borrar caché</button>
+        <button type="button" class="btn btn-primary" id="updAppBtn">Actualizar app</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upd-progress" id="updProgress" aria-hidden="true">
+    <img class="brand-mark" src="assets/logo-qberries.png" alt="" />
+    <p class="brand-name">Q BERRIES</p>
+    <h2>Actualizando app</h2>
+    <p class="sub">Un momento. Traemos la versión nueva.</p>
+    <div class="upd-bar" aria-hidden="true"><i id="updBarFill"></i></div>
+    <p class="upd-pct" id="updPct">0%</p>
+  </div>
 
   <div class="dock">
     <div class="dock-inner">
@@ -1166,13 +1647,13 @@
   <div class="toast" id="toast" role="status"></div>
 
   <div class="picker-backdrop" id="pickerBackdrop"></div>
-  <div class="picker-sheet" id="pickerSheet" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="picker-sheet" id="pickerSheet" role="dialog" aria-modal="true" aria-hidden="true" inert>
     <div class="picker-sheet-inner">
       <div class="picker-head">
         <h3 id="pickerTitle">Elegir</h3>
         <button type="button" class="picker-close" id="pickerClose" aria-label="Cerrar">×</button>
       </div>
-      <div class="picker-search-wrap">
+      <div class="picker-search-wrap" id="pickerSearchWrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input type="search" id="pickerSearch" placeholder="Buscar..." autocomplete="off" />
       </div>
@@ -1184,6 +1665,40 @@
   <script src="api.js"></script>
   <script src="data.js?v=8"></script>
   <script>
+    (function lockDesktopAndShell() {
+      const finePointer = window.matchMedia("(pointer: fine)").matches;
+      const hoverCapable = window.matchMedia("(hover: hover)").matches;
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      const touchPoints = Number(navigator.maxTouchPoints) || 0;
+      // Solo celular/tablet. PC con mouse+hover queda bloqueado (no basta achicar la ventana).
+      const isDesktop =
+        (finePointer && hoverCapable && !coarse) ||
+        (finePointer && hoverCapable && touchPoints === 0);
+      if (isDesktop) {
+        document.documentElement.classList.add("is-desktop-lock");
+        document.body.classList.add("is-desktop-lock");
+        const gate = document.getElementById("desktopGate");
+        if (gate) gate.setAttribute("aria-hidden", "false");
+        window.__QB_FORM_LOCKED__ = true;
+        return;
+      }
+      window.__QB_FORM_LOCKED__ = false;
+      function setAppH() {
+        const vv = window.visualViewport;
+        const h = vv ? Math.round(vv.height) : window.innerHeight;
+        document.documentElement.style.setProperty("--app-h", h + "px");
+      }
+      setAppH();
+      window.addEventListener("resize", setAppH);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", setAppH);
+        window.visualViewport.addEventListener("scroll", setAppH);
+      }
+    })();
+
+    (function () {
+    if (window.__QB_FORM_LOCKED__) return;
+
     const DRAFT_KEY = "qb-form-draft";
     const data = window.MAP_DATA;
     const lots = data.lots || [];
@@ -1292,9 +1807,10 @@
     }
 
     function laborDisplay(s) {
+      // Título limpio en español (evita "AplicacióN")
       return String(s || "")
-        .toLowerCase()
-        .replace(/\b\w/g, m => m.toUpperCase());
+        .toLocaleLowerCase("es")
+        .replace(/(^|[\s\/\-])(\S)/g, (_, sep, ch) => sep + ch.toLocaleUpperCase("es"));
     }
 
     const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
@@ -1336,9 +1852,7 @@
         return;
       }
       labelEl.className = "mpick-text";
-      labelEl.innerHTML = item.sub
-        ? `${item.title}<small>${item.sub}</small>`
-        : item.title;
+      labelEl.textContent = item.title;
     }
 
     function setPickValue(picker, value, silent) {
@@ -1374,7 +1888,12 @@
 
       els.pickerList.querySelectorAll(".picker-option").forEach(btn => {
         btn.addEventListener("click", () => {
-          setPickValue(activePicker, btn.dataset.value);
+          const value = btn.dataset.value;
+          const picker = activePicker;
+          if (document.activeElement && typeof document.activeElement.blur === "function") {
+            document.activeElement.blur();
+          }
+          if (picker) setPickValue(picker, value);
           closePicker();
           saveDraft();
         });
@@ -1385,62 +1904,239 @@
       activePicker = picker;
       picker.trigger.setAttribute("aria-expanded", "true");
       els.pickerTitle.textContent = picker.sheetTitle;
-      els.pickerSearch.placeholder = picker.searchPlaceholder;
-      els.pickerSearch.value = "";
+      const searchWrap = document.getElementById("pickerSearchWrap");
+      const showSearch = !!picker.searchable;
+      if (searchWrap) searchWrap.style.display = showSearch ? "" : "none";
+      if (showSearch) {
+        els.pickerSearch.placeholder = picker.searchPlaceholder || "Buscar...";
+        els.pickerSearch.value = "";
+      } else {
+        els.pickerSearch.value = "";
+      }
       renderPickerList("");
+      els.pickerSheet.removeAttribute("inert");
+      els.pickerSheet.setAttribute("aria-hidden", "false");
       els.pickerBackdrop.classList.add("open");
       els.pickerSheet.classList.add("open");
-      els.pickerSheet.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
-      setTimeout(() => els.pickerSearch.focus(), 280);
+      if (showSearch) {
+        setTimeout(() => {
+          if (els.pickerSheet.classList.contains("open")) els.pickerSearch.focus();
+        }, 280);
+      }
     }
 
     function closePicker() {
+      const trigger = activePicker ? activePicker.trigger : null;
       if (activePicker) {
         activePicker.trigger.setAttribute("aria-expanded", "false");
         activePicker = null;
       }
+      // Quitar foco antes de ocultar (evita warning aria-hidden + focus)
+      const focused = document.activeElement;
+      if (focused && els.pickerSheet.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
       els.pickerBackdrop.classList.remove("open");
       els.pickerSheet.classList.remove("open");
       els.pickerSheet.setAttribute("aria-hidden", "true");
+      els.pickerSheet.setAttribute("inert", "");
       document.body.style.overflow = "";
+      if (trigger && typeof trigger.focus === "function") {
+        try { trigger.focus({ preventScroll: true }); } catch (e) { trigger.focus(); }
+      }
     }
 
-    const fabMapEl = document.getElementById("fabMap");
-    const fabMapMq = window.matchMedia("(max-width: 1279px)");
+    const fabWrap = document.getElementById("fabWrap");
+    const fabBtn = document.getElementById("fab-options-btn");
+    const fabMenu = document.getElementById("fabMenu");
+    const fabScrim = document.getElementById("fabScrim");
+    const fabMq = window.matchMedia("(max-width: 1279px)");
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.1.2";
 
-    function showMapFab(animate) {
-      if (!fabMapEl) return;
-      closePicker();
-      if (!fabMapMq.matches) {
-        fabMapEl.style.display = "none";
-        fabMapEl.classList.remove("fab-map--enter");
+    function setFabOpen(open) {
+      if (!fabWrap || !fabBtn) return;
+      fabWrap.classList.toggle("is-open", open);
+      fabBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (fabMenu) {
+        if (open) fabMenu.removeAttribute("hidden");
+        else fabMenu.setAttribute("hidden", "");
+      }
+      if (fabScrim) {
+        if (open) fabScrim.removeAttribute("hidden");
+        else fabScrim.setAttribute("hidden", "");
+      }
+    }
+
+    function syncFabVisibility() {
+      if (!fabWrap) return;
+      if (!fabMq.matches) {
+        setFabOpen(false);
+        fabWrap.style.display = "none";
         return;
       }
-      fabMapEl.style.display = "flex";
-      fabMapEl.style.visibility = "visible";
-      fabMapEl.style.pointerEvents = "auto";
-      fabMapEl.removeAttribute("hidden");
-      fabMapEl.setAttribute("aria-hidden", "false");
-      if (animate) {
-        fabMapEl.classList.remove("fab-map--enter");
-        void fabMapEl.offsetWidth;
-        fabMapEl.classList.add("fab-map--enter");
-      }
+      fabWrap.style.display = "flex";
     }
 
-    fabMapEl?.addEventListener("click", () => closePicker());
-    window.addEventListener("pageshow", () => showMapFab(true));
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") showMapFab(true);
-    });
-    fabMapMq.addEventListener("change", () => showMapFab(false));
+    function openUpdModal() {
+      const modal = document.getElementById("updModal");
+      const ver = document.getElementById("updVersion");
+      const msg = document.getElementById("updMsg");
+      if (ver) ver.textContent = "Versión " + APP_VERSION;
+      if (msg) msg.textContent = "Comprobando servidor…";
+      if (!modal) return;
+      modal.removeAttribute("inert");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      if (!QBApi.hasApi()) {
+        if (msg) msg.textContent = "Sin API configurada. Puedes actualizar la app igual.";
+        return;
+      }
+      QBApi.pingServer().then(ping => {
+        if (!modal.classList.contains("open")) return;
+        if (ping && ping.ok) {
+          if (msg) msg.textContent = "Al día. Conectado al servidor. Igual puede pulsar Actualizar app para bajar lo último.";
+        } else {
+          if (msg) msg.textContent = "Sin respuesta del servidor. La cola pendiente se mantiene hasta que llegue el OK.";
+        }
+      });
+    }
 
-    function createPicker({ hidden, trigger, labelEl, items, placeholder, sheetTitle, searchPlaceholder, onChange }) {
+    function closeUpdModal() {
+      const modal = document.getElementById("updModal");
+      if (!modal) return;
+      const focused = document.activeElement;
+      if (focused && modal.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
+      modal.classList.remove("open");
+      modal.setAttribute("inert", "");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    async function clearAppCacheOnly() {
+      try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ok */ }
+      els.draftBadge?.classList.remove("show");
+      try {
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) { /* ok */ }
+      showToast("Caché y borrador limpios · cola e historial intactos", null);
+      closeUpdModal();
+    }
+
+    function showUpdProgress() {
+      const el = document.getElementById("updProgress");
+      const fill = document.getElementById("updBarFill");
+      const pct = document.getElementById("updPct");
+      if (!el) return () => {};
+      el.classList.add("open");
+      el.setAttribute("aria-hidden", "false");
+      let n = 0;
+      const setN = v => {
+        n = Math.max(0, Math.min(100, Math.round(v)));
+        if (fill) fill.style.width = n + "%";
+        if (pct) pct.textContent = n + "%";
+      };
+      setN(8);
+      const iv = setInterval(() => {
+        if (n >= 88) return;
+        setN(n + 3 + Math.random() * 5);
+      }, 160);
+      return {
+        set(v) { setN(v); },
+        done() {
+          clearInterval(iv);
+          setN(100);
+        }
+      };
+    }
+
+    async function updateAppVersion() {
+      closeUpdModal();
+      const bar = showUpdProgress();
+      try {
+        bar.set(25);
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        bar.set(55);
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        bar.set(85);
+      } catch (err) {
+        console.warn("updateApp:", err);
+      }
+      bar.done();
+      setTimeout(() => {
+        const url = new URL(location.href);
+        url.searchParams.set("_v", String(Date.now()));
+        location.replace(url.toString());
+      }, 480);
+    }
+
+    fabBtn?.addEventListener("click", e => {
+      e.stopPropagation();
+      closePicker();
+      setFabOpen(!fabWrap.classList.contains("is-open"));
+    });
+    fabScrim?.addEventListener("click", () => setFabOpen(false));
+    fabMenu?.addEventListener("click", e => {
+      const btn = e.target.closest("[data-fab]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-fab");
+      setFabOpen(false);
+      if (act === "historial") {
+        openHistModal();
+      } else if (act === "mapa") {
+        location.href = "index.html?mapa=1";
+      } else if (act === "actualizar") {
+        openUpdModal();
+      }
+    });
+
+    document.getElementById("updClearCacheBtn")?.addEventListener("click", () => {
+      clearAppCacheOnly();
+    });
+    document.getElementById("updAppBtn")?.addEventListener("click", updateAppVersion);
+    document.getElementById("updModal")?.addEventListener("click", e => {
+      if (e.target.id === "updModal") closeUpdModal();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      setFabOpen(false);
+      closeUpdModal();
+      closeHistModal();
+    });
+
+    window.addEventListener("pageshow", () => {
+      syncFabVisibility();
+      tryFlushQueue();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        flushDraftNow();
+      } else {
+        syncFabVisibility();
+        tryFlushQueue();
+      }
+    });
+    window.addEventListener("pagehide", flushDraftNow);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    fabMq.addEventListener("change", syncFabVisibility);
+
+    function createPicker({ hidden, trigger, labelEl, items, placeholder, sheetTitle, searchPlaceholder, searchable, onChange }) {
       const picker = {
         hidden, trigger, labelEl, items, placeholder,
         sheetTitle: sheetTitle || "Elegir",
         searchPlaceholder: searchPlaceholder || "Buscar...",
+        searchable: !!searchable,
         onChange
       };
       trigger.addEventListener("click", () => openPicker(picker));
@@ -1456,7 +2152,8 @@
         placeholder: "Seleccionar lote...",
         sheetTitle: "Elegir lote",
         searchPlaceholder: "Buscar lote, túnel o módulo...",
-        onChange: () => onLoteChange()
+        searchable: true,
+        onChange: () => { onLoteChange(); saveDraft(); }
       }),
       variedad: createPicker({
         hidden: els.fVariedad,
@@ -1465,7 +2162,7 @@
         items: variedadOptions,
         placeholder: "Seleccionar variedad...",
         sheetTitle: "Elegir variedad",
-        searchPlaceholder: "Buscar variedad...",
+        searchable: false,
         onChange: () => saveDraft()
       }),
       laborPpto: createPicker({
@@ -1475,7 +2172,7 @@
         items: laborPptoOptions,
         placeholder: "Seleccionar labor ppto...",
         sheetTitle: "Elegir labor ppto",
-        searchPlaceholder: "Buscar labor ppto...",
+        searchable: false,
         onChange: () => saveDraft()
       }),
       laborReal: createPicker({
@@ -1485,7 +2182,7 @@
         items: laborRealOptions,
         placeholder: "Seleccionar labor real...",
         sheetTitle: "Elegir labor real",
-        searchPlaceholder: "Buscar labor real...",
+        searchable: false,
         onChange: () => { updatePreview(); saveDraft(); }
       })
     };
@@ -1520,7 +2217,13 @@
 
     function saveDraft() {
       clearTimeout(draftTimer);
-      draftTimer = setTimeout(() => {
+      draftTimer = setTimeout(flushDraftNow, 400);
+    }
+
+    function flushDraftNow() {
+      clearTimeout(draftTimer);
+      draftTimer = null;
+      try {
         const state = getFormState();
         const empty = !state.lote && !state.laborReal && !state.avance;
         if (empty) {
@@ -1530,7 +2233,7 @@
         }
         localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
         els.draftBadge.classList.add("show");
-      }, 400);
+      } catch (e) { /* storage lleno / privado */ }
     }
 
     function loadDraft() {
@@ -1541,6 +2244,18 @@
           els.draftBadge.classList.add("show");
         }
       } catch { /* ignore */ }
+    }
+
+    function tryFlushQueue() {
+      if (!QBApi.hasApi() || !navigator.onLine) {
+        updateStatus();
+        return Promise.resolve(0);
+      }
+      return QBApi.flushQueue().then(n => {
+        updateStatus();
+        renderHistory();
+        return n;
+      }).catch(() => 0);
     }
 
     let avanceWarned = false;
@@ -1571,13 +2286,13 @@
     function updateAvanceHint(area, capped) {
       if (!els.fAvanceHint) return;
       if (area <= 0) {
-        els.fAvanceHint.textContent = "Escribe el avance manualmente";
+        els.fAvanceHint.textContent = "";
         els.fAvanceHint.classList.remove("warn");
         return;
       }
       els.fAvanceHint.textContent = capped
         ? "Máximo " + area.toFixed(2) + " ha (área del lote)"
-        : "Puedes escribir el avance · máx. " + area.toFixed(2) + " ha";
+        : "Máx. " + area.toFixed(2) + " ha";
       els.fAvanceHint.classList.toggle("warn", capped);
     }
 
@@ -1619,7 +2334,7 @@
         els.fAvance.removeAttribute("max");
         els.fAvance.classList.remove("avance-capped");
         updateAvanceHint(0, false);
-        els.previewStatus.textContent = "Selecciona un lote";
+        clearPreviewUI();
         return;
       }
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
@@ -1633,9 +2348,32 @@
       updatePreview();
     }
 
+    function clearPreviewUI() {
+      if (els.fAvanceBar) els.fAvanceBar.style.width = "0%";
+      if (els.progressMeta) els.progressMeta.textContent = "0%";
+      if (els.previewT) els.previewT.textContent = "—";
+      if (els.previewL) els.previewL.textContent = "LOTE —";
+      if (els.previewH) els.previewH.textContent = "—";
+      if (els.previewFill) {
+        els.previewFill.style.height = "0%";
+        els.previewFill.style.removeProperty("background");
+        els.previewFill.style.background = "#94a3b8";
+      }
+      if (els.previewCell) {
+        els.previewCell.style.removeProperty("border-color");
+        els.previewCell.style.borderColor = "#d1d5db";
+      }
+      if (els.previewStatus) els.previewStatus.textContent = "Selecciona un lote";
+      updateAvanceHint(0, false);
+      if (els.fAvance) els.fAvance.classList.remove("avance-capped");
+    }
+
     function updatePreview() {
       const lot = byPos.get(els.fLote.value);
-      if (!lot) return;
+      if (!lot) {
+        clearPreviewUI();
+        return;
+      }
       const area = getLotArea();
       const typed = readAvanceTyped();
       let av = typed == null ? 0 : roundHa(typed);
@@ -1671,40 +2409,122 @@
     els.fTotalJr.addEventListener("change", saveDraft);
 
     function resetForm(clearDraft) {
+      clearTimeout(draftTimer);
+      draftTimer = null;
       setPickValue(pickers.lote, "", true);
       setPickValue(pickers.variedad, "SEKOYA POP", true);
       setPickValue(pickers.laborPpto, "", true);
       setPickValue(pickers.laborReal, "", true);
+      els.fLote.value = "";
       els.fModulo.value = "";
       els.fTurno.value = "";
       els.fArea.value = "";
       els.fAvance.value = "";
       els.fTotalJr.value = "";
+      els.fAvance.removeAttribute("max");
       setFechaHoy();
-      if (clearDraft) {
+      clearPreviewUI();
+      if (clearDraft !== false) {
         localStorage.removeItem(DRAFT_KEY);
         els.draftBadge.classList.remove("show");
       }
-      updatePreview();
     }
 
+    let histPage = 0;
+    const HIST_PAGE_SIZE = 7;
+
+    function historyItemHtml(h) {
+      const when = new Date(h.savedAt).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      const synced = !!h.synced;
+      const tag = synced
+        ? '<span class="history-tag synced">Enviado</span>'
+        : '<span class="history-tag pending">Pendiente</span>';
+      return `<div class="history-item">
+        <div><b>LOTE ${h.lote} · ${h.laborReal || "—"}</b><small>${when} · ${Number(h.avance || 0).toFixed(2)} ha</small></div>
+        ${tag}
+      </div>`;
+    }
+
+    /** Card Recientes: solo el último envío confirmado (o el último pendiente si aún no hay OK). */
     function renderHistory() {
-      const items = QBApi.getHistory().slice(0, 12);
-      if (!items.length) {
-        els.historyList.innerHTML = '<div class="history-empty">Sin reportes aún · todo se guarda en el celular</div>';
+      const all = QBApi.getHistory();
+      if (!all.length) {
+        els.historyList.innerHTML = '<div class="history-empty">Sin envíos aún</div>';
         return;
       }
-      els.historyList.innerHTML = items.map(h => {
-        const when = new Date(h.savedAt).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-        const tag = h.synced ? '<span class="history-tag synced">Enviado</span>' : '<span class="history-tag pending">Pendiente</span>';
-        return `<div class="history-item">
-          <div><b>LOTE ${h.lote} · ${h.laborReal || "—"}</b><small>${when} · ${Number(h.avance || 0).toFixed(2)} ha</small></div>
-          ${tag}
-        </div>`;
-      }).join("");
+      const lastSent = all.find(h => h.synced) || all[0];
+      els.historyList.innerHTML = historyItemHtml(lastSent);
     }
 
+    function renderHistFull() {
+      const list = document.getElementById("histFullList");
+      const pager = document.getElementById("histPager");
+      const pageInfo = document.getElementById("histPageInfo");
+      const prevBtn = document.getElementById("histPrev");
+      const nextBtn = document.getElementById("histNext");
+      if (!list) return;
+
+      const all = QBApi.getHistory();
+      if (!all.length) {
+        list.innerHTML = '<div class="history-empty">Sin reportes aún · todo se guarda en el celular</div>';
+        if (pager) pager.hidden = true;
+        histPage = 0;
+        return;
+      }
+
+      const pages = Math.max(1, Math.ceil(all.length / HIST_PAGE_SIZE));
+      if (histPage >= pages) histPage = pages - 1;
+      if (histPage < 0) histPage = 0;
+      const start = histPage * HIST_PAGE_SIZE;
+      const items = all.slice(start, start + HIST_PAGE_SIZE);
+      list.innerHTML = items.map(historyItemHtml).join("");
+
+      if (pager) {
+        pager.hidden = all.length === 0;
+        if (pageInfo) pageInfo.textContent = (histPage + 1) + " / " + pages;
+        if (prevBtn) prevBtn.disabled = histPage <= 0;
+        if (nextBtn) nextBtn.disabled = histPage >= pages - 1;
+      }
+    }
+
+    function openHistModal() {
+      const modal = document.getElementById("histModal");
+      if (!modal) return;
+      histPage = 0;
+      renderHistFull();
+      modal.removeAttribute("inert");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeHistModal() {
+      const modal = document.getElementById("histModal");
+      if (!modal) return;
+      const focused = document.activeElement;
+      if (focused && modal.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
+      modal.classList.remove("open");
+      modal.setAttribute("inert", "");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("histPrev")?.addEventListener("click", () => {
+      histPage -= 1;
+      renderHistFull();
+    });
+    document.getElementById("histNext")?.addEventListener("click", () => {
+      histPage += 1;
+      renderHistFull();
+    });
+    document.getElementById("histClose")?.addEventListener("click", closeHistModal);
+    document.getElementById("histModal")?.addEventListener("click", e => {
+      if (e.target.id === "histModal") closeHistModal();
+    });
+
+    let savingForm = false;
     async function saveForm() {
+      if (savingForm) return;
       if (!els.fLote.value) { showToast("Selecciona un lote", "error"); openPicker(pickers.lote); return; }
       if (!els.fLaborReal.value) { showToast("Selecciona la labor real", "error"); openPicker(pickers.laborReal); return; }
       const lot = byPos.get(els.fLote.value);
@@ -1728,34 +2548,48 @@
         totalJr: Number(els.fTotalJr.value) || 0
       };
 
+      savingForm = true;
       els.saveBtn.disabled = true;
       els.saveBtn.textContent = "Guardando...";
 
-      const res = await QBApi.saveLabor(record);
-      updateStatus();
-      renderHistory();
+      try {
+        const res = await QBApi.saveLabor(record);
+        updateStatus();
+        renderHistory();
+        if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
 
-      els.saveBtn.disabled = false;
-      if (res.ok) {
-        els.saveBtn.classList.add("saved");
-        els.saveBtn.textContent = "✓ Guardado";
-        localStorage.removeItem(DRAFT_KEY);
-        els.draftBadge.classList.remove("show");
-        if (res.queued) {
-          showToast("Guardado en el celular · se sube al tener señal", "offline");
-        } else if (res.synced) {
-          showToast("Guardado y enviado correctamente", null);
+        if (res.ok) {
+          els.saveBtn.classList.add("saved");
+          const synced = !!res.synced && !res.queued;
+          els.saveBtn.textContent = synced ? "✓ Enviado" : "En cola";
+          if (res.queued || !synced) {
+            showToast(
+              "Pendiente de servidor · queda en cola hasta el OK (" + (res.pending || QBApi.queueCount()) + ")",
+              "offline"
+            );
+          } else if (res.duplicate) {
+            showToast("Ya estaba guardado (sin duplicar)", null);
+          } else {
+            showToast("Guardado y confirmado por el servidor", null);
+          }
+          resetForm(true);
+          setTimeout(() => {
+            els.saveBtn.classList.remove("saved");
+            els.saveBtn.textContent = "Guardar avance";
+            els.saveBtn.disabled = false;
+            savingForm = false;
+          }, 900);
         } else {
-          showToast("Guardado en el celular", null);
-        }
-        setTimeout(() => {
-          els.saveBtn.classList.remove("saved");
           els.saveBtn.textContent = "Guardar avance";
-          resetForm(false);
-        }, 1600);
-      } else {
+          els.saveBtn.disabled = false;
+          savingForm = false;
+          showToast(res.message || res.error || "Error al guardar · sigue pendiente", "error");
+        }
+      } catch (err) {
         els.saveBtn.textContent = "Guardar avance";
-        showToast(res.error || "Error al guardar", "error");
+        els.saveBtn.disabled = false;
+        savingForm = false;
+        showToast(String(err.message || err), "error");
       }
     }
 
@@ -1764,15 +2598,21 @@
       els.netPill.className = "status-pill " + (online ? "online" : "offline");
       els.netPill.innerHTML = `<span class="dot"></span>${online ? "En línea" : "Sin conexión"}`;
       const q = QBApi.queueCount();
-      els.queueText.textContent = q + " pend.";
+      els.queueText.textContent = q + " pend";
       els.queuePill.classList.toggle("has-pending", q > 0);
     }
 
     document.getElementById("saveBtn").addEventListener("click", saveForm);
-    document.getElementById("resetBtn").addEventListener("click", () => resetForm(true));
-    window.addEventListener("online", () => { updateStatus(); QBApi.flushQueue().then(n => { if (n) showToast(n + " reporte(s) enviados", null); renderHistory(); updateStatus(); }); });
-    window.addEventListener("offline", updateStatus);
-    window.QB_onQueueFlushed = n => { showToast(n + " reporte(s) enviados", null); renderHistory(); updateStatus(); };
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      resetForm(true);
+      showToast("Formulario limpio", null);
+    });
+    window.QB_onQueueFlushed = n => {
+      showToast(n + " pendiente(s) enviados al recuperar señal", null);
+      renderHistory();
+      if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
+      updateStatus();
+    };
     window.QB_onStatusChange = updateStatus;
 
     // PWA — banner visible en móvil/tablet hasta que esté instalada
@@ -1854,8 +2694,10 @@
     setFechaHoy();
     updateStatus();
     renderHistory();
-    showMapFab(false);
-    if (QBApi.hasApi() && navigator.onLine) QBApi.flushQueue().then(() => { renderHistory(); updateStatus(); });
+    syncFabVisibility();
+    tryFlushQueue();
+
+    })();
   </script>
 </body>
 </html>

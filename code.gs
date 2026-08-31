@@ -1,4 +1,4 @@
-/**
+  /**
  * Q Berries — Reporte de Labores · Etapa I
  *
  * Columnas (fila 1 = encabezados, datos desde fila 2):
@@ -8,9 +8,10 @@
  * Formatos:
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
  *
- * Acciones: ping · guardar · consultar · get · dashboard
+ * Acciones: ping · guardar · guardar_grupo · consultar · get · filtros · dashboard
  * Deploy: Web app · Execute as Me · Anyone
- * Opcional: Script property API_TOKEN
+ * Seguridad: Script property API_TOKEN (obligatorio en producción)
+ * Opcional: MAX_BATCH (default 40)
  */
 
 var TZ = 'America/Lima';
@@ -49,18 +50,26 @@ function doPost(e) {
 function procesar_(e, metodo) {
   try {
     if (!validarToken_(e)) {
-      return { ok: false, code: 'UNAUTHORIZED', message: 'Token inválido' };
+      return { ok: false, code: 'UNAUTHORIZED', message: 'No autorizado' };
+    }
+
+    if (!rateLimitOk_(e)) {
+      return { ok: false, code: 'RATE_LIMIT', message: 'Demasiadas solicitudes — espere unos segundos' };
     }
 
     var action = param_(e, 'action') || '';
     var body = {};
 
     if (metodo === 'POST' && e.postData && e.postData.contents) {
-      try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+      var raw = String(e.postData.contents || '');
+      if (raw.length > 120000) {
+        return { ok: false, code: 'PAYLOAD_TOO_LARGE', message: 'Payload demasiado grande' };
+      }
+      try { body = JSON.parse(raw); } catch (err) { body = {}; }
       if (body.action) action = body.action;
     }
 
-    action = String(action || 'get').toLowerCase();
+    action = String(action || 'get').toLowerCase().replace(/[^a-z_]/g, '');
 
     if (action === 'ping') {
       return {
@@ -75,6 +84,10 @@ function procesar_(e, metodo) {
 
     if (action === 'guardar' || action === 'save' || action === 'post') {
       return guardar_(body.data || body);
+    }
+
+    if (action === 'guardar_grupo' || action === 'guardar_lote' || action === 'save_batch') {
+      return guardarGrupo_(body.data || body);
     }
 
     if (action === 'consultar') {
@@ -94,9 +107,9 @@ function procesar_(e, metodo) {
       return dashboard_(semDash);
     }
 
-    return { ok: false, message: 'Acción no válida. Use: ping, guardar, consultar, get, filtros o dashboard' };
+    return { ok: false, code: 'BAD_ACTION', message: 'Acción no válida' };
   } catch (err) {
-    return { ok: false, message: String(err.message || err) };
+    return { ok: false, code: 'SERVER_ERROR', message: 'Error interno' };
   }
 }
 
@@ -104,7 +117,10 @@ function procesar_(e, metodo) {
 
 function guardar_(d) {
   d = d || {};
-  var localId = String(d.localId || '').trim();
+  var check = validarPayloadLabor_(d);
+  if (!check.ok) return check;
+
+  var localId = safeId_(d.localId);
   var editar = d.editar === true || d.editar === 'true' || d.editar === 1;
 
   if (!editar && localId && yaGuardado_(localId)) {
@@ -115,16 +131,13 @@ function guardar_(d) {
     };
   }
 
-  var laborReal = texto_(d.laborReal || d.labor_real || '');
-  var loteNum = numLote_(d.lote);
-  var turno = texto_(d.turno || d.tunel || '');
-  if (!laborReal) return { ok: false, message: 'Falta labor real' };
-  if (!loteNum) return { ok: false, message: 'Falta lote' };
-  if (!turno) return { ok: false, message: 'Falta túnel / turno' };
+  var laborReal = check.laborReal;
+  var loteNum = check.lote;
+  var turno = check.turno;
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    return { ok: false, message: 'Servidor ocupado — reintente' };
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
   }
 
   try {
@@ -137,42 +150,42 @@ function guardar_(d) {
     }
 
     var hoja = obtenerHoja_();
-    asegurarEncabezados_(hoja);
+    if (hoja.getLastRow() < FILA_INI) asegurarEncabezados_(hoja);
 
-    var sem = num_(d.sem) || semIso_();
-    var modulo = textoMod_(d.modulo || d.md || '');
-    var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || hoy_());
+    var sem = check.sem;
+    var modulo = check.modulo;
+    var fechaIso = check.fecha;
+    var areaHa = check.area;
+    var avanceHa = check.avance;
+    var laborPpto = check.laborPpto;
+    var variedad = check.variedad;
+    var totalJr = check.totalJr;
 
-    var areaHa = numDec_(d.area != null ? d.area : d.areaLote);
-    var avanceHa = numDec_(d.avance);
-    if (areaHa > 0 && avanceHa > areaHa) avanceHa = areaHa;
-
+    var rows = leerFilas_(hoja);
     var actualizado = false;
-    if (editar) {
-      var previas = buscarFilasLoteSem_(hoja, turno, loteNum, sem);
-      if (previas.length) {
-        borrarFilas_(hoja, previas);
-        actualizado = true;
-      }
+    var previas = buscarEnFilas_(rows, turno, loteNum, sem, laborReal);
+    if (previas.length) {
+      borrarFilas_(hoja, previas);
+      actualizado = true;
     }
 
     var fila = [
       sem,
       formatFechaSheet_(fechaIso),
-      texto_(d.laborPpto || d.labor_ppto || ''),
+      laborPpto,
       laborReal,
       modulo,
       turno,
       loteNum,
-      formatVariedad_(d.variedad),
+      variedad,
       areaHa,
       avanceHa,
-      numDec_(d.totalJr != null ? d.totalJr : d.total_jr),
+      totalJr,
       horaGuardado_()
     ];
 
     var primera = hoja.getLastRow() + 1;
-    hoja.appendRow(fila);
+    hoja.getRange(primera, 1, 1, COLUMNAS.length).setValues([fila]);
 
     if (localId) marcarGuardado_(localId);
     invalidarCacheMapa_(sem);
@@ -187,6 +200,141 @@ function guardar_(d) {
       horaGuardado: fila[COL.HORA_GUARDADO],
       message: (actualizado ? 'Actualizado' : 'Guardado') +
         ' — LOTE ' + loteNum + ' · ' + avanceHa + ' ha'
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Guardado grupal seguro: un solo lock, validación por ítem, tope de lote */
+function guardarGrupo_(payload) {
+  payload = payload || {};
+  var items = payload.items || payload.lotes || payload.records || [];
+  if (!Array.isArray(items) || !items.length) {
+    return { ok: false, code: 'EMPTY', message: 'Sin lotes para guardar' };
+  }
+
+  var maxBatch = maxBatch_();
+  if (items.length > maxBatch) {
+    return {
+      ok: false,
+      code: 'BATCH_TOO_LARGE',
+      message: 'Máximo ' + maxBatch + ' lotes por guardado grupal'
+    };
+  }
+
+  var laborRealComun = texto_(payload.laborReal || '');
+  var laborPptoComun = texto_(payload.laborPpto || '');
+  var fechaComun = payload.fecha || '';
+  var semComun = payload.sem;
+  var variedadComun = payload.variedad;
+  var totalJrComun = payload.totalJr;
+
+  var validados = [];
+  for (var i = 0; i < items.length; i++) {
+    var raw = items[i] || {};
+    var merged = {
+      localId: raw.localId,
+      sem: raw.sem != null ? raw.sem : semComun,
+      fecha: raw.fecha || fechaComun,
+      laborPpto: raw.laborPpto || laborPptoComun,
+      laborReal: raw.laborReal || laborRealComun,
+      modulo: raw.modulo,
+      turno: raw.turno || raw.tunel,
+      lote: raw.lote,
+      variedad: raw.variedad || variedadComun,
+      area: raw.area != null ? raw.area : raw.areaLote,
+      avance: raw.avance,
+      totalJr: raw.totalJr != null ? raw.totalJr : totalJrComun
+    };
+    var check = validarPayloadLabor_(merged);
+    if (!check.ok) {
+      return {
+        ok: false,
+        code: check.code || 'INVALID_ITEM',
+        message: 'Lote ' + (i + 1) + ': ' + check.message,
+        index: i
+      };
+    }
+    check.localId = safeId_(merged.localId);
+    validados.push(check);
+  }
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
+  }
+
+  try {
+    var hoja = obtenerHoja_();
+    if (hoja.getLastRow() < FILA_INI) asegurarEncabezados_(hoja);
+
+    var rows = leerFilas_(hoja);
+    var saved = [];
+    var skipped = 0;
+    var updated = 0;
+    var deleteMap = {};
+    var appendRows = [];
+    var hora = horaGuardado_();
+
+    for (var j = 0; j < validados.length; j++) {
+      var v = validados[j];
+      if (v.localId && yaGuardado_(v.localId)) {
+        skipped++;
+        saved.push({ ok: true, duplicate: true, lote: v.lote, turno: v.turno });
+        continue;
+      }
+
+      var previas = buscarEnFilas_(rows, v.turno, v.lote, v.sem, v.laborReal);
+      if (previas.length) {
+        for (var p = 0; p < previas.length; p++) deleteMap[previas[p]] = true;
+        updated++;
+      }
+
+      appendRows.push([
+        v.sem,
+        formatFechaSheet_(v.fecha),
+        v.laborPpto,
+        v.laborReal,
+        v.modulo,
+        v.turno,
+        v.lote,
+        v.variedad,
+        v.area,
+        v.avance,
+        v.totalJr,
+        hora
+      ]);
+      if (v.localId) marcarGuardado_(v.localId);
+      saved.push({
+        ok: true,
+        lote: v.lote,
+        turno: v.turno,
+        avance: v.avance,
+        updated: previas.length > 0
+      });
+    }
+
+    var delIdx = [];
+    for (var dk in deleteMap) {
+      if (deleteMap.hasOwnProperty(dk)) delIdx.push(Number(dk));
+    }
+    if (delIdx.length) borrarFilas_(hoja, delIdx);
+
+    if (appendRows.length) {
+      var start = hoja.getLastRow() + 1;
+      hoja.getRange(start, 1, appendRows.length, COLUMNAS.length).setValues(appendRows);
+    }
+
+    if (validados.length) invalidarCacheMapa_(validados[0].sem);
+
+    return {
+      ok: true,
+      count: saved.length,
+      updated: updated,
+      skipped: skipped,
+      items: saved,
+      message: 'Grupo guardado — ' + (saved.length - skipped) + ' lote(s)'
     };
   } finally {
     lock.releaseLock();
@@ -242,7 +390,8 @@ function getMapa_(d, e) {
   if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
   var fechaFiltro = String(d.fecha || param_(e, 'fecha') || '').trim();
 
-  var cacheKey = 'map_v6_' + [
+  var cacheVer = mapaCacheVer_();
+  var cacheKey = 'map_v7_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', laborPpto || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
@@ -258,9 +407,8 @@ function getMapa_(d, e) {
   } catch (ex) { /* sin cache */ }
 
   var hoja = obtenerHoja_();
-  asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
-  var records = {};
+  var latest = {};
   var list = [];
   var fechaIsoFiltro = fechaFiltro ? normalizarFecha_(fechaFiltro) : '';
 
@@ -280,16 +428,17 @@ function getMapa_(d, e) {
 
     var key = claveLote_(r.turno, r.loteNum);
     if (!key) continue;
-    if (!records[key] || r.rowIndex >= records[key].rowIndex) {
-      records[key] = r;
+    if (!latest[key] || r.rowIndex >= latest[key].rowIndex) {
+      latest[key] = r;
     }
   }
 
-  for (var k in records) {
-    if (!records.hasOwnProperty(k)) continue;
-    list.push(filaToCliente_(records[k]));
+  for (var k in latest) {
+    if (!latest.hasOwnProperty(k)) continue;
+    list.push(filaToCliente_(latest[k]));
   }
 
+  // Solo list (sin records duplicados) → respuesta más liviana
   var result = {
     ok: true,
     count: list.length,
@@ -301,19 +450,12 @@ function getMapa_(d, e) {
       variedad: variedad || null,
       fecha: fechaFiltro || null
     },
-    records: {},
     list: list,
     fromCache: false
   };
 
-  for (var j = 0; j < list.length; j++) {
-    var item = list[j];
-    var pk = claveLote_(item.turno, item.lote);
-    result.records[pk] = item;
-  }
-
   try {
-    CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 90);
+    CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 180);
   } catch (ex2) { /* payload grande */ }
 
   return result;
@@ -519,17 +661,28 @@ function filaToCliente_(r) {
   };
 }
 
-function buscarFilasLoteSem_(hoja, turno, loteNum, sem) {
-  var rows = leerFilas_(hoja);
+function buscarEnFilas_(rows, turno, loteNum, sem, laborReal) {
   var idx = [];
   var turnoNorm = norm_(turno);
+  var laborNorm = laborReal != null && laborReal !== '' ? norm_(laborReal) : '';
+  var semN = num_(sem);
+  var loteN = numLote_(loteNum);
   for (var i = 0; i < rows.length; i++) {
-    if (num_(rows[i].sem) !== num_(sem)) continue;
-    if (numLote_(rows[i].loteNum) !== numLote_(loteNum)) continue;
+    if (num_(rows[i].sem) !== semN) continue;
+    if (numLote_(rows[i].loteNum) !== loteN) continue;
     if (norm_(rows[i].turno) !== turnoNorm) continue;
+    if (laborNorm && norm_(rows[i].laborReal) !== laborNorm) continue;
     idx.push(rows[i].rowIndex);
   }
   return idx;
+}
+
+function buscarFilasLoteSem_(hoja, turno, loteNum, sem) {
+  return buscarEnFilas_(leerFilas_(hoja), turno, loteNum, sem, '');
+}
+
+function buscarFilasLoteSemLabor_(hoja, turno, loteNum, sem, laborReal) {
+  return buscarEnFilas_(leerFilas_(hoja), turno, loteNum, sem, laborReal);
 }
 
 function claveLote_(turno, loteNum) {
@@ -590,12 +743,46 @@ function obtenerHoja_() {
 
 // ─── Cache / dedup ──────────────────────────────────────────────────────────
 
+/** Dedupe durable: Cache (rápido) + Script Properties (sobrevive >6h). Marcar SOLO tras escribir. */
 function yaGuardado_(localId) {
-  return CacheService.getScriptCache().get('lid_' + localId) !== null;
+  if (!localId) return false;
+  var key = 'lid_' + localId;
+  try {
+    if (CacheService.getScriptCache().get(key) !== null) return true;
+  } catch (e) { /* ok */ }
+  try {
+    var v = PropertiesService.getScriptProperties().getProperty(key);
+    if (v) {
+      try { CacheService.getScriptCache().put(key, '1', 21600); } catch (e2) { /* ok */ }
+      return true;
+    }
+  } catch (e) { /* ok */ }
+  return false;
 }
 
 function marcarGuardado_(localId) {
-  CacheService.getScriptCache().put('lid_' + localId, '1', 21600);
+  if (!localId) return;
+  var key = 'lid_' + localId;
+  try {
+    CacheService.getScriptCache().put(key, '1', 21600);
+  } catch (e) { /* ok */ }
+  try {
+    PropertiesService.getScriptProperties().setProperty(key, String(Date.now()));
+  } catch (e) { /* quota: cache sigue cubriendo ~6h */ }
+}
+
+function mapaCacheVer_() {
+  try {
+    return CacheService.getScriptCache().get('map_cache_ver') || '0';
+  } catch (e) {
+    return '0';
+  }
+}
+
+function bumpMapaCache_() {
+  try {
+    CacheService.getScriptCache().put('map_cache_ver', String(Date.now()), 21600);
+  } catch (e) { /* ok */ }
 }
 
 function invalidarCacheMapa_(sem) {
@@ -603,19 +790,135 @@ function invalidarCacheMapa_(sem) {
     var cache = CacheService.getScriptCache();
     cache.remove('dash_lab_v2_' + sem);
     cache.remove('dash_lab_v2_' + semIso_());
+    bumpMapaCache_();
   } catch (e) { /* ok */ }
 }
 
-// ─── Auth / params ──────────────────────────────────────────────────────────
+// ─── Auth / params / seguridad ──────────────────────────────────────────────
 
 function validarToken_(e) {
   var esperado = PropertiesService.getScriptProperties().getProperty('API_TOKEN');
-  if (!esperado) return true;
+  if (!esperado) {
+    // Sin token configurado: permitir (dev). En producción configure API_TOKEN.
+    return true;
+  }
   var token = param_(e, 'token') || '';
   if (!token && e.postData && e.postData.contents) {
-    try { token = JSON.parse(e.postData.contents).token || ''; } catch (err) {}
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      token = parsed.token || (parsed.data && parsed.data.token) || '';
+    } catch (err) {}
   }
-  return token === esperado;
+  token = String(token || '');
+  esperado = String(esperado);
+  if (token.length !== esperado.length) return false;
+  // Comparación en tiempo constante (aprox.)
+  var diff = 0;
+  for (var i = 0; i < esperado.length; i++) {
+    diff |= token.charCodeAt(i) ^ esperado.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+function rateLimitOk_(e) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var tok = String(param_(e, 'token') || 'anon').replace(/[^a-zA-Z0-9_\-]/g, '').substring(0, 40);
+    var key = 'rl_' + (tok || 'anon');
+    var n = Number(cache.get(key) || '0');
+    if (n >= 60) return false;
+    cache.put(key, String(n + 1), 60);
+    return true;
+  } catch (err) {
+    return true;
+  }
+}
+
+function maxBatch_() {
+  var n = Number(PropertiesService.getScriptProperties().getProperty('MAX_BATCH') || '40');
+  if (!isFinite(n) || n < 1) n = 40;
+  if (n > 80) n = 80;
+  return Math.floor(n);
+}
+
+function safeId_(v) {
+  var s = String(v || '').trim().substring(0, 80);
+  return s.replace(/[^a-zA-Z0-9_\-\.]/g, '');
+}
+
+function safeSheetText_(s, maxLen) {
+  maxLen = maxLen || 80;
+  s = String(s || '').trim().toUpperCase();
+  if (s.length > maxLen) s = s.substring(0, maxLen);
+  // Anti formula-injection en Google Sheets
+  if (/^[=+\-@]/.test(s)) s = "'" + s;
+  s = s.replace(/[\u0000-\u001f\u007f]/g, '');
+  return s;
+}
+
+function validarPayloadLabor_(d) {
+  d = d || {};
+  var laborReal = safeSheetText_(d.laborReal || d.labor_real || '', 80);
+  var laborPpto = safeSheetText_(d.laborPpto || d.labor_ppto || '', 80);
+  var turno = safeSheetText_(d.turno || d.tunel || '', 20);
+  var modulo = safeSheetText_(textoMod_(d.modulo || d.md || ''), 12);
+  var loteNum = numLote_(d.lote);
+  var sem = num_(d.sem) || semIso_();
+  var areaHa = numDec_(d.area != null ? d.area : d.areaLote);
+  var avanceHa = numDec_(d.avance);
+  var totalJr = numDec_(d.totalJr != null ? d.totalJr : d.total_jr);
+  var variedad = formatVariedad_(d.variedad);
+  var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || hoy_());
+
+  if (!laborReal) return { ok: false, code: 'MISSING_LABOR', message: 'Falta labor real' };
+  if (!loteNum || loteNum < 1 || loteNum > 99999) {
+    return { ok: false, code: 'BAD_LOTE', message: 'Lote inválido' };
+  }
+  if (!turno || !/^T?\d{1,3}$/i.test(turno.replace(/\s/g, ''))) {
+    // aceptar T1, T10, 1 → normalizar a T#
+    var tNum = String(turno).replace(/\D/g, '');
+    if (!tNum) return { ok: false, code: 'BAD_TURNO', message: 'Túnel / turno inválido' };
+    turno = 'T' + tNum;
+  } else {
+    turno = norm_(turno);
+    if (turno.charAt(0) !== 'T') turno = 'T' + turno.replace(/\D/g, '');
+  }
+  if (sem < 1 || sem > 53) return { ok: false, code: 'BAD_SEM', message: 'Semana inválida' };
+  if (areaHa < 0 || areaHa > 500) return { ok: false, code: 'BAD_AREA', message: 'Área inválida' };
+  if (avanceHa < 0 || avanceHa > 500) return { ok: false, code: 'BAD_AVANCE', message: 'Avance inválido' };
+  if (areaHa > 0 && avanceHa > areaHa) avanceHa = areaHa;
+  if (totalJr < 0 || totalJr > 100000) totalJr = 0;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
+    return { ok: false, code: 'BAD_FECHA', message: 'Fecha inválida' };
+  }
+  if (variedad !== 'SEKOYA POP' && variedad !== 'MAGICA') {
+    variedad = 'SEKOYA POP';
+  }
+
+  var allow = PropertiesService.getScriptProperties().getProperty('LABOR_ALLOWLIST');
+  if (allow) {
+    var okLabor = false;
+    var parts = String(allow).split('|');
+    for (var i = 0; i < parts.length; i++) {
+      if (norm_(parts[i]) === laborReal) { okLabor = true; break; }
+    }
+    if (!okLabor) return { ok: false, code: 'LABOR_NOT_ALLOWED', message: 'Labor no permitida' };
+  }
+
+  return {
+    ok: true,
+    laborReal: laborReal,
+    laborPpto: laborPpto,
+    turno: turno,
+    modulo: modulo,
+    lote: loteNum,
+    sem: sem,
+    area: areaHa,
+    avance: avanceHa,
+    totalJr: totalJr,
+    variedad: variedad,
+    fecha: fechaIso
+  };
 }
 
 function param_(e, key) {
@@ -724,7 +1027,7 @@ function textoMod_(s) {
 }
 
 function texto_(s) {
-  return norm_(s);
+  return safeSheetText_(s, 80);
 }
 
 function num_(v) {

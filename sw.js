@@ -1,4 +1,4 @@
-const CACHE = "qb-v2";
+const CACHE = "qb-v27";
 const SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,33 @@ const SHELL = [
   "./assets/icon-192.png",
   "./assets/apple-touch-icon.png"
 ];
+
+function isShellPath(pathname) {
+  return (
+    pathname === "/" ||
+    pathname.endsWith("/") ||
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".js") ||
+    pathname.endsWith(".webmanifest") ||
+    pathname.includes("/assets/")
+  );
+}
+
+async function putInCache(request, response) {
+  if (!response || !response.ok || response.type === "opaque") return;
+  try {
+    const cache = await caches.open(CACHE);
+    await cache.put(request, response);
+  } catch (e) { /* ignore */ }
+}
+
+async function refreshInBackground(request) {
+  try {
+    const res = await fetch(request);
+    // No se reutiliza el body: put consume esta respuesta
+    await putInCache(request, res);
+  } catch (e) { /* offline */ }
+}
 
 self.addEventListener("install", e => {
   e.waitUntil(
@@ -35,25 +62,26 @@ self.addEventListener("fetch", e => {
   if (url.origin !== location.origin) return;
   if (e.request.method !== "GET") return;
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const fetchPromise = fetch(e.request).then(res => {
-        if (res && res.ok) {
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        }
-        return res;
-      }).catch(() => cached);
+  e.respondWith((async () => {
+    const cached = await caches.match(e.request);
 
-      // App shell: cache primero para offline instantáneo
-      if (cached && (
-        url.pathname.endsWith(".html") ||
-        url.pathname.endsWith(".js") ||
-        url.pathname.endsWith(".webmanifest") ||
-        url.pathname.includes("/assets/")
-      )) {
-        return cached;
+    // Shell: responde cache al instante y actualiza en background (sin clone cruzado)
+    if (cached && isShellPath(url.pathname)) {
+      e.waitUntil(refreshInBackground(e.request));
+      return cached;
+    }
+
+    try {
+      const res = await fetch(e.request);
+      if (res && res.ok && res.type !== "opaque") {
+        // Clonar ANTES de devolver; put usa la copia
+        const copy = res.clone();
+        e.waitUntil(putInCache(e.request, copy));
       }
-      return fetchPromise.then(res => res || cached);
-    })
-  );
+      return res;
+    } catch (err) {
+      if (cached) return cached;
+      return new Response("Offline", { status: 503, statusText: "Offline" });
+    }
+  })());
 });
