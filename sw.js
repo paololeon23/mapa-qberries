@@ -1,4 +1,4 @@
-const CACHE = "qb-v27";
+const CACHE = "qb-v77";
 const SHELL = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const SHELL = [
   "./config.js",
   "./api.js",
   "./data.js",
+  "./data.js?v=8",
   "./manifest.webmanifest",
   "./assets/logo-qberries.png",
   "./assets/icon-192.png",
@@ -31,13 +32,17 @@ async function putInCache(request, response) {
   } catch (e) { /* ignore */ }
 }
 
-async function refreshInBackground(request) {
-  try {
-    const res = await fetch(request);
-    // No se reutiliza el body: put consume esta respuesta
-    await putInCache(request, res);
-  } catch (e) { /* offline */ }
-}
+self.addEventListener("message", e => {
+  const data = e.data || {};
+  if (data.type === "PURGE") {
+    e.waitUntil(
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+    );
+  }
+  if (data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener("install", e => {
   e.waitUntil(
@@ -64,17 +69,24 @@ self.addEventListener("fetch", e => {
 
   e.respondWith((async () => {
     const cached = await caches.match(e.request);
+    const shell = isShellPath(url.pathname);
 
-    // Shell: responde cache al instante y actualiza en background (sin clone cruzado)
-    if (cached && isShellPath(url.pathname)) {
-      e.waitUntil(refreshInBackground(e.request));
-      return cached;
+    // Online: red primero en shell para bajar JS/HTML al día al instante
+    if (shell) {
+      try {
+        const net = await fetch(e.request, { cache: "no-store" });
+        if (net && net.ok && net.type !== "opaque") {
+          const copy = net.clone();
+          e.waitUntil(putInCache(e.request, copy));
+          return net;
+        }
+      } catch (err) { /* offline o red lenta */ }
+      if (cached) return cached;
     }
 
     try {
       const res = await fetch(e.request);
       if (res && res.ok && res.type !== "opaque") {
-        // Clonar ANTES de devolver; put usa la copia
         const copy = res.clone();
         e.waitUntil(putInCache(e.request, copy));
       }

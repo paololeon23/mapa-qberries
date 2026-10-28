@@ -94,6 +94,59 @@
     ].join("|");
   }
 
+  function colorPalette() {
+    return (window.QB_CONFIG && window.QB_CONFIG.COLOR_PALETTE) || {
+      "#64B5F6": "Lunes",
+      "#81C784": "Martes",
+      "#FFD54F": "Miercoles",
+      "#FF8A65": "Jueves",
+      "#CE93D8": "Viernes"
+    };
+  }
+
+  const COLOR_ALIASES = {
+    LUNES: "#64B5F6", AZUL: "#64B5F6",
+    MARTES: "#81C784", VERDE: "#81C784",
+    MIERCOLES: "#FFD54F", MIÉRCOLES: "#FFD54F", AMARILLO: "#FFD54F",
+    JUEVES: "#FF8A65", NARANJA: "#FF8A65",
+    VIERNES: "#CE93D8", MORADO: "#CE93D8", VIOLETA: "#CE93D8"
+  };
+
+  const COLOR_HEX_LEGACY = {
+    "#1E88E5": "#64B5F6",
+    "#43A047": "#81C784",
+    "#F9A825": "#FFD54F",
+    "#E64A19": "#FF8A65",
+    "#8E24AA": "#CE93D8"
+  };
+
+  function normalizeColor(color) {
+    const raw = String(color || "").trim();
+    if (!raw) return "";
+    const up = raw.toUpperCase();
+    if (COLOR_HEX_LEGACY[up]) return COLOR_HEX_LEGACY[up];
+    if (/^#[0-9A-F]{6}$/.test(up)) return up;
+    return colorNameToHex(raw);
+  }
+
+  function colorHexToName(hex) {
+    const h = normalizeColor(hex);
+    if (!h) return "";
+    return colorPalette()[h] || "";
+  }
+
+  function colorNameToHex(name) {
+    const norm = String(name || "").trim().toUpperCase().replace(/\s+/g, " ").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (!norm) return "";
+    if (COLOR_ALIASES[norm]) return COLOR_ALIASES[norm];
+    const pal = colorPalette();
+    for (const [hex, label] of Object.entries(pal)) {
+      const lab = String(label).toUpperCase().replace(/\s+/g, " ").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (lab === norm) return hex.toUpperCase();
+    }
+    return /^#[0-9A-F]{6}$/.test(norm) ? norm : "";
+  }
+
   /** Valida y limpia un registro antes de API / cola */
   function validateRecord(record) {
     const errors = [];
@@ -141,7 +194,8 @@
       variedad,
       area,
       avance,
-      totalJr: Math.min(100000, Math.max(0, Number(record.totalJr) || 0))
+      totalJr: Math.min(100000, Math.max(0, Number(record.totalJr) || 0)),
+      color: normalizeColor(record.color)
     };
     const fp = fingerprint(base);
     const rawId = record.localId ? String(record.localId) : newClientId();
@@ -284,6 +338,7 @@
     if (items.length > max) {
       return { ok: false, message: "Máximo " + max + " lotes por grupo", code: "BATCH_TOO_LARGE" };
     }
+    const sharedColor = shared && normalizeColor(shared.color);
     const cleaned = [];
     for (let i = 0; i < items.length; i++) {
       const checked = validateRecord(Object.assign({}, shared || {}, items[i]));
@@ -295,7 +350,10 @@
           index: i
         };
       }
-      cleaned.push(checked.record);
+      const rec = Object.assign({}, checked.record);
+      if (sharedColor) rec.color = sharedColor;
+      else if (items[i].color) rec.color = normalizeColor(items[i].color);
+      cleaned.push(rec);
     }
     return postJson(apiBody("guardar_grupo", {
       laborReal: shared && shared.laborReal,
@@ -304,6 +362,7 @@
       sem: shared && shared.sem,
       variedad: shared && shared.variedad,
       totalJr: shared && shared.totalJr,
+      color: shared && (sharedColor || normalizeColor(shared.color) || shared.color),
       items: cleaned
     }));
   }
@@ -318,6 +377,7 @@
     if (filters.modulo) params.set("modulo", safeText(filters.modulo, 12));
     if (filters.variedad) params.set("variedad", safeText(filters.variedad, 40));
     if (filters.fecha) params.set("fecha", String(filters.fecha).slice(0, 10));
+    if (filters.nocache || filters.force) params.set("nocache", "1");
     const token = apiToken();
     if (token) params.set("token", token);
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -377,6 +437,12 @@
 
       try {
         const res = await postLabor(payload);
+        if (isRateLimitedResponse(res)) {
+          if (window.QB_onRateLimit) window.QB_onRateLimit();
+          const n = enqueue(payload, savedAt);
+          if (window.QB_onStatusChange) window.QB_onStatusChange();
+          return { ok: true, queued: true, synced: false, savedAt, pending: n, payload, rateLimited: true };
+        }
         if (!serverConfirmed(res)) {
           throw new Error((res && (res.message || res.error)) || "Servidor no confirmó el guardado");
         }
@@ -418,20 +484,19 @@
 
     const payloads = [];
     for (let i = 0; i < records.length; i++) {
-      const checked = validateRecord(Object.assign({}, shared || {}, records[i]));
+      const src = Object.assign({}, shared || {}, records[i]);
+      const checked = validateRecord(src);
       if (!checked.ok) {
         return { ok: false, message: "Lote " + (i + 1) + ": " + checked.errors.join(" · "), index: i };
       }
-      payloads.push(Object.assign({}, checked.record, {
-        color: records[i].color
-      }));
-      saveLocal(payloads[i], false);
+      const payload = Object.assign({}, checked.record, {
+        color: normalizeColor(src.color) || checked.record.color
+      });
+      payloads.push(payload);
+      saveLocal(Object.assign({}, payload, { color: src.color || payload.color }), false);
     }
 
-    const apiItems = payloads.map(p => {
-      const { color, ...rest } = p;
-      return rest;
-    });
+    const apiItems = payloads;
 
     if (!apiUrl()) {
       return { ok: true, local: true, count: apiItems.length, payloads };
@@ -445,6 +510,19 @@
 
     try {
       const res = await postLaborBatch(apiItems, shared);
+      if (isRateLimitedResponse(res)) {
+        if (window.QB_onRateLimit) window.QB_onRateLimit();
+        apiItems.forEach(p => enqueue(p, Date.now()));
+        if (window.QB_onStatusChange) window.QB_onStatusChange();
+        return {
+          ok: true,
+          queued: true,
+          synced: false,
+          rateLimited: true,
+          count: apiItems.length,
+          payloads
+        };
+      }
       if (!serverConfirmed(res)) throw new Error((res && res.message) || "Servidor no confirmó el grupo");
       payloads.forEach(p => markHistorySynced(p.posKey, Date.now(), p.localId));
       if (window.QB_onStatusChange) window.QB_onStatusChange();
@@ -474,13 +552,22 @@
       let sent = 0;
       const seen = new Set();
 
+      let hitRateLimit = false;
       for (const item of q) {
         const id = item.payload?.localId || item.payload?._fp || String(item.ts);
         if (seen.has(id)) continue;
         seen.add(id);
+        if (hitRateLimit) {
+          pending.push(item);
+          continue;
+        }
         try {
           const res = await postLabor(item.payload);
-          if (serverConfirmed(res)) {
+          if (isRateLimitedResponse(res)) {
+            if (window.QB_onRateLimit) window.QB_onRateLimit();
+            pending.push(item);
+            hitRateLimit = true;
+          } else if (serverConfirmed(res)) {
             sent++;
             markHistorySynced(item.payload.posKey, item.ts, item.payload.localId);
           } else {
@@ -496,6 +583,22 @@
     } finally {
       flushing = false;
     }
+  }
+
+  function isRateLimitedResponse(res) {
+    if (!res) return false;
+    if (res.code === "RATE_LIMIT") return true;
+    return /demasiadas solicitudes/i.test(String(res.message || res.error || ""));
+  }
+
+  function getPendingPosKeys() {
+    const keys = new Set();
+    getQueue().forEach(item => {
+      const p = item.payload;
+      if (!p) return;
+      if (p.posKey) keys.add(String(p.posKey));
+    });
+    return keys;
   }
 
   function queueCount() {
@@ -516,13 +619,17 @@
     validateRecord,
     flushQueue,
     queueCount,
+    getPendingPosKeys,
     getHistory,
     getLocalRecords,
     saveLocal,
     pendingHistoryCount,
     pingServer,
     serverConfirmed,
-    hasApi: () => !!apiUrl()
+    hasApi: () => !!apiUrl(),
+    normalizeColor,
+    colorHexToName,
+    colorNameToHex
   };
 
   window.addEventListener("online", () => {

@@ -17,7 +17,7 @@ window.QB_CONFIG = {
 
   BRAND: "Q Berries",
   APP_NAME: "Q Berries · Labores",
-  APP_VERSION: "1.1.2",
+  APP_VERSION: "1.2.8",
 
   LABOR_OPTS: {
     labor_ppto: [
@@ -25,9 +25,17 @@ window.QB_CONFIG = {
       "MANTENIMIENTO CERCOS VIVOS", "MANTENIMIENTO DE CERCOS VIVOS", "PROYECCIONES"
     ],
     labor_real: [
-      "APLICACIÓN CON MOCHILA", "ARENADO DE MACETAS", "ARREGLO DE CAMELLONES", "DESHIERBO",
-      "DESHIERBO/PALANA", "LAVADO DE PLANTAS", "PODA KING GRASS", "PROYECCIONES",
-      "RETIRO DE PIEDRAS", "TUTORES"
+      "DESHIERBO",
+      "ARENADO DE MACETAS"
     ]
+  },
+
+  /** Paleta de avance semanal: un color por día hábil (se guarda el nombre en la hoja) */
+  COLOR_PALETTE: {
+    "#64B5F6": "Lunes",
+    "#81C784": "Martes",
+    "#FFD54F": "Miercoles",
+    "#FF8A65": "Jueves",
+    "#CE93D8": "Viernes"
   }
 };

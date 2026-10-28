@@ -322,12 +322,12 @@
 
     .card {
       background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 18px;
-      padding: 1.25rem 1.2rem;
-      box-shadow: 0 2px 14px rgba(15, 51, 39, 0.05);
+      border: 1px solid #e6ebe8;
+      border-radius: 20px;
+      padding: 1.2rem 1.15rem 1.25rem;
+      box-shadow: 0 4px 18px rgba(15, 51, 39, 0.045);
       transition: border-color .2s, box-shadow .2s, background .2s;
-      margin-bottom: 1rem;
+      margin-bottom: 0.9rem;
     }
     .card-head {
       display: flex;
@@ -401,44 +401,70 @@
     .field select {
       width: 100%;
       height: var(--input-h);
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
+      border: 1px solid #dce3df;
+      border-radius: 14px;
       padding: 0 0.95rem;
       font: inherit;
       font-size: var(--fs-body);
-      font-weight: 500;
+      font-weight: 600;
       color: var(--ink);
-      background: #f9f9f9;
+      background: #f7faf8;
       appearance: none;
       -webkit-appearance: none;
       transition: border-color .15s, box-shadow .15s, background .15s;
     }
     .field input::placeholder {
-      color: #bdbdbd;
-      font-weight: 400;
+      color: #94a3b8;
+      font-weight: 500;
     }
     .field input:focus,
     .field select:focus {
       outline: none;
       background: #fff;
-      border-color: #cbd5e1;
-      box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.08);
+      border-color: #86efac;
+      box-shadow: 0 0 0 4px rgba(47, 138, 88, 0.12);
     }
     .field input[readonly] {
-      background: #f9fafb;
-      color: #374151;
-      border-color: #e8eeeb;
+      background: #f3f6f4;
+      color: #1f3d32;
+      border-color: #e4ece7;
       cursor: default;
       box-shadow: none;
     }
     .field input[readonly]:focus {
-      border-color: #e8eeeb;
+      border-color: #e4ece7;
       box-shadow: none;
     }
     .field input.avance-capped {
       border-color: #f59e0b;
       background: #fffbeb;
     }
+    .avance-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+    .avance-row input {
+      flex: 1;
+      min-width: 0;
+      width: auto;
+    }
+    .btn-finish {
+      flex-shrink: 0;
+      height: var(--input-h);
+      padding: 0 0.95rem;
+      border-radius: 14px;
+      border: 1px solid var(--forest);
+      background: var(--forest);
+      color: #fff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: var(--tracking-ui);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-finish:active { opacity: 0.88; }
     .field-hint {
       margin: 0.25rem 0 0;
       font-size: 0.68rem;
@@ -458,10 +484,10 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.65rem;
-      padding: 0 0.95rem;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      background: #f9f9f9;
+      padding: 0 0.85rem 0 0.95rem;
+      border: 1px solid #dce3df;
+      border-radius: 14px;
+      background: #f7faf8;
       font-family: inherit;
       font-size: var(--fs-pick);
       font-weight: 600;
@@ -473,16 +499,23 @@
       overflow: hidden;
       transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s;
     }
-    .mpick-trigger:hover {
-      border-color: #cbd5e1;
+    .mpick-trigger:hover:not(:disabled) {
+      border-color: #b7c9bf;
       background: #fff;
     }
-    .mpick-trigger:active { opacity: 0.88; }
+    .mpick-trigger:active:not(:disabled) { opacity: 0.88; }
     .mpick-trigger:focus-visible {
       outline: none;
       background: #fff;
-      border-color: #cbd5e1;
-      box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.08);
+      border-color: #86efac;
+      box-shadow: 0 0 0 4px rgba(47, 138, 88, 0.12);
+    }
+    .mpick-trigger:disabled,
+    .mpick-trigger.is-disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      background: #f1f5f3;
+      color: #94a3b8;
     }
     .mpick-text {
       flex: 1;
@@ -548,6 +581,8 @@
       max-height: min(78vh, 620px);
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .picker-head {
       display: flex;
@@ -566,16 +601,26 @@
     .picker-close {
       width: 36px;
       height: 36px;
+      padding: 0;
       border: 1px solid var(--line);
       border-radius: 10px;
       background: #fff;
       color: var(--muted);
-      font-size: 1.25rem;
-      line-height: 1;
+      font-size: 1.35rem;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       flex-shrink: 0;
     }
+    .picker-close span {
+      display: block;
+      line-height: 1;
+      transform: translateY(-0.5px);
+    }
     .picker-search-wrap {
+      display: none !important;
       position: relative;
       margin-bottom: 0.75rem;
       flex-shrink: 0;
@@ -606,50 +651,108 @@
       box-shadow: 0 0 0 3px rgba(47,138,88,0.12);
     }
     .picker-list {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      flex: 1;
+      flex: 0 0 auto;
       min-height: 0;
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
       padding-bottom: 0.25rem;
     }
+    .picker-option .opt-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.12);
+    }
     .picker-option {
       width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
       text-align: left;
-      padding: 0.85rem 1rem;
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      padding: 0.82rem 0.9rem;
+      border: 1px solid #e6ebe8;
+      border-radius: 16px;
       background: #fff;
       cursor: pointer;
       font-family: inherit;
       font-size: var(--fs-pick);
-      transition: border-color .12s, background .12s, opacity .12s;
+      transition: border-color .12s, background .12s, opacity .12s, box-shadow .12s;
     }
     .picker-option:hover {
-      border-color: #cbd5e1;
-      background: #f9fafb;
+      border-color: #b7c9bf;
+      background: #f7faf8;
     }
-    .picker-option:active { opacity: 0.88; background: #f3f4f6; }
+    .picker-option:active { opacity: 0.9; background: #eef6f1; }
+    .picker-option .opt-copy {
+      flex: 1;
+      min-width: 0;
+    }
     .picker-option b {
       display: block;
-      font-size: var(--fs-pick);
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 700;
       color: var(--forest);
       line-height: 1.25;
       letter-spacing: var(--tracking-ui);
     }
     .picker-option small {
       display: block;
-      margin-top: 0.18rem;
-      font-size: 0.75rem;
+      margin-top: 0.16rem;
+      font-size: 0.74rem;
       font-weight: 500;
       color: var(--muted);
     }
+    .picker-option .opt-check {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      background: #fff;
+      position: relative;
+    }
     .picker-option.selected {
-      border-color: var(--forest-soft);
+      border-color: #86efac;
       background: #f0fdf4;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.08);
+    }
+    .picker-option.selected .opt-check {
+      border-color: var(--forest);
+      background: var(--forest);
+    }
+    .picker-option.selected .opt-check::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 3px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-left: 0;
+      transform: rotate(45deg);
+    }
+    .picker-option.is-captured {
+      background: #f3faf6;
+      border-color: #bbd6c4;
+    }
+    .picker-option.is-captured.selected {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+    .opt-tag {
+      display: inline-block;
+      margin-top: 0.28rem;
+      padding: 0.1rem 0.42rem;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
     .picker-empty {
       text-align: center;
@@ -661,7 +764,365 @@
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.65rem;
+      gap: 0.7rem;
+    }
+    .area-chip {
+      height: var(--input-h);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 0.95rem;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 100%);
+      border: 1px solid #bbf7d0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .area-chip .area-k {
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #047857;
+      line-height: 1;
+      margin-bottom: 0.18rem;
+    }
+    .area-chip strong {
+      font-size: 1.12rem;
+      font-weight: 800;
+      color: var(--forest);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: var(--tracking-tight);
+      line-height: 1.1;
+    }
+    .area-chip strong small {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #3f7a52;
+      margin-left: 0.2rem;
+    }
+    .area-chip.is-empty {
+      background: #f7faf8;
+      border-color: #dce3df;
+    }
+    .area-chip.is-empty .area-k { color: #94a3b8; }
+    .area-chip.is-empty strong { color: #94a3b8; }
+
+    .ratio-box {
+      margin-top: 1rem;
+      padding: 0.9rem 0.9rem 1rem;
+      border-radius: 16px;
+      background: #f7faf8;
+      border: 1px solid #e4ece7;
+    }
+    .ratio-box .ratio-title {
+      margin: 0 0 0.75rem;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .ratio-formula {
+      margin: 0.55rem 0 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #3f7a52;
+    }
+
+    .local-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .local-lot {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 0.75rem;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #e4ece7;
+    }
+    .local-lot.is-active {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+    .local-lot .lot-copy {
+      flex: 1;
+      min-width: 0;
+    }
+    .local-lot b {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: var(--forest);
+    }
+    .local-lot small {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .local-lot .lot-open,
+    .local-lot .lot-del {
+      flex-shrink: 0;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid #dce3df;
+      background: #fff;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--forest);
+      cursor: pointer;
+      padding: 0 0.65rem;
+    }
+    .local-lot .lot-del {
+      width: 34px;
+      padding: 0;
+      color: #b91c1c;
+    }
+    .btn-capture {
+      width: 100%;
+      height: 44px;
+      margin-top: 0.7rem;
+      border-radius: 12px;
+      border: 1px solid var(--forest);
+      background: var(--forest);
+      color: #fff;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .local-empty {
+      text-align: center;
+      padding: 0.85rem 0.5rem 0.2rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .sum-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.45rem;
+    }
+    .sum-kpi {
+      padding: 0.7rem 0.45rem;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #e4ece7;
+      text-align: center;
+    }
+    .sum-kpi span {
+      display: block;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.22rem;
+    }
+    .sum-kpi strong {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--forest);
+      letter-spacing: var(--tracking-tight);
+      font-variant-numeric: tabular-nums;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.35rem;
+    }
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.22rem;
+      min-height: 52px;
+      padding: 0.38rem 0.15rem;
+      border-radius: 12px;
+      border: 1px solid #e2ebe6;
+      background: #f7fbf8;
+      cursor: pointer;
+      color: #0f3327;
+    }
+    .color-swatch .sw-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .color-swatch small {
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: #0f3327;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .color-swatch.is-on {
+      border-color: #2f8a58;
+      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.18);
+      background: #ecfdf3;
+    }
+    .color-swatch.is-locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: grayscale(0.25);
+    }
+    .color-swatch.is-future {
+      opacity: 0.22;
+      filter: grayscale(0.55);
+    }
+
+    .lot-board {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 0.55rem;
+      text-align: left;
+    }
+    .mod-group {
+      padding: 0.5rem;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e8eeeb;
+    }
+    .mod-group-head {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .mod-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .mod-group-head b {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--forest);
+    }
+    .mod-group-head span {
+      margin-left: auto;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .mod-lots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.32rem;
+    }
+    .mini-cell {
+      position: relative;
+      overflow: hidden;
+      flex: 1 1 calc(25% - 0.28rem);
+      min-width: 68px;
+      min-height: 70px;
+      border-radius: 10px;
+      border: 2px solid #d1d5db;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.28rem 0.15rem 0.3rem;
+      box-sizing: border-box;
+    }
+    .mini-cell.is-on {
+      box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.12);
+    }
+    .mod-lots[data-n="1"] .mini-cell {
+      flex: 0 1 34%;
+      min-width: 88px;
+    }
+    .mod-lots[data-n="2"] .mini-cell {
+      flex: 1 1 calc(50% - 0.2rem);
+    }
+    #sumModal .mini-cell-wrap {
+      flex: 1 1 calc(25% - 0.28rem);
+      min-width: 68px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.28rem;
+    }
+    #sumModal .mod-lots[data-n="1"] .mini-cell-wrap {
+      flex: 0 1 34%;
+      min-width: 88px;
+    }
+    #sumModal .mod-lots[data-n="2"] .mini-cell-wrap {
+      flex: 1 1 calc(50% - 0.2rem);
+    }
+    #sumModal .mini-cell-wrap .mini-cell {
+      width: 100%;
+      flex: none;
+      min-width: 0;
+    }
+    #sumModal .mini-del {
+      width: 100%;
+      height: 32px;
+      padding: 0 0.4rem;
+      border: 1px solid #fecaca;
+      border-radius: 9px;
+      background: #fff7f7;
+      color: #b42318;
+      font: inherit;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.28rem;
+      cursor: pointer;
+    }
+    #sumModal .mini-del svg {
+      width: 13px;
+      height: 13px;
+      pointer-events: none;
+    }
+    #sumModal .hist-sheet {
+      width: min(440px, calc(100% - 1.1rem));
+    }
+    #sumModal .sum-strip {
+      margin-bottom: 0.65rem;
+    }
+    #sumModal .hist-sheet-body {
+      gap: 0.5rem;
+    }
+    .mini-fill {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 0%;
+      opacity: 0.72;
+    }
+    .mini-cell .t,
+    .mini-cell .l,
+    .mini-cell .h {
+      position: relative;
+      z-index: 1;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.15;
+      color: #0b0f0d;
+    }
+    .mini-cell .l { font-size: 0.66rem; }
+    .board-empty {
+      text-align: center;
+      padding: 0.85rem 0.4rem;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
 
     .form-meta {
@@ -827,8 +1288,8 @@
       pointer-events: auto;
     }
     .hist-sheet {
-      width: min(400px, 100%);
-      max-height: min(82vh, 620px);
+      width: min(420px, 100%);
+      max-height: min(86vh, 680px);
       background: #fff;
       border-radius: 18px;
       border: 1px solid #e5e7eb;
@@ -1316,7 +1777,12 @@
         width: 42px;
         height: 42px;
         border-radius: 12px;
-        font-size: 1.35rem;
+        font-size: 1.45rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
       }
       .picker-search-wrap input {
         height: 52px;
@@ -1434,7 +1900,7 @@
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Detalle del día</h2>
-            <p class="card-head-sub">Lote y datos · solo hoy</p>
+            <p class="card-head-sub">Módulo · turno · lote · solo hoy</p>
           </div>
           <span class="draft-badge" id="draftBadge">Borrador guardado</span>
         </div>
@@ -1453,22 +1919,30 @@
         </div>
 
         <div class="field">
-          <label for="fLoteTrigger">Lote <span class="req">*</span></label>
-          <input type="hidden" id="fLote" value="" />
-          <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text is-empty" id="fLoteLabel">Seleccionar lote...</span>
+          <label for="fModuloTrigger">Módulo <span class="req">*</span></label>
+          <input type="hidden" id="fModulo" value="" />
+          <button type="button" class="mpick-trigger" id="fModuloTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fModuloLabel">Seleccionar módulo...</span>
             <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
 
         <div class="row2">
           <div class="field">
-            <label for="fModulo">Módulo</label>
-            <input id="fModulo" type="text" readonly placeholder="—" />
+            <label for="fTurnoTrigger">Turno <span class="req">*</span></label>
+            <input type="hidden" id="fTurno" value="" />
+            <button type="button" class="mpick-trigger" id="fTurnoTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
+              <span class="mpick-text is-empty" id="fTurnoLabel">Elige módulo</span>
+              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
           </div>
           <div class="field">
-            <label for="fTurno">Turno</label>
-            <input id="fTurno" type="text" readonly placeholder="—" />
+            <label for="fLoteTrigger">Lote <span class="req">*</span></label>
+            <input type="hidden" id="fLote" value="" />
+            <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
+              <span class="mpick-text is-empty" id="fLoteLabel">Elige turno</span>
+              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
           </div>
         </div>
 
@@ -1482,8 +1956,12 @@
             </button>
           </div>
           <div class="field">
-            <label for="fArea">Área (ha)</label>
-            <input id="fArea" type="text" readonly placeholder="0.00" />
+            <label for="fArea">Área</label>
+            <input type="hidden" id="fArea" value="" />
+            <div class="area-chip is-empty" id="areaChip">
+              <span class="area-k">Hectáreas</span>
+              <strong id="fAreaText">0.00 <small>ha</small></strong>
+            </div>
           </div>
         </div>
       </section>
@@ -1493,48 +1971,17 @@
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Labor</h2>
-            <p class="card-head-sub">Presupuesto y labor real</p>
+            <p class="card-head-sub">Labor real del lote</p>
           </div>
-        </div>
-
-        <div class="field">
-          <label for="fLaborPptoTrigger">Labor ppto</label>
-          <input type="hidden" id="fLaborPpto" value="" />
-          <button type="button" class="mpick-trigger" id="fLaborPptoTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text is-empty" id="fLaborPptoLabel">Seleccionar labor ppto...</span>
-            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
         </div>
 
         <div class="field">
           <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
           <input type="hidden" id="fLaborReal" value="" />
           <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor real...</span>
+            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor...</span>
             <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-        </div>
-      </section>
-
-      <section class="card" id="avanceCard">
-        <div class="card-head">
-          <div class="card-head-accent" aria-hidden="true"></div>
-          <div class="card-head-text">
-            <h2>Avance</h2>
-            <p class="card-head-sub">Hectáreas y jornales</p>
-          </div>
-        </div>
-
-        <div class="row2">
-          <div class="field">
-            <label for="fAvance">Avance (ha)</label>
-            <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 0.50" />
-            <p class="field-hint" id="fAvanceHint"></p>
-          </div>
-          <div class="field">
-            <label for="fTotalJr">Total (JR)</label>
-            <input id="fTotalJr" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
-          </div>
         </div>
       </section>
 
@@ -1543,8 +1990,17 @@
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Progreso</h2>
-            <p class="card-head-sub">Vista del lote</p>
+            <p class="card-head-sub">Avance del lote · tope el área</p>
           </div>
+        </div>
+
+        <div class="field">
+          <label for="fAvance">Avance (ha)</label>
+          <div class="avance-row">
+            <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="" placeholder="0.00" />
+            <button type="button" class="btn-finish" id="finishLotBtn">Terminar</button>
+          </div>
+          <p class="field-hint" id="fAvanceHint"></p>
         </div>
 
         <div class="field progress-wrap">
@@ -1553,29 +2009,51 @@
           <div class="progress-meta" id="progressMeta">0%</div>
         </div>
 
+        <div class="field">
+          <label>Color de pintura</label>
+          <input type="hidden" id="fColor" value="" />
+          <div class="color-grid" id="colorGrid"></div>
+          <p class="field-hint" id="colorHint">Lunes a viernes · un color por día</p>
+        </div>
+
         <div class="preview">
-          <div class="preview-label">Vista previa</div>
-          <div class="preview-cell" id="previewCell">
-            <div class="preview-fill" id="previewFill"></div>
-            <span class="t" id="previewT">—</span>
-            <span class="l" id="previewL">LOTE —</span>
-            <span class="h" id="previewH">—</span>
-          </div>
+          <div class="preview-label">Lotes agregados por módulo</div>
+          <div class="lot-board" id="lotBoard"></div>
           <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
+        </div>
+        <button type="button" class="btn-capture" id="captureBtn">Ver</button>
+      </section>
+
+      <section class="card" id="avanceCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Avance</h2>
+            <p class="card-head-sub">Jornales sobre el área total</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fTotalJr">Jornales (JR)</label>
+          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+        </div>
+        <div class="ratio-box">
+          <p class="ratio-title">Cálculo</p>
+          <div class="row2">
+            <div class="field">
+              <label for="fRatio">Ratio</label>
+              <input id="fRatio" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+            </div>
+            <div class="field">
+              <label>JR / área total</label>
+              <input id="fRatioOut" type="text" readonly placeholder="—" />
+            </div>
+          </div>
+          <p class="ratio-formula" id="ratioFormula">JR = ratio × área total</p>
         </div>
       </section>
     </form>
 
-    <section class="card" id="historyCard">
-      <div class="card-head">
-        <div class="card-head-accent" aria-hidden="true"></div>
-        <div class="card-head-text">
-          <h2>Recientes</h2>
-          <p class="card-head-sub">Último envío en este dispositivo</p>
-        </div>
-      </div>
-      <div class="history-list" id="historyList"></div>
-    </section>
   </main>
 
   <div class="fab-wrap" id="fabWrap">
@@ -1597,7 +2075,7 @@
           <h3 id="histTitle">Historial</h3>
           <p>7 registros por página</p>
         </div>
-        <button type="button" class="picker-close" id="histClose" aria-label="Cerrar">×</button>
+        <button type="button" class="picker-close" id="histClose" aria-label="Cerrar"><span>×</span></button>
       </div>
       <div class="hist-sheet-body" id="histFullList"></div>
       <div class="history-pager" id="histPager" hidden>
@@ -1605,6 +2083,24 @@
         <span class="page-info" id="histPageInfo">1 / 1</span>
         <button type="button" id="histNext">Siguiente</button>
       </div>
+    </div>
+  </div>
+
+  <div class="hist-modal" id="sumModal" aria-hidden="true" inert>
+    <div class="hist-sheet" role="dialog" aria-labelledby="sumTitle">
+      <div class="hist-sheet-head">
+        <div>
+          <h3 id="sumTitle">Resumen</h3>
+          <p>Lotes en el celular · área total</p>
+        </div>
+        <button type="button" class="picker-close" id="sumClose" aria-label="Cerrar"><span>×</span></button>
+      </div>
+      <div class="sum-strip" id="sumModalKpis">
+        <div class="sum-kpi"><span>Lotes</span><strong id="sumKpiLots">0</strong></div>
+        <div class="sum-kpi"><span>Área total</span><strong id="sumKpiArea">0.00 ha</strong></div>
+        <div class="sum-kpi"><span>Avance</span><strong id="sumKpiAv">0.00 ha</strong></div>
+      </div>
+      <div class="hist-sheet-body" id="sumBoard"></div>
     </div>
   </div>
 
@@ -1651,7 +2147,7 @@
     <div class="picker-sheet-inner">
       <div class="picker-head">
         <h3 id="pickerTitle">Elegir</h3>
-        <button type="button" class="picker-close" id="pickerClose" aria-label="Cerrar">×</button>
+        <button type="button" class="picker-close" id="pickerClose" aria-label="Cerrar"><span>×</span></button>
       </div>
       <div class="picker-search-wrap" id="pickerSearchWrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -1700,6 +2196,8 @@
     if (window.__QB_FORM_LOCKED__) return;
 
     const DRAFT_KEY = "qb-form-draft";
+    const LOCAL_LOTS_KEY = "qb-form-local-lots";
+    const FORM_DAY_KEY = "qb-form-day";
     const data = window.MAP_DATA;
     const lots = data.lots || [];
     const modules = data.modules || [];
@@ -1722,6 +2220,36 @@
         month: "2-digit",
         day: "2-digit"
       }).format(new Date());
+    }
+
+    const DAY_COLORS = [
+      { dow: 1, hex: "#64B5F6", name: "Lunes", short: "Lun" },
+      { dow: 2, hex: "#81C784", name: "Martes", short: "Mar" },
+      { dow: 3, hex: "#FFD54F", name: "Miércoles", short: "Mié" },
+      { dow: 4, hex: "#FF8A65", name: "Jueves", short: "Jue" },
+      { dow: 5, hex: "#CE93D8", name: "Viernes", short: "Vie" }
+    ];
+
+    function limaDow(iso) {
+      const d = new Date((iso || hoyIso()) + "T12:00:00-05:00");
+      const js = d.getDay();
+      return js === 0 ? 7 : js;
+    }
+
+    function todayColorEntry() {
+      const dow = limaDow();
+      if (dow >= 1 && dow <= 5) return DAY_COLORS[dow - 1];
+      return DAY_COLORS[4];
+    }
+
+    function isDayUnlocked(dow) {
+      const today = limaDow();
+      if (today >= 6) return true;
+      return dow <= today;
+    }
+
+    function currentPaintColor() {
+      return todayColorEntry().hex;
     }
 
     function formatFechaDisplay(iso) {
@@ -1752,37 +2280,49 @@
       fLoteTrigger: document.getElementById("fLoteTrigger"),
       fLoteLabel: document.getElementById("fLoteLabel"),
       fModulo: document.getElementById("fModulo"),
+      fModuloTrigger: document.getElementById("fModuloTrigger"),
+      fModuloLabel: document.getElementById("fModuloLabel"),
       fTurno: document.getElementById("fTurno"),
+      fTurnoTrigger: document.getElementById("fTurnoTrigger"),
+      fTurnoLabel: document.getElementById("fTurnoLabel"),
       fArea: document.getElementById("fArea"),
+      fAreaText: document.getElementById("fAreaText"),
+      areaChip: document.getElementById("areaChip"),
       fVariedad: document.getElementById("fVariedad"),
       fVariedadTrigger: document.getElementById("fVariedadTrigger"),
       fVariedadLabel: document.getElementById("fVariedadLabel"),
-      fLaborPpto: document.getElementById("fLaborPpto"),
-      fLaborPptoTrigger: document.getElementById("fLaborPptoTrigger"),
-      fLaborPptoLabel: document.getElementById("fLaborPptoLabel"),
       fLaborReal: document.getElementById("fLaborReal"),
       fLaborRealTrigger: document.getElementById("fLaborRealTrigger"),
       fLaborRealLabel: document.getElementById("fLaborRealLabel"),
       fAvance: document.getElementById("fAvance"),
       fAvanceHint: document.getElementById("fAvanceHint"),
+      finishLotBtn: document.getElementById("finishLotBtn"),
       fTotalJr: document.getElementById("fTotalJr"),
+      fRatio: document.getElementById("fRatio"),
+      fRatioOut: document.getElementById("fRatioOut"),
+      ratioFormula: document.getElementById("ratioFormula"),
       fSem: document.getElementById("fSem"),
       fSemText: document.getElementById("fSemText"),
       fFecha: document.getElementById("fFecha"),
       fFechaText: document.getElementById("fFechaText"),
       fAvanceBar: document.getElementById("fAvanceBar"),
       progressMeta: document.getElementById("progressMeta"),
-      previewCell: document.getElementById("previewCell"),
-      previewFill: document.getElementById("previewFill"),
-      previewT: document.getElementById("previewT"),
-      previewL: document.getElementById("previewL"),
-      previewH: document.getElementById("previewH"),
+      lotBoard: document.getElementById("lotBoard"),
       previewStatus: document.getElementById("previewStatus"),
+      fColor: document.getElementById("fColor"),
+      colorGrid: document.getElementById("colorGrid"),
+      colorHint: document.getElementById("colorHint"),
+      sumModal: document.getElementById("sumModal"),
+      sumBoard: document.getElementById("sumBoard"),
+      sumKpiLots: document.getElementById("sumKpiLots"),
+      sumKpiArea: document.getElementById("sumKpiArea"),
+      sumKpiAv: document.getElementById("sumKpiAv"),
       toast: document.getElementById("toast"),
       netPill: document.getElementById("netPill"),
       queuePill: document.getElementById("queuePill"),
       queueText: document.getElementById("queueText"),
       saveBtn: document.getElementById("saveBtn"),
+      captureBtn: document.getElementById("captureBtn"),
       draftBadge: document.getElementById("draftBadge"),
       historyList: document.getElementById("historyList"),
       pickerBackdrop: document.getElementById("pickerBackdrop"),
@@ -1814,31 +2354,67 @@
     }
 
     const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
-    const loteOptions = sortedLots.map(lot => {
+
+    function lotPosKey(lot) {
+      return `${lot.r},${lot.c}`;
+    }
+
+    function lotOption(lot) {
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       const tunel = String(lot.tunel || "").toUpperCase();
       const ha = lot.ha != null ? Number(lot.ha).toFixed(2) + " ha" : "";
       return {
-        value: `${lot.r},${lot.c}`,
+        value: lotPosKey(lot),
         title: `LOTE ${lot.lote}`,
-        sub: [tunel, mod?.label, ha].filter(Boolean).join(" · "),
+        sub: [tunel, ha].filter(Boolean).join(" · "),
         search: `lote ${lot.lote} ${tunel} m${lot.modulo} ${mod?.label || ""}`.toLowerCase()
       };
-    });
+    }
+
+    const moduloOptions = modules.map(m => ({
+      value: String(m.id),
+      title: m.label,
+      sub: (m.name || m.label) + (m.ha != null ? " · " + Number(m.ha).toFixed(2) + " ha" : ""),
+      search: `${m.label} ${m.name || ""} modulo ${m.id}`.toLowerCase(),
+      color: m.fill || m.badge || ""
+    }));
+
+    function lotsForModulo(modId) {
+      if (!modId) return [];
+      return sortedLots.filter(l => String(l.modulo) === String(modId));
+    }
+
+    function turnoOptionsFor(modId) {
+      const seen = new Set();
+      const out = [];
+      lotsForModulo(modId).forEach(lot => {
+        const t = String(lot.tunel || "").toUpperCase();
+        if (!t || seen.has(t)) return;
+        seen.add(t);
+        out.push({
+          value: t,
+          title: t,
+          sub: "Turno · " + (modById[lot.modulo]?.label || ""),
+          search: t.toLowerCase()
+        });
+      });
+      out.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+      return out;
+    }
+
+    function loteOptionsFor(modId, turno) {
+      const t = String(turno || "").toUpperCase();
+      return lotsForModulo(modId)
+        .filter(l => !t || String(l.tunel || "").toUpperCase() === t)
+        .map(lotOption);
+    }
 
     const variedadOptions = [
       { value: "SEKOYA POP", title: "S. Pop", sub: "Variedad", search: "sekoya pop s pop" },
       { value: "MAGICA", title: "Mágica", sub: "Variedad", search: "magica magica" }
     ];
 
-    const laborPptoOptions = LABOR.labor_ppto.map(s => ({
-      value: s,
-      title: laborDisplay(s),
-      sub: "Labor ppto",
-      search: s.toLowerCase()
-    }));
-
-    const laborRealOptions = LABOR.labor_real.map(s => ({
+    const laborRealOptions = (LABOR.labor_real || []).map(s => ({
       value: s,
       title: laborDisplay(s),
       sub: "Labor real",
@@ -1880,9 +2456,20 @@
 
       els.pickerList.innerHTML = filtered.map(item => {
         const sel = item.value === activePicker.hidden.value ? " selected" : "";
-        return `<button type="button" class="picker-option${sel}" data-value="${item.value.replace(/"/g, "&quot;")}">
-          <b>${item.title}</b>
-          ${item.sub ? `<small>${item.sub}</small>` : ""}
+        const captured = pickers && activePicker === pickers.lote && localLots && localLots[item.value];
+        const taken = captured ? " is-captured" : "";
+        const dot = item.color
+          ? `<span class="opt-dot" style="background:${item.color}"></span>`
+          : "";
+        const tag = captured ? '<span class="opt-tag">En el día</span>' : "";
+        return `<button type="button" class="picker-option${sel}${taken}" data-value="${item.value.replace(/"/g, "&quot;")}">
+          ${dot}
+          <span class="opt-copy">
+            <b>${item.title}</b>
+            ${item.sub ? `<small>${item.sub}</small>` : ""}
+            ${tag}
+          </span>
+          <span class="opt-check" aria-hidden="true"></span>
         </button>`;
       }).join("");
 
@@ -1893,6 +2480,9 @@
           if (document.activeElement && typeof document.activeElement.blur === "function") {
             document.activeElement.blur();
           }
+          if (picker && (picker === pickers.modulo || picker === pickers.turno || picker === pickers.lote)) {
+            persistCurrentLot();
+          }
           if (picker) setPickValue(picker, value);
           closePicker();
           saveDraft();
@@ -1901,6 +2491,7 @@
     }
 
     function openPicker(picker) {
+      if (!picker || picker.trigger.disabled) return;
       activePicker = picker;
       picker.trigger.setAttribute("aria-expanded", "true");
       els.pickerTitle.textContent = picker.sheetTitle;
@@ -1952,7 +2543,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.1.2";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.2.4";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -2015,15 +2606,24 @@
     }
 
     async function clearAppCacheOnly() {
-      try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ok */ }
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(LOCAL_LOTS_KEY);
+        localStorage.removeItem(FORM_DAY_KEY);
+      } catch (e) { /* ok */ }
+      localLots = {};
+      resetForm(true, true);
+      try { localStorage.setItem(FORM_DAY_KEY, hoyIso()); } catch (e2) { /* ok */ }
       els.draftBadge?.classList.remove("show");
+      renderColorGrid();
+      renderLocalLots();
       try {
         if (window.caches) {
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
         }
       } catch (e) { /* ok */ }
-      showToast("Caché y borrador limpios · cola e historial intactos", null);
+      showToast("Caché limpia · detalle del día en 0", null);
       closeUpdModal();
     }
 
@@ -2058,9 +2658,19 @@
       closeUpdModal();
       const bar = showUpdProgress();
       try {
+        try { sessionStorage.setItem("qb-app-refresh", "1"); } catch { /* ok */ }
         bar.set(25);
+        if (QBApi.hasApi() && navigator.onLine) {
+          try { await QBApi.flushQueue(); } catch { /* ok */ }
+        }
         if ("serviceWorker" in navigator) {
+          const ctrl = navigator.serviceWorker.controller;
+          if (ctrl) ctrl.postMessage({ type: "PURGE" });
           const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.update().catch(() => null)));
+          regs.forEach(r => {
+            if (r.waiting) r.waiting.postMessage({ type: "SKIP_WAITING" });
+          });
           await Promise.all(regs.map(r => r.unregister()));
         }
         bar.set(55);
@@ -2078,6 +2688,16 @@
         url.searchParams.set("_v", String(Date.now()));
         location.replace(url.toString());
       }, 480);
+    }
+
+    function consumeAppRefreshFlag() {
+      try {
+        if (sessionStorage.getItem("qb-app-refresh") === "1") {
+          sessionStorage.removeItem("qb-app-refresh");
+          return true;
+        }
+      } catch { /* ok */ }
+      return new URL(location.href).searchParams.has("_v");
     }
 
     fabBtn?.addEventListener("click", e => {
@@ -2115,6 +2735,11 @@
     });
 
     window.addEventListener("pageshow", () => {
+      if (rollDayIfNeeded()) {
+        resetForm(true, true);
+        renderColorGrid();
+        showToast("Nuevo día · detalle en 0", null);
+      }
       syncFabVisibility();
       tryFlushQueue();
     });
@@ -2122,6 +2747,11 @@
       if (document.visibilityState === "hidden") {
         flushDraftNow();
       } else {
+        if (rollDayIfNeeded()) {
+          resetForm(true, true);
+          renderColorGrid();
+          showToast("Nuevo día · detalle en 0", null);
+        }
         syncFabVisibility();
         tryFlushQueue();
       }
@@ -2143,16 +2773,41 @@
       return picker;
     }
 
+    function setPickerEnabled(picker, enabled) {
+      if (!picker || !picker.trigger) return;
+      picker.trigger.disabled = !enabled;
+      picker.trigger.classList.toggle("is-disabled", !enabled);
+    }
+
     const pickers = {
+      modulo: createPicker({
+        hidden: els.fModulo,
+        trigger: els.fModuloTrigger,
+        labelEl: els.fModuloLabel,
+        items: moduloOptions,
+        placeholder: "Seleccionar módulo...",
+        sheetTitle: "Elegir módulo",
+        searchable: false,
+        onChange: () => { onModuloChange(); saveDraft(); }
+      }),
+      turno: createPicker({
+        hidden: els.fTurno,
+        trigger: els.fTurnoTrigger,
+        labelEl: els.fTurnoLabel,
+        items: [],
+        placeholder: "Elige módulo",
+        sheetTitle: "Elegir turno",
+        searchable: false,
+        onChange: () => { onTurnoChange(); saveDraft(); }
+      }),
       lote: createPicker({
         hidden: els.fLote,
         trigger: els.fLoteTrigger,
         labelEl: els.fLoteLabel,
-        items: loteOptions,
-        placeholder: "Seleccionar lote...",
+        items: [],
+        placeholder: "Elige turno",
         sheetTitle: "Elegir lote",
-        searchPlaceholder: "Buscar lote, túnel o módulo...",
-        searchable: true,
+        searchable: false,
         onChange: () => { onLoteChange(); saveDraft(); }
       }),
       variedad: createPicker({
@@ -2163,56 +2818,136 @@
         placeholder: "Seleccionar variedad...",
         sheetTitle: "Elegir variedad",
         searchable: false,
-        onChange: () => saveDraft()
-      }),
-      laborPpto: createPicker({
-        hidden: els.fLaborPpto,
-        trigger: els.fLaborPptoTrigger,
-        labelEl: els.fLaborPptoLabel,
-        items: laborPptoOptions,
-        placeholder: "Seleccionar labor ppto...",
-        sheetTitle: "Elegir labor ppto",
-        searchable: false,
-        onChange: () => saveDraft()
+        onChange: () => { persistCurrentLot(); saveDraft(); }
       }),
       laborReal: createPicker({
         hidden: els.fLaborReal,
         trigger: els.fLaborRealTrigger,
         labelEl: els.fLaborRealLabel,
         items: laborRealOptions,
-        placeholder: "Seleccionar labor real...",
-        sheetTitle: "Elegir labor real",
+        placeholder: "Seleccionar labor...",
+        sheetTitle: "Elegir labor",
         searchable: false,
-        onChange: () => { updatePreview(); saveDraft(); }
+        onChange: () => { updatePreview(); persistCurrentLot(); saveDraft(); }
       })
     };
+
+    setPickerEnabled(pickers.turno, false);
+    setPickerEnabled(pickers.lote, false);
 
     els.pickerClose.addEventListener("click", closePicker);
     els.pickerBackdrop.addEventListener("click", closePicker);
     els.pickerSearch.addEventListener("input", () => renderPickerList(els.pickerSearch.value));
 
+    let suppressPersist = false;
+    let syncingCalc = false;
+    let localLots = {};
+
+    function rollDayIfNeeded() {
+      const today = hoyIso();
+      let stored = "";
+      try { stored = localStorage.getItem(FORM_DAY_KEY) || ""; } catch (e) { stored = ""; }
+      if (!stored) {
+        try { localStorage.setItem(FORM_DAY_KEY, today); } catch (e) { /* ok */ }
+        return false;
+      }
+      if (stored === today) return false;
+      localLots = {};
+      try {
+        localStorage.removeItem(LOCAL_LOTS_KEY);
+        localStorage.removeItem(DRAFT_KEY);
+        localStorage.setItem(FORM_DAY_KEY, today);
+      } catch (e) { /* ok */ }
+      return true;
+    }
+
+    function loadLocalLotsMap() {
+      if (rollDayIfNeeded()) return;
+      try {
+        localLots = JSON.parse(localStorage.getItem(LOCAL_LOTS_KEY) || "{}") || {};
+      } catch {
+        localLots = {};
+      }
+    }
+
+    function saveLocalLotsMap() {
+      try {
+        localStorage.setItem(LOCAL_LOTS_KEY, JSON.stringify(localLots));
+      } catch (e) { /* storage lleno */ }
+    }
+
+    function localLotsEntries() {
+      return Object.keys(localLots).map(k => localLots[k]).filter(Boolean);
+    }
+
+    function setAreaDisplay(ha) {
+      const n = roundHa(ha);
+      els.fArea.value = n ? formatHa(n) : "";
+      if (els.fAreaText) {
+        els.fAreaText.innerHTML = (n ? formatHa(n) : "0.00") + " <small>ha</small>";
+      }
+      els.areaChip?.classList.toggle("is-empty", !n);
+    }
+
     function getFormState() {
       return {
+        modulo: els.fModulo.value,
+        turno: els.fTurno.value,
         lote: els.fLote.value,
         variedad: els.fVariedad.value,
-        laborPpto: els.fLaborPpto.value,
         laborReal: els.fLaborReal.value,
         avance: els.fAvance.value,
-        totalJr: els.fTotalJr.value
+        totalJr: els.fTotalJr.value,
+        ratio: els.fRatio ? els.fRatio.value : "",
+        color: els.fColor ? els.fColor.value : ""
       };
+    }
+
+    function applyCascadeFromLot(lot, silent) {
+      if (!lot) return;
+      const modId = lot.modulo != null ? String(lot.modulo) : "";
+      const turno = String(lot.tunel || "").toUpperCase();
+      pickers.turno.items = turnoOptionsFor(modId);
+      pickers.lote.items = loteOptionsFor(modId, turno);
+      setPickValue(pickers.modulo, modId, true);
+      setPickValue(pickers.turno, turno, true);
+      setPickValue(pickers.lote, lotPosKey(lot), true);
+      setPickerEnabled(pickers.turno, !!modId);
+      setPickerEnabled(pickers.lote, !!modId && !!turno);
+      pickers.turno.placeholder = modId ? "Seleccionar turno..." : "Elige módulo";
+      pickers.lote.placeholder = turno ? "Seleccionar lote..." : "Elige turno";
+      if (!silent) onLoteChange();
     }
 
     function applyFormState(s) {
       if (!s) return;
-      setPickValue(pickers.lote, s.lote || "", true);
+      suppressPersist = true;
       setPickValue(pickers.variedad, s.variedad || "SEKOYA POP", true);
-      setPickValue(pickers.laborPpto, s.laborPpto || "", true);
       setPickValue(pickers.laborReal, s.laborReal || "", true);
       els.fAvance.value = s.avance ? formatHa(s.avance) : "";
       els.fTotalJr.value = s.totalJr || "";
+      if (els.fRatio) els.fRatio.value = s.ratio || "";
+      setPaintColor(currentPaintColor());
+      const lot = s.lote ? byPos.get(s.lote) : null;
+      if (lot) {
+        applyCascadeFromLot(lot, true);
+      } else if (s.modulo) {
+        pickers.turno.items = turnoOptionsFor(s.modulo);
+        setPickValue(pickers.modulo, s.modulo, true);
+        setPickerEnabled(pickers.turno, true);
+        pickers.turno.placeholder = "Seleccionar turno...";
+        if (s.turno) {
+          pickers.lote.items = loteOptionsFor(s.modulo, s.turno);
+          setPickValue(pickers.turno, s.turno, true);
+          setPickerEnabled(pickers.lote, true);
+          pickers.lote.placeholder = "Seleccionar lote...";
+        }
+      }
       setFechaHoy();
       onLoteChange();
+      updateRatioFromJr();
       updatePreview();
+      suppressPersist = false;
     }
 
     function saveDraft() {
@@ -2275,10 +3010,302 @@
       return lot ? roundHa(lot.ha) : 0;
     }
 
+    function moduleColor(modId) {
+      const mod = modById[modId] || modById[Number(modId)];
+      return (mod && (mod.badge || mod.fill)) || "";
+    }
+
+    function normalizeHex(v) {
+      const s = String(v || "").trim().toUpperCase();
+      return /^#[0-9A-F]{6}$/.test(s) ? s : "";
+    }
+
+    function colorPaletteList() {
+      const today = limaDow();
+      return DAY_COLORS.map(d => ({
+        hex: d.hex,
+        fill: d.hex,
+        label: d.name,
+        short: d.short,
+        dow: d.dow,
+        unlocked: isDayUnlocked(d.dow),
+        isToday: today >= 1 && today <= 5 ? d.dow === today : d.dow === 5
+      }));
+    }
+
+    function setPaintColor(hex) {
+      const today = todayColorEntry();
+      const h = today.hex;
+      if (els.fColor) els.fColor.value = h;
+      if (!els.colorGrid) return;
+      els.colorGrid.querySelectorAll(".color-swatch").forEach(btn => {
+        btn.classList.toggle("is-on", btn.getAttribute("data-color") === h);
+      });
+      if (els.colorHint) {
+        els.colorHint.textContent = "Hoy " + today.name.toLowerCase() + " · se desbloquea un color por día";
+      }
+    }
+
+    function renderColorGrid() {
+      if (!els.colorGrid) return;
+      const today = limaDow();
+      els.colorGrid.innerHTML = colorPaletteList().map(c => {
+        const future = today <= 5 && c.dow > today;
+        const past = c.unlocked && !c.isToday && !future;
+        const cls = "color-swatch"
+          + (c.isToday ? " is-on" : "")
+          + (past ? " is-locked" : "")
+          + (future ? " is-future is-locked" : "");
+        return `<button type="button" class="${cls}" data-color="${c.hex}" data-dow="${c.dow}" ${future ? "disabled" : ""} aria-label="${c.label}" ${future ? "aria-disabled=\"true\"" : ""}>
+          <span class="sw-dot" style="background:${c.hex}"></span>
+          <small>${c.short}</small>
+        </button>`;
+      }).join("");
+      els.colorGrid.querySelectorAll(".color-swatch").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const dow = Number(btn.getAttribute("data-dow"));
+          if (!isDayUnlocked(dow) || dow !== todayColorEntry().dow) {
+            const hit = DAY_COLORS.find(d => d.dow === dow);
+            showToast(hit ? ("Ese color es de " + hit.name.toLowerCase() + " · hoy pinta " + todayColorEntry().name.toLowerCase()) : "Color bloqueado", null);
+            return;
+          }
+          setPaintColor(btn.getAttribute("data-color"));
+          saveDraft();
+        });
+      });
+      setPaintColor(currentPaintColor());
+    }
+
+    function totalsFromLots() {
+      const items = previewItems();
+      const n = items.length;
+      const area = roundHa(items.reduce((s, i) => s + (Number(i.area) || 0), 0));
+      const av = roundHa(items.reduce((s, i) => s + (Number(i.avance) || 0), 0));
+      return { n, area, av };
+    }
+
+    function updateRatioUI() {
+      const tot = totalsFromLots();
+      const area = tot.area;
+      const jr = roundHa(els.fTotalJr.value);
+      const ratio = area > 0 ? roundHa(jr / area) : 0;
+      if (els.fRatioOut) els.fRatioOut.value = area > 0 ? formatHa(ratio) : "—";
+      if (els.ratioFormula) {
+        els.ratioFormula.textContent = area > 0
+          ? "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio)
+          : "JR = ratio × área total";
+      }
+    }
+
+    function updateJrFromRatio() {
+      if (syncingCalc) return;
+      syncingCalc = true;
+      const area = totalsFromLots().area;
+      const ratio = roundHa(els.fRatio && els.fRatio.value);
+      const jr = area > 0 ? roundHa(ratio * area) : 0;
+      if (els.fTotalJr) els.fTotalJr.value = jr ? formatHa(jr) : "";
+      updateRatioUI();
+      syncingCalc = false;
+      saveDraft();
+    }
+
+    function updateRatioFromJr() {
+      if (syncingCalc) return;
+      syncingCalc = true;
+      const area = totalsFromLots().area;
+      const jr = roundHa(els.fTotalJr.value);
+      const ratio = area > 0 ? roundHa(jr / area) : 0;
+      if (els.fRatio) els.fRatio.value = (jr && area) ? formatHa(ratio) : "";
+      updateRatioUI();
+      syncingCalc = false;
+    }
+
+    function persistCurrentLot() {
+      if (suppressPersist) return;
+      const posKey = els.fLote.value;
+      if (!posKey) return;
+      const lot = byPos.get(posKey);
+      if (!lot) return;
+      const avance = roundHa(els.fAvance.value);
+      const laborReal = String(els.fLaborReal.value || "");
+      if (!laborReal && avance <= 0) return;
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      localLots[posKey] = {
+        posKey,
+        modulo: String(lot.modulo != null ? lot.modulo : els.fModulo.value || ""),
+        moduloLabel: mod ? mod.label : "",
+        turno: String(lot.tunel || els.fTurno.value || "").toUpperCase(),
+        lote: lot.lote,
+        variedad: els.fVariedad.value || "SEKOYA POP",
+        laborReal,
+        area: roundHa(lot.ha),
+        avance,
+        color: currentPaintColor(),
+        capturedAt: Date.now()
+      };
+      saveLocalLotsMap();
+      renderLocalLots();
+    }
+
+    function previewItems() {
+      const map = Object.assign({}, localLots);
+      const posKey = els.fLote.value;
+      const lot = posKey ? byPos.get(posKey) : null;
+      if (lot) {
+        const avance = roundHa(els.fAvance.value);
+        if (avance > 0 || map[posKey]) {
+          const mod = lot.modulo != null ? modById[lot.modulo] : null;
+          map[posKey] = Object.assign({}, map[posKey] || {}, {
+            posKey,
+            modulo: String(lot.modulo != null ? lot.modulo : els.fModulo.value || ""),
+            moduloLabel: (map[posKey] && map[posKey].moduloLabel) || (mod ? mod.label : ""),
+            turno: String(lot.tunel || "").toUpperCase(),
+            lote: lot.lote,
+            area: roundHa(lot.ha),
+            avance: avance || roundHa(map[posKey] && map[posKey].avance),
+            laborReal: els.fLaborReal.value || (map[posKey] && map[posKey].laborReal) || "",
+            color: currentPaintColor()
+          });
+        }
+      }
+      return Object.keys(map).map(k => map[k]).filter(i => i && (roundHa(i.avance) > 0 || i.laborReal));
+    }
+
+    function lotBoardHtml(items, activeKey, withDelete) {
+      if (!items.length) {
+        return '<div class="board-empty">Aún no hay lotes. Completa el avance para ir agregando.</div>';
+      }
+      const groups = {};
+      items.forEach(item => {
+        const id = String(item.modulo || "x");
+        if (!groups[id]) groups[id] = [];
+        groups[id].push(item);
+      });
+      const order = modules.map(m => String(m.id)).concat(Object.keys(groups).filter(k => !modules.some(m => String(m.id) === k)));
+      return order.filter(id => groups[id] && groups[id].length).map(id => {
+        const mod = modById[id] || modById[Number(id)];
+        const color = (mod && (mod.fill || mod.badge)) || "#64748b";
+        const accent = (mod && (mod.badge || mod.fill)) || color;
+        const rows = groups[id].slice().sort((a, b) => Number(a.lote) - Number(b.lote) || String(a.turno).localeCompare(String(b.turno)));
+        const areaG = roundHa(rows.reduce((s, i) => s + (Number(i.area) || 0), 0));
+        return `<div class="mod-group">
+          <div class="mod-group-head">
+            <span class="mod-dot" style="background:${accent}"></span>
+            <b>${mod ? mod.label : ("M" + id)}</b>
+            <span>${rows.length} · ${formatHa(areaG)} ha</span>
+          </div>
+          <div class="mod-lots" data-n="${rows.length}">
+            ${rows.map(item => {
+              const area = roundHa(item.area);
+              const av = roundHa(item.avance);
+              const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              const on = item.posKey === activeKey ? " is-on" : "";
+              const fill = normalizeHex(item.color) || currentPaintColor() || color;
+              const cell = `<button type="button" class="mini-cell${on}" data-open="${item.posKey}">
+                  <div class="mini-fill" style="background:${fill};height:${pct}%"></div>
+                  <span class="t">${item.turno || "—"}</span>
+                  <span class="l">LOTE ${item.lote}</span>
+                  <span class="h">${formatHa(area)}</span>
+                </button>`;
+              if (!withDelete) return cell;
+              return `<div class="mini-cell-wrap">
+                ${cell}
+                <button type="button" class="mini-del" data-del="${item.posKey}" aria-label="Eliminar lote ${item.lote}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  <span>Quitar</span>
+                </button>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderLocalLots() {
+      const items = previewItems();
+      const tot = totalsFromLots();
+      if (els.lotBoard) els.lotBoard.innerHTML = lotBoardHtml(items, els.fLote.value, false);
+      if (els.sumBoard && els.sumModal?.classList.contains("open")) {
+        els.sumBoard.innerHTML = lotBoardHtml(items, els.fLote.value, true);
+        if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
+        if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
+        if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+      }
+      updateRatioUI();
+    }
+
+    function openLocalLot(posKey) {
+      const item = localLots[posKey];
+      const lot = byPos.get(posKey);
+      if (!lot) return;
+      persistCurrentLot();
+      suppressPersist = true;
+      applyCascadeFromLot(lot, true);
+      if (item) {
+        if (item.laborReal) setPickValue(pickers.laborReal, item.laborReal, true);
+        if (item.variedad) setPickValue(pickers.variedad, item.variedad, true);
+        els.fAvance.value = item.avance ? formatHa(item.avance) : "";
+        setPaintColor(currentPaintColor());
+      }
+      onLoteChange();
+      updatePreview();
+      suppressPersist = false;
+      renderLocalLots();
+      closeSumModal();
+    }
+
+    function removeLocalLot(posKey) {
+      if (!posKey || !localLots[posKey]) return;
+      delete localLots[posKey];
+      saveLocalLotsMap();
+      if (els.fLote.value === posKey) {
+        els.fAvance.value = "";
+        clearLotDerived();
+      }
+      renderLocalLots();
+      saveDraft();
+      showToast("Lote quitado del día", null);
+    }
+
+    function onModuloChange() {
+      const modId = els.fModulo.value;
+      pickers.turno.items = turnoOptionsFor(modId);
+      pickers.lote.items = [];
+      setPickValue(pickers.turno, "", true);
+      setPickValue(pickers.lote, "", true);
+      setPickerEnabled(pickers.turno, !!modId);
+      setPickerEnabled(pickers.lote, false);
+      pickers.turno.placeholder = modId ? "Seleccionar turno..." : "Elige módulo";
+      pickers.lote.placeholder = "Elige turno";
+      setPickLabel(pickers.turno.labelEl, null, pickers.turno.placeholder);
+      setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
+      clearLotDerived();
+    }
+
+    function onTurnoChange() {
+      const modId = els.fModulo.value;
+      const turno = els.fTurno.value;
+      pickers.lote.items = loteOptionsFor(modId, turno);
+      setPickValue(pickers.lote, "", true);
+      setPickerEnabled(pickers.lote, !!modId && !!turno);
+      pickers.lote.placeholder = turno ? "Seleccionar lote..." : "Elige turno";
+      setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
+      clearLotDerived();
+    }
+
+    function clearLotDerived() {
+      setAreaDisplay(0);
+      els.fAvance.removeAttribute("max");
+      els.fAvance.classList.remove("avance-capped");
+      updateAvanceHint(0, false);
+      clearPreviewUI();
+      updateRatioUI();
+    }
+
     /** Lee lo que escribió el usuario, sin forzar el input */
     function readAvanceTyped() {
       const raw = String(els.fAvance.value || "").trim().replace(",", ".");
-      if (raw === "" || raw === "." || raw === "-") return null;
+      if (raw === "" || raw === "." || raw === "-" || raw === "0.") return null;
       const n = parseFloat(raw);
       return isNaN(n) ? null : n;
     }
@@ -2328,106 +3355,215 @@
     function onLoteChange() {
       const lot = byPos.get(els.fLote.value);
       if (!lot) {
-        els.fModulo.value = "";
-        els.fTurno.value = "";
-        els.fArea.value = "";
-        els.fAvance.removeAttribute("max");
-        els.fAvance.classList.remove("avance-capped");
-        updateAvanceHint(0, false);
-        clearPreviewUI();
+        clearLotDerived();
         return;
       }
-      const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      els.fModulo.value = mod ? mod.label : "";
-      els.fTurno.value = String(lot.tunel || "").toUpperCase();
-      els.fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
+      const saved = localLots[els.fLote.value];
+      if (!suppressPersist) {
+        suppressPersist = true;
+        if (saved) {
+          if (saved.laborReal) setPickValue(pickers.laborReal, saved.laborReal, true);
+          if (saved.variedad) setPickValue(pickers.variedad, saved.variedad, true);
+          els.fAvance.value = saved.avance ? formatHa(saved.avance) : "";
+        } else {
+          els.fAvance.value = "";
+        }
+        suppressPersist = false;
+      }
+      setAreaDisplay(lot.ha);
       els.fAvance.removeAttribute("max");
       finalizeAvance({ toast: false, format: false });
-      els.previewCell.style.borderColor = mod?.badge || "#d1d5db";
-      els.previewFill.style.background = mod?.badge || mod?.fill || "#94a3b8";
+      setPaintColor(currentPaintColor());
       updatePreview();
+      renderLocalLots();
     }
 
     function clearPreviewUI() {
       if (els.fAvanceBar) els.fAvanceBar.style.width = "0%";
       if (els.progressMeta) els.progressMeta.textContent = "0%";
-      if (els.previewT) els.previewT.textContent = "—";
-      if (els.previewL) els.previewL.textContent = "LOTE —";
-      if (els.previewH) els.previewH.textContent = "—";
-      if (els.previewFill) {
-        els.previewFill.style.height = "0%";
-        els.previewFill.style.removeProperty("background");
-        els.previewFill.style.background = "#94a3b8";
-      }
-      if (els.previewCell) {
-        els.previewCell.style.removeProperty("border-color");
-        els.previewCell.style.borderColor = "#d1d5db";
-      }
       if (els.previewStatus) els.previewStatus.textContent = "Selecciona un lote";
       updateAvanceHint(0, false);
       if (els.fAvance) els.fAvance.classList.remove("avance-capped");
+      renderLocalLots();
     }
 
     function updatePreview() {
       const lot = byPos.get(els.fLote.value);
-      if (!lot) {
-        clearPreviewUI();
-        return;
-      }
       const area = getLotArea();
       const typed = readAvanceTyped();
       let av = typed == null ? 0 : roundHa(typed);
       if (area > 0 && av > area) av = area;
       const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
-      els.fAvanceBar.style.width = pct + "%";
-      els.progressMeta.textContent = pct.toFixed(0) + "% · " + av.toFixed(2) + " / " + area.toFixed(2) + " ha";
-      els.previewT.textContent = String(lot.tunel || "").toUpperCase();
-      els.previewL.textContent = "LOTE " + lot.lote;
-      els.previewH.textContent = lot.ha != null ? Number(lot.ha).toFixed(2) : "—";
-      els.previewFill.style.height = pct + "%";
+      if (els.fAvanceBar) els.fAvanceBar.style.width = pct + "%";
+      if (els.progressMeta) {
+        els.progressMeta.textContent = lot
+          ? pct.toFixed(0) + "% · " + av.toFixed(2) + " / " + area.toFixed(2) + " ha"
+          : "0%";
+      }
       updateAvanceHint(area, typed != null && area > 0 && typed > area);
-      const labor = els.fLaborReal.value;
-      els.previewStatus.textContent = labor
-        ? (pct >= 98 ? "Completado" : pct > 0 ? "En progreso" : "Pendiente") + " · " + labor
-        : "Selecciona labor real";
+      const tot = totalsFromLots();
+      if (els.previewStatus) {
+        els.previewStatus.textContent = tot.n
+          ? tot.n + " lote(s) · área " + formatHa(tot.area) + " ha"
+          : "Selecciona un lote y pon el avance";
+      }
+      renderLocalLots();
     }
 
-    els.fAvance.addEventListener("input", () => {
+    function capAvanceInput() {
+      const area = getLotArea();
+      const typed = readAvanceTyped();
+      if (typed == null || area <= 0) {
+        updateAvanceHint(area, false);
+        return;
+      }
+      if (typed > area) {
+        els.fAvance.value = formatHa(area);
+        updateAvanceHint(area, true);
+        if (!avanceWarned) {
+          showToast("Máximo " + formatHa(area) + " ha", "error");
+          avanceWarned = true;
+          setTimeout(() => { avanceWarned = false; }, 2500);
+        }
+      } else {
+        updateAvanceHint(area, false);
+      }
+    }
+
+    function finishCurrentLot() {
+      const area = getLotArea();
+      if (!els.fLote.value || area <= 0) {
+        showToast("Selecciona un lote", "error");
+        return;
+      }
+      els.fAvance.value = formatHa(area);
+      finalizeAvance({ toast: false, format: true });
       updatePreview();
+      persistCurrentLot();
+      saveDraft();
+      showToast("Lote terminado · " + formatHa(area) + " ha", null);
+    }
+
+    els.finishLotBtn?.addEventListener("click", finishCurrentLot);
+
+    els.fAvance.addEventListener("input", () => {
+      capAvanceInput();
+      updatePreview();
+      persistCurrentLot();
       saveDraft();
     });
     els.fAvance.addEventListener("change", () => {
+      capAvanceInput();
       updatePreview();
+      persistCurrentLot();
       saveDraft();
     });
     els.fAvance.addEventListener("blur", () => {
       finalizeAvance({ toast: true, format: true });
       updatePreview();
+      persistCurrentLot();
       saveDraft();
     });
-    els.fTotalJr.addEventListener("input", saveDraft);
-    els.fTotalJr.addEventListener("change", saveDraft);
 
-    function resetForm(clearDraft) {
+    els.fTotalJr.addEventListener("input", () => {
+      updateRatioFromJr();
+      saveDraft();
+    });
+    els.fTotalJr.addEventListener("change", () => {
+      const n = roundHa(els.fTotalJr.value);
+      els.fTotalJr.value = n ? formatHa(n) : "";
+      updateRatioFromJr();
+      saveDraft();
+    });
+    els.fRatio?.addEventListener("input", updateJrFromRatio);
+    els.fRatio?.addEventListener("change", () => {
+      const n = roundHa(els.fRatio.value);
+      els.fRatio.value = n ? formatHa(n) : "";
+      updateJrFromRatio();
+    });
+
+    function openSumModal() {
+      persistCurrentLot();
+      renderLocalLots();
+      const modal = els.sumModal;
+      if (!modal) return;
+      const tot = totalsFromLots();
+      if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
+      if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
+      if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+      if (els.sumBoard) els.sumBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, true);
+      modal.removeAttribute("inert");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeSumModal() {
+      const modal = els.sumModal;
+      if (!modal) return;
+      const focused = document.activeElement;
+      if (focused && modal.contains(focused) && typeof focused.blur === "function") focused.blur();
+      modal.classList.remove("open");
+      modal.setAttribute("inert", "");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    els.captureBtn?.addEventListener("click", openSumModal);
+    document.getElementById("sumClose")?.addEventListener("click", closeSumModal);
+    els.sumModal?.addEventListener("click", e => {
+      if (e.target.id === "sumModal") closeSumModal();
+    });
+    function onLotBoardClick(e) {
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        e.preventDefault();
+        e.stopPropagation();
+        removeLocalLot(del.getAttribute("data-del"));
+        return;
+      }
+      const open = e.target.closest("[data-open]");
+      if (open) openLocalLot(open.getAttribute("data-open"));
+    }
+    els.lotBoard?.addEventListener("click", onLotBoardClick);
+    els.sumBoard?.addEventListener("click", onLotBoardClick);
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeSumModal();
+    });
+
+    function resetForm(clearDraft, clearLocal) {
       clearTimeout(draftTimer);
       draftTimer = null;
+      suppressPersist = true;
+      setPickValue(pickers.modulo, "", true);
+      setPickValue(pickers.turno, "", true);
       setPickValue(pickers.lote, "", true);
       setPickValue(pickers.variedad, "SEKOYA POP", true);
-      setPickValue(pickers.laborPpto, "", true);
       setPickValue(pickers.laborReal, "", true);
-      els.fLote.value = "";
-      els.fModulo.value = "";
-      els.fTurno.value = "";
-      els.fArea.value = "";
+      pickers.turno.items = [];
+      pickers.lote.items = [];
+      setPickerEnabled(pickers.turno, false);
+      setPickerEnabled(pickers.lote, false);
+      pickers.turno.placeholder = "Elige módulo";
+      pickers.lote.placeholder = "Elige turno";
+      setPickLabel(pickers.turno.labelEl, null, pickers.turno.placeholder);
+      setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
       els.fAvance.value = "";
       els.fTotalJr.value = "";
+      if (els.fRatio) els.fRatio.value = "";
+      if (els.fColor) els.fColor.value = "";
+      setPaintColor(currentPaintColor());
       els.fAvance.removeAttribute("max");
       setFechaHoy();
-      clearPreviewUI();
+      clearLotDerived();
+      suppressPersist = false;
       if (clearDraft !== false) {
         localStorage.removeItem(DRAFT_KEY);
         els.draftBadge.classList.remove("show");
       }
+      if (clearLocal) {
+        localLots = {};
+        saveLocalLotsMap();
+      }
+      renderLocalLots();
     }
 
     let histPage = 0;
@@ -2447,6 +3583,7 @@
 
     /** Card Recientes: solo el último envío confirmado (o el último pendiente si aún no hay OK). */
     function renderHistory() {
+      if (!els.historyList) return;
       const all = QBApi.getHistory();
       if (!all.length) {
         els.historyList.innerHTML = '<div class="history-empty">Sin envíos aún</div>';
@@ -2522,38 +3659,81 @@
       if (e.target.id === "histModal") closeHistModal();
     });
 
+    function recordFromItem(item) {
+      const lot = byPos.get(item.posKey);
+      const laborReal = item.laborReal || els.fLaborReal.value;
+      if (!lot || !laborReal) return null;
+      if (roundHa(item.avance) <= 0) return null;
+      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      let avance = roundHa(item.avance);
+      const area = roundHa(lot.ha);
+      if (area > 0 && avance > area) avance = area;
+      return {
+        posKey: item.posKey,
+        sem: Number(els.fSem.value) || currentWeek,
+        fecha: els.fFecha.value,
+        laborPpto: "",
+        laborReal,
+        modulo: mod ? mod.label : (item.moduloLabel || ""),
+        turno: String(item.turno || lot.tunel || "").toUpperCase(),
+        lote: lot.lote,
+        variedad: item.variedad || els.fVariedad.value || "SEKOYA POP",
+        area,
+        avance,
+        totalJr: 0,
+        color: currentPaintColor()
+      };
+    }
+
     let savingForm = false;
     async function saveForm() {
       if (savingForm) return;
-      if (!els.fLote.value) { showToast("Selecciona un lote", "error"); openPicker(pickers.lote); return; }
-      if (!els.fLaborReal.value) { showToast("Selecciona la labor real", "error"); openPicker(pickers.laborReal); return; }
-      const lot = byPos.get(els.fLote.value);
-      if (!lot) return;
-
-      const area = roundHa(lot.ha);
-      const avance = finalizeAvance({ toast: true, format: true });
-
-      const record = {
-        posKey: els.fLote.value,
-        sem: Number(els.fSem.value) || currentWeek,
-        fecha: els.fFecha.value,
-        laborPpto: els.fLaborPpto.value,
-        laborReal: els.fLaborReal.value,
-        modulo: els.fModulo.value,
-        turno: els.fTurno.value,
-        lote: lot.lote,
-        variedad: els.fVariedad.value,
-        area,
-        avance,
-        totalJr: Number(els.fTotalJr.value) || 0
-      };
+      persistCurrentLot();
+      const items = localLotsEntries();
+      const records = items.map(recordFromItem).filter(Boolean);
+      if (!records.length) {
+        if (!els.fModulo.value) {
+          showToast("Selecciona un módulo", "error");
+          openPicker(pickers.modulo);
+          return;
+        }
+        if (!els.fTurno.value) {
+          showToast("Selecciona un turno", "error");
+          openPicker(pickers.turno);
+          return;
+        }
+        if (!els.fLote.value) {
+          showToast("Selecciona un lote", "error");
+          openPicker(pickers.lote);
+          return;
+        }
+        if (!els.fLaborReal.value) {
+          showToast("Selecciona la labor real", "error");
+          openPicker(pickers.laborReal);
+          return;
+        }
+        showToast("Captura el lote o completa labor y avance", "error");
+        return;
+      }
 
       savingForm = true;
       els.saveBtn.disabled = true;
-      els.saveBtn.textContent = "Guardando...";
+      els.saveBtn.textContent = records.length > 1 ? "Enviando " + records.length + "..." : "Guardando...";
 
       try {
-        const res = await QBApi.saveLabor(record);
+        const totArea = roundHa(records.reduce((s, r) => s + (Number(r.area) || 0), 0));
+        const jrTotal = roundHa(els.fTotalJr.value);
+        records.forEach(r => {
+          r.totalJr = totArea > 0 ? roundHa(jrTotal * ((Number(r.area) || 0) / totArea)) : 0;
+        });
+        const shared = {
+          fecha: els.fFecha.value,
+          sem: Number(els.fSem.value) || currentWeek,
+          laborReal: els.fLaborReal.value
+        };
+        const res = records.length === 1
+          ? await QBApi.saveLabor(records[0])
+          : await QBApi.saveLaborsBatch(records, shared);
         updateStatus();
         renderHistory();
         if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
@@ -2564,15 +3744,15 @@
           els.saveBtn.textContent = synced ? "✓ Enviado" : "En cola";
           if (res.queued || !synced) {
             showToast(
-              "Pendiente de servidor · queda en cola hasta el OK (" + (res.pending || QBApi.queueCount()) + ")",
+              records.length + " lote(s) en cola hasta el OK (" + (res.pending || QBApi.queueCount()) + ")",
               "offline"
             );
           } else if (res.duplicate) {
             showToast("Ya estaba guardado (sin duplicar)", null);
           } else {
-            showToast("Guardado y confirmado por el servidor", null);
+            showToast(records.length + " lote(s) guardados", null);
           }
-          resetForm(true);
+          resetForm(true, true);
           setTimeout(() => {
             els.saveBtn.classList.remove("saved");
             els.saveBtn.textContent = "Guardar avance";
@@ -2604,8 +3784,8 @@
 
     document.getElementById("saveBtn").addEventListener("click", saveForm);
     document.getElementById("resetBtn").addEventListener("click", () => {
-      resetForm(true);
-      showToast("Formulario limpio", null);
+      resetForm(true, false);
+      showToast("Formulario limpio · lotes del celular se mantienen", null);
     });
     window.QB_onQueueFlushed = n => {
       showToast(n + " pendiente(s) enviados al recuperar señal", null);
@@ -2690,12 +3870,30 @@
       }).catch(() => {});
     }
 
-    loadDraft();
+    const newDay = rollDayIfNeeded();
+    loadLocalLotsMap();
+    renderColorGrid();
+    if (newDay) {
+      resetForm(true, true);
+      showToast("Nuevo día · detalle en 0", null);
+    } else {
+      loadDraft();
+    }
     setFechaHoy();
     updateStatus();
     renderHistory();
+    renderLocalLots();
     syncFabVisibility();
-    tryFlushQueue();
+    if (consumeAppRefreshFlag()) {
+      tryFlushQueue().then(n => {
+        updateStatus();
+        renderHistory();
+        if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
+        showToast(n > 0 ? "App actualizada · " + n + " enviado(s)" : "App actualizada · datos al día", null);
+      });
+    } else {
+      tryFlushQueue();
+    }
 
     })();
   </script>

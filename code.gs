@@ -3,7 +3,10 @@
  *
  * Columnas (fila 1 = encabezados, datos desde fila 2):
  *  SEM | FECHA | LABOR PPTO | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
- *  AREA LOTE | AVANCE | TOTAL (JR) | HORA GUARDADO
+ *  AREA LOTE | AVANCE | TOTAL (JR) | COLOR | HORA GUARDADO
+ *
+ * Hoja "RESUMEN DIA":
+ *  FECHA | SEM | MD | AREA TOTAL | JR | RATIO
  *
  * Formatos:
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
@@ -16,12 +19,13 @@
 
 var TZ = 'America/Lima';
 var HOJA = ''; // vacío = hoja activa
+var HOJA_RESUMEN = 'RESUMEN DIA';
 var FILA_ENC = 1;
 var FILA_INI = 2;
 
 var COLUMNAS = [
   'SEM', 'FECHA', 'LABOR PPTO', 'LABOR REAL', 'MD', 'TURNO', 'LOTE',
-  'VARIEDAD', 'AREA LOTE', 'AVANCE', 'TOTAL (JR)', 'HORA GUARDADO'
+  'VARIEDAD', 'AREA LOTE', 'AVANCE', 'TOTAL (JR)', 'COLOR', 'HORA GUARDADO'
 ];
 
 var COL = {
@@ -36,7 +40,8 @@ var COL = {
   AREA: 8,
   AVANCE: 9,
   TOTAL_JR: 10,
-  HORA_GUARDADO: 11
+  COLOR: 11,
+  HORA_GUARDADO: 12
 };
 
 function doGet(e) {
@@ -47,13 +52,25 @@ function doPost(e) {
   return responder_(procesar_(e, 'POST'));
 }
 
+function peekAction_(e, metodo) {
+  var action = param_(e, 'action') || '';
+  if (metodo === 'POST' && e.postData && e.postData.contents) {
+    try {
+      var body = JSON.parse(String(e.postData.contents || ''));
+      if (body && body.action) action = body.action;
+    } catch (err) { /* ok */ }
+  }
+  return String(action || 'get').toLowerCase().replace(/[^a-z_]/g, '');
+}
+
 function procesar_(e, metodo) {
   try {
     if (!validarToken_(e)) {
       return { ok: false, code: 'UNAUTHORIZED', message: 'No autorizado' };
     }
 
-    if (!rateLimitOk_(e)) {
+    var actionPeek = peekAction_(e, metodo);
+    if (!rateLimitOk_(e, actionPeek)) {
       return { ok: false, code: 'RATE_LIMIT', message: 'Demasiadas solicitudes — espere unos segundos' };
     }
 
@@ -150,7 +167,7 @@ function guardar_(d) {
     }
 
     var hoja = obtenerHoja_();
-    if (hoja.getLastRow() < FILA_INI) asegurarEncabezados_(hoja);
+    asegurarEncabezados_(hoja);
 
     var sem = check.sem;
     var modulo = check.modulo;
@@ -181,6 +198,7 @@ function guardar_(d) {
       areaHa,
       avanceHa,
       totalJr,
+      check.color || '',
       horaGuardado_()
     ];
 
@@ -189,6 +207,7 @@ function guardar_(d) {
 
     if (localId) marcarGuardado_(localId);
     invalidarCacheMapa_(sem);
+    try { actualizarResumenDia_(fechaIso); } catch (eRes) { /* no bloquear el guardado */ }
 
     return {
       ok: true,
@@ -229,6 +248,7 @@ function guardarGrupo_(payload) {
   var semComun = payload.sem;
   var variedadComun = payload.variedad;
   var totalJrComun = payload.totalJr;
+  var colorComun = payload.color;
 
   var validados = [];
   for (var i = 0; i < items.length; i++) {
@@ -245,7 +265,8 @@ function guardarGrupo_(payload) {
       variedad: raw.variedad || variedadComun,
       area: raw.area != null ? raw.area : raw.areaLote,
       avance: raw.avance,
-      totalJr: raw.totalJr != null ? raw.totalJr : totalJrComun
+      totalJr: raw.totalJr != null ? raw.totalJr : totalJrComun,
+      color: raw.color || colorComun
     };
     var check = validarPayloadLabor_(merged);
     if (!check.ok) {
@@ -255,6 +276,9 @@ function guardarGrupo_(payload) {
         message: 'Lote ' + (i + 1) + ': ' + check.message,
         index: i
       };
+    }
+    if (!check.color && colorComun) {
+      check.color = normalizarColorNombre_(colorComun);
     }
     check.localId = safeId_(merged.localId);
     validados.push(check);
@@ -267,7 +291,7 @@ function guardarGrupo_(payload) {
 
   try {
     var hoja = obtenerHoja_();
-    if (hoja.getLastRow() < FILA_INI) asegurarEncabezados_(hoja);
+    asegurarEncabezados_(hoja);
 
     var rows = leerFilas_(hoja);
     var saved = [];
@@ -303,6 +327,7 @@ function guardarGrupo_(payload) {
         v.area,
         v.avance,
         v.totalJr,
+        v.color || '',
         hora
       ]);
       if (v.localId) marcarGuardado_(v.localId);
@@ -326,7 +351,10 @@ function guardarGrupo_(payload) {
       hoja.getRange(start, 1, appendRows.length, COLUMNAS.length).setValues(appendRows);
     }
 
-    if (validados.length) invalidarCacheMapa_(validados[0].sem);
+    if (validados.length) {
+      invalidarCacheMapa_(validados[0].sem);
+      try { actualizarResumenDia_(validados[0].fecha); } catch (eRes) { /* no bloquear el guardado */ }
+    }
 
     return {
       ok: true,
@@ -338,6 +366,91 @@ function guardarGrupo_(payload) {
     };
   } finally {
     lock.releaseLock();
+  }
+}
+
+var COLUMNAS_RESUMEN = ['FECHA', 'SEM', 'MD', 'AREA TOTAL', 'JR', 'RATIO'];
+
+function obtenerHojaResumen_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var h = ss.getSheetByName(HOJA_RESUMEN);
+  if (h) return h;
+  var prev = ss.getActiveSheet();
+  h = ss.insertSheet(HOJA_RESUMEN);
+  h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
+  h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length)
+    .setFontWeight('bold')
+    .setBackground('#1a5c40')
+    .setFontColor('#FFFFFF');
+  h.setFrozenRows(FILA_ENC);
+  try { if (prev) ss.setActiveSheet(prev); } catch (e) { /* ok */ }
+  return h;
+}
+
+/** Recalcula el resumen del día (un renglón por módulo) desde la hoja de labores. */
+function actualizarResumenDia_(fechaIso) {
+  fechaIso = normalizarFecha_(fechaIso || hoy_());
+  var hoja = obtenerHoja_();
+  asegurarEncabezados_(hoja);
+  var rows = leerFilas_(hoja);
+  var groups = {};
+  var sem = 0;
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.fechaIso !== fechaIso) continue;
+    var md = String(r.modulo || '').trim() || 'SIN MOD';
+    if (!groups[md]) groups[md] = { modulo: md, lots: {}, jr: 0 };
+    var lotKey = norm_(r.turno) + '|' + String(r.loteNum);
+    if (!groups[md].lots.hasOwnProperty(lotKey)) {
+      groups[md].lots[lotKey] = r.area;
+    }
+    groups[md].jr += Number(r.totalJr) || 0;
+    if (!sem) sem = num_(r.sem) || 0;
+  }
+  if (!sem) sem = semIso_();
+
+  var resumen = obtenerHojaResumen_();
+  var last = resumen.getLastRow();
+  if (last >= FILA_INI) {
+    var data = resumen.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_RESUMEN.length).getValues();
+    var toDel = [];
+    for (var d = 0; d < data.length; d++) {
+      if (normalizarFecha_(data[d][0]) === fechaIso) toDel.push(FILA_INI + d);
+    }
+    if (toDel.length) borrarFilas_(resumen, toDel);
+  }
+
+  var keys = [];
+  for (var k in groups) {
+    if (groups.hasOwnProperty(k)) keys.push(k);
+  }
+  keys.sort(function (a, b) {
+    return String(a).localeCompare(String(b), 'es', { numeric: true });
+  });
+
+  var append = [];
+  for (var g = 0; g < keys.length; g++) {
+    var grp = groups[keys[g]];
+    var area = 0;
+    for (var lk in grp.lots) {
+      if (grp.lots.hasOwnProperty(lk)) area += Number(grp.lots[lk]) || 0;
+    }
+    area = Math.round(area * 100) / 100;
+    var jr = Math.round((Number(grp.jr) || 0) * 100) / 100;
+    var ratio = area > 0 ? Math.round((jr / area) * 100) / 100 : 0;
+    append.push([
+      formatFechaSheet_(fechaIso),
+      sem,
+      grp.modulo,
+      area,
+      jr,
+      ratio
+    ]);
+  }
+  if (append.length) {
+    var start = resumen.getLastRow() + 1;
+    resumen.getRange(start, 1, append.length, COLUMNAS_RESUMEN.length).setValues(append);
   }
 }
 
@@ -389,22 +502,27 @@ function getMapa_(d, e) {
   var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
   if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
   var fechaFiltro = String(d.fecha || param_(e, 'fecha') || '').trim();
+  var skipCache = d.nocache === true || d.nocache === 1 ||
+    String(d.nocache || param_(e, 'nocache') || '').trim() === '1' ||
+    String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
   var cacheKey = 'map_v7_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', laborPpto || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
-  try {
-    var cached = CacheService.getScriptCache().get(cacheKey);
-    if (cached) {
-      var parsed = JSON.parse(cached);
-      if (parsed && parsed.ok) {
-        parsed.fromCache = true;
-        return parsed;
+  if (!skipCache) {
+    try {
+      var cached = CacheService.getScriptCache().get(cacheKey);
+      if (cached) {
+        var parsed = JSON.parse(cached);
+        if (parsed && parsed.ok) {
+          parsed.fromCache = true;
+          return parsed;
+        }
       }
-    }
-  } catch (ex) { /* sin cache */ }
+    } catch (ex) { /* sin cache */ }
+  }
 
   var hoja = obtenerHoja_();
   var rows = leerFilas_(hoja);
@@ -470,6 +588,7 @@ function filtrosOpciones_() {
   var fechaMap = {};
   var mdMap = {};
   var laborMap = {};
+  var laborPptoMap = {};
 
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
@@ -486,6 +605,9 @@ function filtrosOpciones_() {
 
     var lab = norm_(r.laborReal);
     if (lab) laborMap[lab] = true;
+
+    var labP = norm_(r.laborPpto);
+    if (labP) laborPptoMap[labP] = true;
   }
 
   var sem = Object.keys(semMap).map(function (x) { return parseInt(x, 10); });
@@ -504,12 +626,16 @@ function filtrosOpciones_() {
   var laborReal = Object.keys(laborMap);
   laborReal.sort();
 
+  var laborPpto = Object.keys(laborPptoMap);
+  laborPpto.sort();
+
   return {
     ok: true,
     sem: sem,
     fecha: fecha,
     md: md,
     laborReal: laborReal,
+    laborPpto: laborPpto,
     count: rows.length
   };
 }
@@ -636,6 +762,7 @@ function leerFilas_(hoja) {
       area: numDec_(row[COL.AREA]),
       avance: numDec_(row[COL.AVANCE]),
       totalJr: numDec_(row[COL.TOTAL_JR]),
+      color: normalizarColorNombre_(row[COL.COLOR]),
       horaGuardado: String(row[COL.HORA_GUARDADO] || '').trim()
     });
   }
@@ -657,6 +784,7 @@ function filaToCliente_(r) {
     area: r.area,
     avance: r.avance,
     totalJr: r.totalJr,
+    color: r.color || '',
     horaGuardado: r.horaGuardado
   };
 }
@@ -710,7 +838,9 @@ function asegurarEncabezados_(hoja) {
   }
 
   var headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, lastCol).getValues()[0]);
-  if (headers[0] === 'SEM' && headers.indexOf('HORA GUARDADO') >= 0) return;
+  migrarColumnaColor_(hoja, headers);
+  headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, Math.max(hoja.getLastColumn(), COLUMNAS.length)).getValues()[0]);
+  if (headers[0] === 'SEM' && headers.indexOf('HORA GUARDADO') >= 0 && headers.indexOf('COLOR') >= 0) return;
 
   var cur = hoja.getRange(FILA_ENC, 1, 1, COLUMNAS.length).getValues()[0];
   var vacio = true;
@@ -721,6 +851,72 @@ function asegurarEncabezados_(hoja) {
     hoja.getRange(FILA_ENC, 1, 1, COLUMNAS.length).setValues([COLUMNAS]);
   }
   estilizarEncabezados_(hoja);
+}
+
+function migrarColumnaColor_(hoja, headers) {
+  if (!headers || headers[0] !== 'SEM') return;
+  if (headers.indexOf('COLOR') >= 0) return;
+  if (headers.indexOf('HORA GUARDADO') < 0) return;
+  hoja.insertColumnAfter(COL.TOTAL_JR + 1);
+  hoja.getRange(FILA_ENC, COL.COLOR + 1).setValue('COLOR');
+}
+
+var COLOR_PALETTE_ = {
+  '#64B5F6': 'Lunes',
+  '#81C784': 'Martes',
+  '#FFD54F': 'Miercoles',
+  '#FF8A65': 'Jueves',
+  '#CE93D8': 'Viernes',
+  '#1E88E5': 'Lunes',
+  '#43A047': 'Martes',
+  '#F9A825': 'Miercoles',
+  '#E64A19': 'Jueves',
+  '#8E24AA': 'Viernes'
+};
+
+var COLOR_NAME_ALIASES_ = {
+  LUNES: 'Lunes',
+  MARTES: 'Martes',
+  MIERCOLES: 'Miercoles',
+  JUEVES: 'Jueves',
+  VIERNES: 'Viernes',
+  AZUL: 'Lunes',
+  VERDE: 'Martes',
+  AMARILLO: 'Miercoles',
+  NARANJA: 'Jueves',
+  MORADO: 'Viernes',
+  VIOLETA: 'Viernes'
+};
+
+function colorKey_(s) {
+  return String(s || '')
+    .toUpperCase()
+    .replace(/\s+/g, '')
+    .replace(/Á/g, 'A').replace(/É/g, 'E').replace(/Í/g, 'I')
+    .replace(/Ó/g, 'O').replace(/Ú/g, 'U');
+}
+
+function normalizarColorNombre_(v) {
+  var s = String(v || '').trim();
+  if (!s) return '';
+
+  var up = s.toUpperCase();
+  if (/^#[0-9A-F]{6}$/.test(up) && COLOR_PALETTE_[up]) {
+    return safeSheetText_(COLOR_PALETTE_[up], 24);
+  }
+
+  var alias = COLOR_NAME_ALIASES_[colorKey_(s)];
+  if (alias) return safeSheetText_(alias, 24);
+
+  var norm = norm_(s);
+  for (var hex in COLOR_PALETTE_) {
+    if (!COLOR_PALETTE_.hasOwnProperty(hex)) continue;
+    if (norm_(COLOR_PALETTE_[hex]) === norm || colorKey_(COLOR_PALETTE_[hex]) === colorKey_(s)) {
+      return safeSheetText_(COLOR_PALETTE_[hex], 24);
+    }
+  }
+
+  return '';
 }
 
 function estilizarEncabezados_(hoja) {
@@ -820,13 +1016,15 @@ function validarToken_(e) {
   return diff === 0;
 }
 
-function rateLimitOk_(e) {
+function rateLimitOk_(e, action) {
+  action = String(action || '').toLowerCase();
+  if (action === 'ping') return true;
   try {
     var cache = CacheService.getScriptCache();
     var tok = String(param_(e, 'token') || 'anon').replace(/[^a-zA-Z0-9_\-]/g, '').substring(0, 40);
     var key = 'rl_' + (tok || 'anon');
     var n = Number(cache.get(key) || '0');
-    if (n >= 60) return false;
+    if (n >= 90) return false;
     cache.put(key, String(n + 1), 60);
     return true;
   } catch (err) {
@@ -917,7 +1115,8 @@ function validarPayloadLabor_(d) {
     avance: avanceHa,
     totalJr: totalJr,
     variedad: variedad,
-    fecha: fechaIso
+    fecha: fechaIso,
+    color: normalizarColorNombre_(d.color)
   };
 }
 

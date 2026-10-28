@@ -323,7 +323,7 @@
       pointer-events: none;
     }
     .kpi-refresh.loading svg {
-      animation: deskRefreshSpin 0.7s linear infinite;
+      animation: qbSpin 0.7s linear infinite;
     }
     @keyframes deskRefreshSpin { to { transform: rotate(360deg); } }
     .kpi-actions {
@@ -666,7 +666,6 @@
       width: 100%;
       height: 100%;
       transform-origin: 0 0;
-      will-change: transform;
     }
 
     .stage {
@@ -687,10 +686,12 @@
       box-shadow: 0 0 0 1px var(--line-strong), var(--shadow-sm);
       overflow: visible;
       box-sizing: border-box;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
     }
 
     .cell {
-      border: 1px solid #cbd5e1;
+      border: var(--cell-border, 1px) solid #cbd5e1;
       width: 100%;
       height: 100%;
       min-height: 0;
@@ -707,7 +708,7 @@
       background: #ffffff;
       user-select: none;
       transition: box-shadow .12s ease, border-color .12s ease, filter .15s;
-      overflow: hidden;
+      overflow: visible;
       box-sizing: border-box;
     }
     .cell.empty {
@@ -720,7 +721,7 @@
     .cell .h {
       color: #0b0f0d;
       max-width: 100%;
-      overflow: hidden;
+      overflow: visible;
       text-overflow: clip;
       white-space: nowrap;
       font-size: var(--fs-cell, 11px);
@@ -728,6 +729,7 @@
       letter-spacing: 0.02em;
       text-transform: uppercase;
       line-height: 1.05;
+      pointer-events: none;
     }
     .cell .h {
       font-variant-numeric: tabular-nums;
@@ -759,10 +761,14 @@
       transition: height .2s ease;
     }
     .cell.dim {
-      opacity: 0.16;
-      filter: grayscale(0.55);
-      transform: none;
-      box-shadow: none;
+      opacity: 1;
+      filter: none;
+      background: #f8fafc !important;
+    }
+    .cell.dim .t,
+    .cell.dim .l,
+    .cell.dim .h {
+      color: #94a3b8;
     }
 
     .cell.m1  { background: #fff; border-color: #8E24AA; }
@@ -863,29 +869,53 @@
 
     .save-toast {
       position: fixed;
-      top: 50%;
+      top: auto;
+      bottom: calc(1.15rem + env(safe-area-inset-bottom, 0px));
       left: 50%;
-      transform: translate(-50%, -50%) scale(0.92);
+      transform: translateX(-50%) scale(0.92);
       background: #166534;
       color: #fff;
-      padding: 1.1rem 1.6rem;
+      padding: 0.85rem 1.25rem;
       border-radius: 14px;
-      font-size: 1.05rem;
+      font-size: 0.92rem;
       font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      box-shadow: 0 20px 50px rgba(22, 101, 52, 0.45);
-      z-index: 20000;
-      transition: transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+      box-shadow: 0 16px 40px rgba(22, 101, 52, 0.38);
+      z-index: 10080;
+      transition: transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease, top .2s ease;
       pointer-events: none;
       opacity: 0;
       border: 2px solid #4ade80;
       text-align: center;
-      min-width: min(320px, 86vw);
+      min-width: min(300px, 88vw);
+      max-width: min(420px, 92vw);
+    }
+    .save-toast.info {
+      background: linear-gradient(135deg, #1e4d7b 0%, #2563eb 100%);
+      border-color: #93c5fd;
+      box-shadow: 0 16px 40px rgba(37, 99, 235, 0.35);
+      text-transform: none;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .save-toast.wait {
+      background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+      border-color: #fcd34d;
+      box-shadow: 0 16px 40px rgba(217, 119, 6, 0.32);
+      text-transform: none;
+      font-weight: 700;
+      letter-spacing: 0.01em;
     }
     .save-toast.show {
-      transform: translate(-50%, -50%) scale(1);
+      transform: translateX(-50%) scale(1);
       opacity: 1;
+    }
+    .save-toast.toast-below-modal {
+      bottom: auto;
+    }
+    .save-toast.toast-below-modal.show {
+      transform: translateX(-50%) scale(1);
     }
     .save-toast.error {
       background: var(--qb-red);
@@ -900,6 +930,284 @@
       letter-spacing: 0.02em;
       text-transform: none;
       opacity: 0.95;
+    }
+
+    /* Nube de estado — sincronización amigable (no asusta) */
+    @keyframes qbSpin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes qbSpinReverse {
+      to { transform: rotate(-360deg); }
+    }
+    @keyframes syncOkPop {
+      0% { transform: scale(0.55); opacity: 0; }
+      55% { transform: scale(1.12); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .sync-cloud {
+      position: fixed;
+      top: max(0.75rem, env(safe-area-inset-top));
+      right: max(0.75rem, env(safe-area-inset-right));
+      z-index: 19990;
+      max-width: min(320px, calc(100vw - 1.5rem));
+      opacity: 0;
+      transform: translateY(-12px) scale(0.96);
+      pointer-events: none;
+      transition: opacity .28s ease, transform .28s cubic-bezier(.2,.8,.2,1);
+    }
+    .sync-cloud.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .sync-cloud-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.65rem 0.95rem;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(15, 61, 46, 0.12);
+      box-shadow: 0 12px 32px rgba(15, 51, 39, 0.14), 0 0 0 1px rgba(255,255,255,0.6) inset;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .sync-cloud-icon {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #ecfdf5;
+      color: #166534;
+      position: relative;
+      overflow: hidden;
+    }
+    .sync-cloud[data-state="busy"] .sync-cloud-icon {
+      background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+      color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .sync-cloud[data-state="wait"] .sync-cloud-icon {
+      background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);
+      color: #d97706;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.14);
+    }
+    .sync-cloud[data-state="offline"] .sync-cloud-icon {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .sync-cloud[data-state="ok"] .sync-cloud-icon {
+      background: linear-gradient(145deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #166534;
+      box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.12);
+    }
+    .sync-cloud-orbit {
+      position: absolute;
+      inset: 0.2rem;
+      border-radius: 50%;
+      border: 2.5px solid transparent;
+      border-top-color: currentColor;
+      border-right-color: rgba(37, 99, 235, 0.35);
+      opacity: 0;
+      animation: none;
+    }
+    .sync-cloud-orbit.outer {
+      inset: 0.05rem;
+      border-width: 2px;
+      border-top-color: transparent;
+      border-right-color: transparent;
+      border-bottom-color: currentColor;
+      opacity: 0;
+    }
+    .sync-cloud[data-state="busy"] .sync-cloud-orbit,
+    .sync-cloud[data-state="wait"] .sync-cloud-orbit {
+      opacity: 1;
+      animation: qbSpin 0.75s linear infinite;
+    }
+    .sync-cloud[data-state="busy"] .sync-cloud-orbit.outer {
+      opacity: 0.55;
+      animation: qbSpinReverse 1.15s linear infinite;
+    }
+    .sync-cloud[data-state="wait"] .sync-cloud-orbit {
+      border-right-color: rgba(217, 119, 6, 0.35);
+      animation-duration: 0.95s;
+    }
+    .sync-cloud-glyph {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: center center;
+    }
+    .sync-cloud-glyph svg {
+      display: block;
+      width: 1rem;
+      height: 1rem;
+    }
+    .sync-cloud[data-state="wait"] .sync-cloud-glyph.wait {
+      opacity: 1;
+      font-size: 0.72rem;
+    }
+    .sync-cloud[data-state="offline"] .sync-cloud-glyph.offline {
+      opacity: 1;
+    }
+    .sync-cloud[data-state="ok"] .sync-cloud-glyph.ok {
+      opacity: 1;
+      animation: syncOkPop 0.45s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .sync-cloud[data-state="busy"] .sync-cloud-glyph,
+    .sync-cloud[data-state="ok"] .sync-cloud-glyph.wait,
+    .sync-cloud[data-state="ok"] .sync-cloud-glyph.offline {
+      opacity: 0;
+    }
+    .sync-cloud-copy strong {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #0f3327;
+      line-height: 1.2;
+    }
+    .sync-cloud-copy span {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.3;
+    }
+    @keyframes syncPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .map-wrap.is-syncing::before {
+      content: none;
+    }
+    .map-wrap.is-syncing.show-veil::before,
+    .map-wrap.is-syncing.show-spinner::before {
+      content: none;
+      animation: none;
+    }
+    .map-wrap.is-syncing::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(2px);
+      pointer-events: none;
+      z-index: 79;
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .map-wrap.is-syncing.show-spinner::after {
+      opacity: 1;
+    }
+    .map-sync-loader {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 81;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .map-wrap.is-syncing.show-spinner .map-sync-loader {
+      opacity: 1;
+    }
+    .map-sync-loader[hidden] {
+      display: none !important;
+    }
+    .map-sync-loader-ring {
+      position: relative;
+      width: 3.25rem;
+      height: 3.25rem;
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.18);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+    }
+    .map-sync-loader-ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .map-sync-track {
+      fill: none;
+      stroke: rgba(37, 99, 235, 0.16);
+      stroke-width: 4;
+    }
+    .map-sync-progress {
+      fill: none;
+      stroke: #2563eb;
+      stroke-width: 4;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.28s ease;
+    }
+    .map-sync-loader.is-done .map-sync-progress {
+      stroke: #16a34a;
+    }
+    .map-sync-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: #1d4ed8;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .map-sync-loader.is-done .map-sync-pct {
+      color: #15803d;
+    }
+    .map-sync-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #475569;
+      max-width: 11rem;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .save-toast.wait strong::before {
+      content: "";
+      display: inline-block;
+      width: 0.85rem;
+      height: 0.85rem;
+      margin-right: 0.45rem;
+      vertical-align: -0.1em;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: qbSpin 0.7s linear infinite;
+    }
+    #saveLaborBtn:disabled {
+      position: relative;
+      opacity: 0.92;
+    }
+    #saveLaborBtn:disabled::after {
+      content: "";
+      display: inline-block;
+      width: 0.85rem;
+      height: 0.85rem;
+      margin-left: 0.45rem;
+      vertical-align: -0.12em;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: qbSpin 0.7s linear infinite;
     }
 
     #saveLaborBtn.saved {
@@ -1043,6 +1351,104 @@
     .btn-danger:hover {
       background: #b91c1c;
       border-color: #b91c1c;
+    }
+
+    /* Modal Descarte: semanas */
+    .descarte-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10060;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .descarte-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .descarte-card {
+      width: min(400px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d6e0da;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.22);
+      overflow: hidden;
+      transform: translateY(10px) scale(0.97);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .descarte-modal.open .descarte-card {
+      transform: translateY(0) scale(1);
+    }
+    .descarte-card-head {
+      padding: 1rem 1.15rem 0.75rem;
+      background: #0f3327;
+      color: #fff;
+    }
+    .descarte-card-head h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .descarte-card-head p {
+      margin: 0.3rem 0 0;
+      font-size: 0.72rem;
+      opacity: 0.78;
+      font-weight: 500;
+    }
+    .descarte-card-body {
+      padding: 1rem 1.15rem 0.5rem;
+    }
+    .descarte-weeks {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.55rem;
+    }
+    .descarte-week {
+      border: 1.5px solid #d6e0da;
+      background: #f8faf9;
+      color: #0f3327;
+      border-radius: 12px;
+      padding: 0.75rem 0.6rem;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
+    }
+    .descarte-week:hover {
+      border-color: #1a5c40;
+      background: #eef5f1;
+    }
+    .descarte-week.is-on {
+      background: #0f3327;
+      border-color: #0f3327;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(15, 51, 39, 0.22);
+    }
+    .descarte-hint {
+      margin: 0.75rem 0 0;
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .descarte-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.85rem 1.15rem 1.1rem;
+    }
+    .descarte-card-actions .btn {
+      flex: 1;
+      height: 40px;
+    }
+    #descarteContinueBtn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     /* Modal Actualizar: datos o app */
@@ -1408,6 +1814,10 @@
     }
     .multi-palette-label {
       width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
       font-size: 0.58rem;
       font-weight: 800;
       letter-spacing: 0.08em;
@@ -1415,6 +1825,43 @@
       color: #64748b;
       margin: 0;
       line-height: 1.2;
+    }
+    .brush-current {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: auto;
+      text-transform: none;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+      color: #0f3327;
+      font-size: 0.68rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .brush-current i {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 51, 39, 0.25);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55);
+      flex-shrink: 0;
+    }
+    .color-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      color: #0f3327;
+    }
+    .color-chip i {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 51, 39, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+      flex-shrink: 0;
     }
     .multi-palette-row {
       display: flex;
@@ -1441,38 +1888,6 @@
     }
     .swatch:hover { opacity: 1; }
     .multi-palette-row .swatch:not(.is-on) {
-      opacity: 0.55;
-    }
-    .swatch-custom {
-      position: relative;
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      border: 2px dashed #94a3b8;
-      background:
-        conic-gradient(from 0deg, #e53935, #f9a825, #43a047, #1e88e5, #8e24aa, #e53935);
-      cursor: pointer;
-      flex-shrink: 0;
-      overflow: hidden;
-      padding: 0;
-      margin-left: 0.1rem;
-    }
-    .swatch-custom input[type="color"] {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-      border: none;
-      padding: 0;
-    }
-    .swatch-custom.is-on {
-      border-style: solid;
-      border-color: #94a3b8;
-      opacity: 1;
-    }
-    .multi-palette-row .swatch-custom:not(.is-on) {
       opacity: 0.55;
     }
     .multi-palette-inline {
@@ -1608,8 +2023,7 @@
       opacity: 0.55;
       cursor: not-allowed;
     }
-    .field input::placeholder,
-    .cselect-search input::placeholder {
+    .field input::placeholder {
       color: #94a3b8;
       font-weight: 600;
       text-transform: uppercase;
@@ -1692,38 +2106,6 @@
       overflow: hidden;
     }
     .cselect.open .cselect-panel { display: block; }
-    .cselect-search {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.45rem 0.55rem;
-      border-bottom: 1px solid #e2ebe6;
-      background: #f7fbf8;
-    }
-    .cselect-search svg {
-      width: 14px;
-      height: 14px;
-      color: #1a5c40;
-      flex-shrink: 0;
-    }
-    .cselect-search input {
-      flex: 1;
-      height: 30px;
-      border: 1px solid #c5d4cc;
-      border-radius: 7px;
-      padding: 0 0.55rem;
-      font: inherit;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #fff;
-      color: #0f3327;
-      outline: none;
-      text-transform: uppercase;
-    }
-    .cselect-search input:focus {
-      border-color: #2f8a58;
-      box-shadow: 0 0 0 2px rgba(47, 138, 88, 0.12);
-    }
     .cselect-list {
       max-height: 180px;
       overflow-y: auto;
@@ -2166,7 +2548,7 @@
       }
       .mob-refresh svg { width: 15px; height: 15px; flex-shrink: 0; }
       .mob-refresh:active { transform: scale(0.97); }
-      .mob-refresh.loading svg { animation: mobSpin 0.8s linear infinite; }
+      .mob-refresh.loading svg { animation: qbSpin 0.8s linear infinite; }
       .mob-head-actions {
         display: flex;
         align-items: center;
@@ -2324,7 +2706,7 @@
       .map-wrap {
         flex: 1;
         min-height: 0;
-        padding: 10px;
+        padding: 6px;
         border-radius: 0;
         touch-action: none;
         cursor: grab;
@@ -2346,6 +2728,35 @@
         border: 1px solid #b8c5bc;
         box-shadow: 0 0 0 1px #b8c5bc, 0 10px 36px rgba(15, 51, 39, 0.14);
         overflow: visible;
+      }
+      .cell {
+        padding: 1px 0;
+        line-height: 1;
+        overflow: visible;
+      }
+      .cell .t,
+      .cell .l,
+      .cell .h {
+        line-height: 1.05;
+        letter-spacing: 0;
+        font-weight: 800;
+        max-width: 100%;
+        font-size: var(--fs-cell, 11px);
+        transform: none;
+        text-shadow: none;
+        -webkit-font-smoothing: antialiased;
+      }
+      .cell .t,
+      .cell .l {
+        font-weight: 700;
+      }
+      .cell .h {
+        margin-top: 0;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+      .grid.map-zoomed .cell:not(.empty) {
+        z-index: 2;
       }
       .mob-detail {
         display: block;
@@ -2445,7 +2856,7 @@
         right: 0;
         bottom: 0;
         z-index: 72;
-        --mob-filters-h: 7.75rem;
+        --mob-filters-h: 11.25rem;
         padding: 0.55rem 0.85rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
         background: rgba(255, 255, 255, 0.97);
         border-top: 1px solid #e2ebe6;
@@ -2464,7 +2875,11 @@
       .mob-filter-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.45rem;
+        gap: 0.4rem;
+        max-height: min(42vh, 14rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.1rem;
       }
       .mob-filter-field {
         display: flex;
@@ -2604,14 +3019,17 @@
         </svg>
         Limpiar
       </button>
+      <button type="button" class="btn btn-outline" id="descarteBtn" title="Descarte">
+        Descarte
+      </button>
     </div>
   </header>
 
   <div class="drawer-backdrop" id="laborBackdrop"></div>
-  <aside class="labor-drawer" id="laborDrawer" aria-hidden="true">
+  <aside class="labor-drawer" id="laborDrawer" aria-hidden="true" inert>
     <div class="drawer-head" style="position:relative">
       <h2>Reporte de labores</h2>
-      <p>Selecciona lote · labor · avance · se pinta al instante</p>
+      <p>Selecciona lote · labor · avance · Guardar avance</p>
       <button type="button" class="drawer-close" id="closeLaborDrawer" aria-label="Cerrar">×</button>
     </div>
     <form class="drawer-body" id="laborForm" novalidate>
@@ -2636,12 +3054,6 @@
                 Seleccionar lote...
               </button>
               <div class="cselect-panel" role="listbox">
-                <div class="cselect-search">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-                  </svg>
-                  <input id="fLoteSearch" type="search" placeholder="Buscar lote..." autocomplete="off" />
-                </div>
                 <div class="cselect-list" id="fLoteList"></div>
               </div>
             </div>
@@ -2652,7 +3064,7 @@
             </button>
             <div class="multi-palette-inline" id="multiPaletteInline">
               <div class="multi-palette" role="group" aria-label="Pincel de colores">
-                <div class="multi-palette-label">Pincel de colores · elige y pinta en el mapa</div>
+                <div class="multi-palette-label">10 colores · elige y pinta en el mapa</div>
               </div>
             </div>
           </div>
@@ -2701,7 +3113,7 @@
         </div>
         <div class="field">
           <label for="fAvance">Avance (ha)</label>
-          <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="" placeholder="Ej. 0.50" />
+          <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="0." placeholder="0." />
         </div>
         <div class="field">
           <label for="fTotalJr">Total (JR)</label>
@@ -2740,7 +3152,7 @@
       </div>
       <div class="multi-card-body">
         <div class="multi-palette" id="multiPaletteModal" role="group" aria-label="Pincel de colores">
-          <div class="multi-palette-label">Pincel de colores</div>
+          <div class="multi-palette-label">10 colores</div>
         </div>
         <div id="multiLotList"></div>
       </div>
@@ -2763,6 +3175,28 @@
       <div class="confirm-card-actions">
         <button type="button" class="btn" id="confirmClearCancel">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmClearOk">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="descarte-modal" id="descarteModal" aria-hidden="true" inert>
+    <div class="descarte-card" role="dialog" aria-labelledby="descarteTitle">
+      <div class="descarte-card-head">
+        <h3 id="descarteTitle">Descarte</h3>
+        <p>Elige una o varias semanas</p>
+      </div>
+      <div class="descarte-card-body">
+        <div class="descarte-weeks" id="descarteWeeks" role="group" aria-label="Semanas">
+          <button type="button" class="descarte-week" data-sem="34" aria-pressed="false">SEM 34</button>
+          <button type="button" class="descarte-week" data-sem="35" aria-pressed="false">SEM 35</button>
+          <button type="button" class="descarte-week" data-sem="36" aria-pressed="false">SEM 36</button>
+          <button type="button" class="descarte-week" data-sem="37" aria-pressed="false">SEM 37</button>
+        </div>
+        <p class="descarte-hint" id="descarteHint">Puedes marcar varias semanas a la vez.</p>
+      </div>
+      <div class="descarte-card-actions">
+        <button type="button" class="btn" id="descarteCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="descarteContinueBtn" disabled>Continuar</button>
       </div>
     </div>
   </div>
@@ -2823,7 +3257,7 @@
       <div class="filter-head">
         <div>
           <h2 id="filterTitle">Filtros del mapa</h2>
-          <span class="sub">SEM · Fecha · MD · Labor real → GET</span>
+          <span class="sub">SEM · Fecha · MD · Labor ppto · Labor real</span>
         </div>
         <button type="button" id="closeFilterModal">Cerrar</button>
       </div>
@@ -2859,10 +3293,20 @@
           </div>
         </div>
         <div class="filter-block">
+          <h3>Labor ppto</h3>
+          <div class="cselect filter-cselect" id="filterLaborPptoC">
+            <input type="hidden" id="filterLaborPptoSelect" value="" />
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores ppto</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-block">
           <h3>Labor real</h3>
           <div class="cselect filter-cselect" id="filterLaborC">
             <input type="hidden" id="filterLaborSelect" value="" />
-            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores</button>
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores reales</button>
             <div class="cselect-panel" role="listbox">
               <div class="cselect-list"></div>
             </div>
@@ -2920,6 +3364,16 @@
           <div class="stage" id="stage">
             <div class="grid" id="grid"></div>
           </div>
+        </div>
+        <div class="map-sync-loader" id="mapSyncLoader" hidden aria-live="polite" aria-busy="false">
+          <div class="map-sync-loader-ring">
+            <svg viewBox="0 0 56 56" aria-hidden="true">
+              <circle class="map-sync-track" cx="28" cy="28" r="24" />
+              <circle class="map-sync-progress" id="mapSyncProgressRing" cx="28" cy="28" r="24" />
+            </svg>
+            <span class="map-sync-pct" id="mapSyncPct">0%</span>
+          </div>
+          <span class="map-sync-label" id="mapSyncLabel">Cargando…</span>
         </div>
         <div class="map-mobile-ui" id="mapMobileUi" aria-hidden="true">
           <div class="mob-zoom">
@@ -2988,6 +3442,16 @@
             </div>
           </label>
           <label class="mob-filter-field">
+            <span>Labor ppto</span>
+            <div class="cselect filter-cselect" id="mobFilterLaborPptoC">
+              <input type="hidden" id="mobFilterLaborPpto" value="" />
+              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por labor ppto">Todas</button>
+              <div class="cselect-panel" role="listbox">
+                <div class="cselect-list"></div>
+              </div>
+            </div>
+          </label>
+          <label class="mob-filter-field">
             <span>Labor real</span>
             <div class="cselect filter-cselect" id="mobFilterLaborC">
               <input type="hidden" id="mobFilterLabor" value="" />
@@ -3020,6 +3484,25 @@
   </div>
 
   <div class="save-toast" id="saveToast" role="status"></div>
+  <div class="sync-cloud" id="syncCloud" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="sync-cloud-inner">
+      <div class="sync-cloud-icon" aria-hidden="true">
+        <div class="sync-cloud-orbit outer"></div>
+        <div class="sync-cloud-orbit"></div>
+        <span class="sync-cloud-glyph wait">☁</span>
+        <span class="sync-cloud-glyph offline">📡</span>
+        <span class="sync-cloud-glyph ok" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l5 5 9-9"/>
+          </svg>
+        </span>
+      </div>
+      <div class="sync-cloud-copy">
+        <strong id="syncCloudTitle">Sincronizando</strong>
+        <span id="syncCloudSub">Con la hoja de cálculo</span>
+      </div>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -3049,6 +3532,19 @@
 
     function formatHa(v) {
       return roundHa(v).toFixed(2);
+    }
+
+    /** Prefijo listo para escribir decimales: "0." */
+    function seedAvancePrefix(inp) {
+      if (!inp) return;
+      const raw = String(inp.value || "").trim().replace(",", ".");
+      if (raw === "" || raw === "0" || raw === "0.0" || raw === "0.00" || raw === ".") {
+        inp.value = "0.";
+        try {
+          const len = inp.value.length;
+          inp.setSelectionRange(len, len);
+        } catch (_) { /* ok */ }
+      }
     }
 
     function formatTitle(raw) {
@@ -3081,6 +3577,150 @@
     let activeMod = null;
     let searchTerm = "";
     let lastSyncLabel = "Sin sincronizar";
+    let syncCloudHideTimer = null;
+    let syncActivityDepth = 0;
+    let syncCloudResumeTimer = null;
+    let mapSyncLoaderCreep = null;
+    let mapSyncLoaderPct = 0;
+    const MAP_SYNC_RING_C = 2 * Math.PI * 24;
+
+    function setMapSyncProgress(pct, label) {
+      mapSyncLoaderPct = Math.max(0, Math.min(100, Math.round(pct)));
+      const ring = document.getElementById("mapSyncProgressRing");
+      const pctEl = document.getElementById("mapSyncPct");
+      const labelEl = document.getElementById("mapSyncLabel");
+      const loader = document.getElementById("mapSyncLoader");
+      if (ring) {
+        ring.style.strokeDasharray = String(MAP_SYNC_RING_C);
+        ring.style.strokeDashoffset = String(MAP_SYNC_RING_C * (1 - mapSyncLoaderPct / 100));
+      }
+      if (pctEl) pctEl.textContent = mapSyncLoaderPct + "%";
+      if (labelEl && label) labelEl.textContent = label;
+      if (loader) loader.classList.toggle("is-done", mapSyncLoaderPct >= 100);
+    }
+
+    function stopMapSyncCreep() {
+      if (mapSyncLoaderCreep) {
+        clearInterval(mapSyncLoaderCreep);
+        mapSyncLoaderCreep = null;
+      }
+    }
+
+    function startMapSyncCreep(label) {
+      stopMapSyncCreep();
+      setMapSyncProgress(6, label || "Cargando…");
+      mapSyncLoaderCreep = setInterval(() => {
+        if (mapSyncLoaderPct >= 88) return;
+        setMapSyncProgress(mapSyncLoaderPct + 2 + Math.random() * 5);
+      }, 160);
+    }
+
+    function setMapSyncVeil(on, lite) {
+      const vp = document.getElementById("viewport");
+      const loader = document.getElementById("mapSyncLoader");
+      if (!vp) return;
+      vp.classList.toggle("is-syncing", !!on);
+      vp.classList.toggle("show-veil", !!on && !lite);
+      vp.classList.toggle("show-spinner", !!on);
+      if (loader) {
+        loader.hidden = !on;
+        loader.setAttribute("aria-busy", on ? "true" : "false");
+        if (!on) loader.classList.remove("is-done");
+      }
+      if (!on) {
+        stopMapSyncCreep();
+        setMapSyncProgress(0);
+      }
+    }
+
+    function hideSyncCloud() {
+      const root = document.getElementById("syncCloud");
+      if (!root) return;
+      root.classList.remove("show");
+      clearTimeout(syncCloudHideTimer);
+      syncCloudHideTimer = setTimeout(() => {
+        if (!root.classList.contains("show")) root.hidden = true;
+      }, 320);
+    }
+
+    function setSyncCloud(state, title, subtitle, opts) {
+      const root = document.getElementById("syncCloud");
+      const titleEl = document.getElementById("syncCloudTitle");
+      const subEl = document.getElementById("syncCloudSub");
+      if (!root || !titleEl || !subEl) return;
+      opts = opts || {};
+      root.dataset.state = state || "busy";
+      if (title) titleEl.textContent = title;
+      if (subtitle != null) subEl.textContent = subtitle;
+      root.hidden = false;
+      clearTimeout(syncCloudHideTimer);
+      requestAnimationFrame(() => root.classList.add("show"));
+      if (state === "ok" || state === "idle") {
+        const ms = opts.autoHideMs != null ? opts.autoHideMs : (state === "ok" ? 2600 : 1800);
+        syncCloudHideTimer = setTimeout(hideSyncCloud, ms);
+      }
+    }
+
+    function pushSyncActivity(title, subtitle, withVeil) {
+      syncActivityDepth++;
+      hideSyncCloud();
+      setMapSyncVeil(true, withVeil === false);
+      startMapSyncCreep(subtitle || title || "Cargando…");
+    }
+
+    function popSyncActivity(ok, title, subtitle) {
+      syncActivityDepth = Math.max(0, syncActivityDepth - 1);
+      if (syncActivityDepth > 0) return;
+      stopMapSyncCreep();
+      if (ok) {
+        setMapSyncProgress(100, "Carga completa");
+      }
+      const finish = () => {
+        setMapSyncVeil(false);
+        if (ok) {
+          const t = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+          lastSyncLabel = "Al día · " + t;
+          setSyncCloud("ok", title || "Listo", subtitle || "Mapa actualizado", { autoHideMs: 2600 });
+        } else {
+          hideSyncCloud();
+        }
+        updateMobileChrome();
+      };
+      if (ok) setTimeout(finish, 380);
+      else finish();
+    }
+
+    function notifyRateLimitSoft() {
+      const now = Date.now();
+      if (now - rateLimitWarnedAt < 20000) return;
+      rateLimitWarnedAt = now;
+      noteRateLimit();
+      const waitSec = Math.max(15, Math.ceil((syncPausedUntil - Date.now()) / 1000));
+      setSyncCloud(
+        "wait",
+        "Un momento…",
+        "Seguimos en ~" + waitSec + " s · puedes seguir editando",
+        { autoHideMs: 0 }
+      );
+      showToast("Conectando con la hoja", false, "Unos segundos y seguimos solos", "wait");
+      clearTimeout(syncCloudResumeTimer);
+      syncCloudResumeTimer = setTimeout(() => {
+        if (!canSyncNow()) return;
+        setSyncCloud("ok", "Conectado", "Ya sincronizamos de nuevo", { autoHideMs: 2200 });
+      }, Math.max(1000, syncPausedUntil - Date.now()));
+    }
+
+    function updateNetworkCloud() {
+      if (!navigator.onLine) {
+        setSyncCloud("offline", "Sin internet", "Tus cambios quedan guardados en el celular", { autoHideMs: 0 });
+        lastSyncLabel = "Sin conexión";
+        updateMobileChrome();
+        return;
+      }
+      if (syncActivityDepth === 0 && canSyncNow()) {
+        hideSyncCloud();
+      }
+    }
 
     function setActiveMod(modId) {
       activeMod = modId == null ? null : modId;
@@ -3152,13 +3792,23 @@
     }
 
     async function refreshMapData(showFeedback, opts = {}) {
-      if (mapSyncBusy) return lastAutoCount;
-      mapSyncBusy = true;
       const soft = !!opts.soft;
       const fast = !!opts.fast;
+      const forceReplace = !!opts.replace;
+      if (soft && !canSyncNow()) return lastAutoCount;
+      if (mapSyncBusy) return lastAutoCount;
       const btn = document.getElementById("mobRefreshBtn");
       const deskBtn = document.getElementById("deskRefreshBtn");
-      const showBusy = !soft || fast;
+      const showBusy = !soft || fast || forceReplace;
+      const showCloud = showBusy || !!showFeedback;
+      mapSyncBusy = true;
+      if (showCloud) {
+        pushSyncActivity(
+          forceReplace ? "Actualizando mapa" : (showFeedback ? "Sincronizando" : "Cargando datos"),
+          "Un momento, por favor…",
+          showBusy
+        );
+      }
       if (showBusy) {
         if (btn && !fast) {
           btn.classList.add("loading");
@@ -3170,23 +3820,35 @@
         }
       }
       let n = 0;
+      let syncOk = true;
       try {
         if (API_URL) {
           const filters = currentMapFilters();
+          if (forceReplace || showFeedback || opts.nocache) filters.nocache = true;
+          if (showCloud) setMapSyncProgress(22, "Conectando con la hoja…");
           // Rápido: GET primero (sin esperar cola). Flush en segundo plano.
-          if (!soft && !fast && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
+          if (!soft && !fast && !forceReplace && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
             const flushed = await QBApi.flushQueue();
             if (flushed > 0 && showFeedback) {
               showToast("Cola enviada", false, flushed + " pendiente(s) subidos");
             }
           }
-          n = await syncLaborsFromSheet(filters, {
-            replace: !soft && !fast && !!showFeedback,
-            fullPaint: !soft && !fast && !!showFeedback
+          if (showCloud) setMapSyncProgress(42, "Leyendo labores…");
+          const doReplace = forceReplace || (!soft && !fast && !!showFeedback);
+          const syncRes = await syncLaborsFromSheet(filters, {
+            replace: doReplace,
+            fullPaint: doReplace || !!opts.fullPaint
           });
-          lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+          n = syncRes?.n || 0;
+          syncOk = !!syncRes?.ok;
+          if (showCloud) setMapSyncProgress(78, "Pintando el mapa…");
+          if (syncOk) {
+            lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+          } else if (syncRes?.rateLimited) {
+            lastSyncLabel = "Esperando servidor…";
+          }
           updatePendingChips();
-          if (fast && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
+          if ((fast || forceReplace) && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
             QBApi.flushQueue().then(flushed => {
               if (flushed > 0) updatePendingChips();
             }).catch(() => {});
@@ -3195,15 +3857,22 @@
           lastSyncLabel = "Sin API configurada";
         }
         updateMobileChrome();
-        if (!soft || fast) applyFilter();
+        if (!soft || fast || forceReplace) applyFilter();
+        if (showCloud) setMapSyncProgress(94, "Finalizando…");
         const sig = laborSnapshot();
         const changed = sig !== lastLaborSig;
         if (showFeedback) {
-          showToast(
-            n > 0 ? (fast ? "Cambios traídos" : "Datos actualizados") : "Mapa al día",
-            false,
-            n > 0 ? `${n} lotes desde la hoja` : "Sin labores en este filtro"
-          );
+          if (n > 0) {
+            showToast(
+              forceReplace || !fast ? "Datos actualizados" : "Cambios traídos",
+              false,
+              `${n} lotes desde la hoja`
+            );
+          } else if (forceReplace || (!soft && !fast)) {
+            showToast("Sin labores", false, "Mapa limpio · nada en este filtro");
+          } else {
+            showToast("Mapa al día", false, "Sin labores en este filtro");
+          }
         } else if (changed && lastLaborSig !== null && n > 0) {
           showToast("Mapa actualizado", false, `${n} lote(s) detectados`);
         }
@@ -3211,6 +3880,17 @@
         lastAutoCount = n;
       } finally {
         mapSyncBusy = false;
+        if (showCloud) {
+          if (syncOk) {
+            popSyncActivity(
+              true,
+              n > 0 ? "Datos listos" : "Mapa al día",
+              n > 0 ? (n + " lote(s) desde la hoja") : "No hay cambios nuevos"
+            );
+          } else {
+            popSyncActivity(false);
+          }
+        }
         if (showBusy) {
           if (btn) {
             btn.classList.remove("loading");
@@ -3236,23 +3916,65 @@
     let lastAutoCount = 0;
     let lastLaborSig = null;
     let autoSyncTimer = null;
+    let softSyncTimer = null;
+    let syncPausedUntil = 0;
+    let rateLimitWarnedAt = 0;
     let savingLabor = false;
+    const AUTO_SYNC_MS = 20000;
+    const FILTER_CACHE_KEY = "qb-filtros-cache";
+    const FILTER_CACHE_TTL = 10 * 60 * 1000;
+
+    function isApiRateLimited(res) {
+      if (!res) return false;
+      if (res.code === "RATE_LIMIT") return true;
+      return /demasiadas solicitudes/i.test(String(res.message || res.error || ""));
+    }
+
+    function noteRateLimit() {
+      syncPausedUntil = Date.now() + 90000;
+    }
+
+    function canSyncNow() {
+      return Date.now() >= syncPausedUntil;
+    }
+
+    function readFilterCache() {
+      try {
+        const raw = sessionStorage.getItem(FILTER_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.ts || Date.now() - parsed.ts > FILTER_CACHE_TTL) return null;
+        return parsed.data || null;
+      } catch {
+        return null;
+      }
+    }
+
+    function writeFilterCache(data) {
+      try {
+        sessionStorage.setItem(FILTER_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+      } catch { /* ok */ }
+    }
 
     async function autoSyncFromSheet() {
-      if (!API_URL || !navigator.onLine || document.hidden || mapSyncBusy || savingLabor) return;
+      if (!canSyncNow() || !API_URL || !navigator.onLine || document.hidden || mapSyncBusy || savingLabor) return;
       if (multiLotMode && multiLotKeys.size) return;
       await refreshMapData(false, { soft: true });
     }
 
     function startAutoSync() {
       if (autoSyncTimer) clearInterval(autoSyncTimer);
-      autoSyncTimer = setInterval(autoSyncFromSheet, 8000);
+      autoSyncTimer = setInterval(autoSyncFromSheet, AUTO_SYNC_MS);
     }
 
     function scheduleSoftSync(delayMs) {
-      setTimeout(() => {
-        if (!mapSyncBusy && !savingLabor) refreshMapData(false, { soft: true });
-      }, delayMs || 600);
+      if (softSyncTimer) clearTimeout(softSyncTimer);
+      softSyncTimer = setTimeout(() => {
+        softSyncTimer = null;
+        if (!canSyncNow() || mapSyncBusy || savingLabor) return;
+        if (typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) return;
+        refreshMapData(false, { soft: true });
+      }, Math.max(3500, delayMs || 3500));
     }
 
     function openRefreshModal() {
@@ -3277,10 +3999,23 @@
 
     async function updateAppVersion() {
       closeRefreshModal();
-      showToast("Actualizando app...", false, "Limpiando caché");
+      showToast("Actualizando app...", false, "Bajando código y datos de la hoja");
       try {
+        try {
+          sessionStorage.setItem("qb-app-refresh", "1");
+          sessionStorage.removeItem(FILTER_CACHE_KEY);
+        } catch { /* ok */ }
+        if (API_URL && navigator.onLine && typeof QBApi.flushQueue === "function") {
+          try { await QBApi.flushQueue(); } catch { /* ok */ }
+        }
         if ("serviceWorker" in navigator) {
+          const ctrl = navigator.serviceWorker.controller;
+          if (ctrl) ctrl.postMessage({ type: "PURGE" });
           const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.update().catch(() => null)));
+          regs.forEach(r => {
+            if (r.waiting) r.waiting.postMessage({ type: "SKIP_WAITING" });
+          });
           await Promise.all(regs.map(r => r.unregister()));
         }
         if (window.caches) {
@@ -3298,7 +4033,7 @@
     document.getElementById("mobRefreshBtn")?.addEventListener("click", openRefreshModal);
     document.getElementById("refreshDataBtn")?.addEventListener("click", () => {
       closeRefreshModal();
-      refreshMapData(true);
+      refreshMapData(true, { replace: true, nocache: true });
     });
     document.getElementById("refreshAppBtn")?.addEventListener("click", updateAppVersion);
     document.getElementById("refreshCancelBtn")?.addEventListener("click", closeRefreshModal);
@@ -3364,7 +4099,7 @@
       </div>`;
     sidebar.appendChild(kpiBlock);
     document.getElementById("deskRefreshBtn")?.addEventListener("click", () => {
-      refreshMapData(true, { fast: true });
+      refreshMapData(true, { replace: true, nocache: true });
     });
 
     const modBlock = document.createElement("div");
@@ -3459,52 +4194,143 @@
     let multiLotMode = false;
     /** @type {Map<string, { avance: number }>} */
     const multiLotKeys = new Map();
-    /* Pincel: colores intensos (módulos + extras) */
-    const MULTI_COLORS = [
-      "#1E88E5", /* azul */
-      "#43A047", /* verde */
-      "#8E24AA", /* morado */
-      "#F9A825", /* amarillo */
-      "#E64A19", /* naranja */
-      "#00695C", /* teal */
-      "#C62828", /* rojo */
-      "#6A1B9A", /* violeta */
-      "#00838F", /* cian */
-      "#2E7D32"  /* verde fuerte */
-    ];
+    /* Pincel: un color por día hábil (lun–vie) */
+    const COLOR_NAMES = Object.assign({}, (window.QB_CONFIG && window.QB_CONFIG.COLOR_PALETTE) || {
+      "#64B5F6": "Lunes",
+      "#81C784": "Martes",
+      "#FFD54F": "Miercoles",
+      "#FF8A65": "Jueves",
+      "#CE93D8": "Viernes"
+    });
+    const MULTI_COLORS = Object.keys(COLOR_NAMES);
+
+    function normalizeHexColor(color) {
+      const raw = String(color || "").trim();
+      if (!/^#[0-9A-Fa-f]{6}$/.test(raw)) return "";
+      return raw.toUpperCase();
+    }
+
+    function colorChipHtml(color) {
+      const hex = normalizeHexColor(color);
+      if (!hex) return "—";
+      const name = COLOR_NAMES[hex] || "Personalizado";
+      return `<span class="color-chip" title="${name} · ${hex}"><i style="background:${hex}" aria-hidden="true"></i>${hex}</span>`;
+    }
+
+    function colorDetailText(color) {
+      const hex = normalizeHexColor(color);
+      if (!hex) return "";
+      return COLOR_NAMES[hex] || "Personalizado";
+    }
+
+    function clampToPalette(color) {
+      const hex = (typeof QBApi.normalizeColor === "function" ? QBApi.normalizeColor(color) : "") || normalizeHexColor(color);
+      if (!hex) return MULTI_COLORS[0];
+      const hit = MULTI_COLORS.find(c => c.toUpperCase() === hex);
+      return hit || MULTI_COLORS[0];
+    }
+
+    function brushColorForSave() {
+      const hex = clampToPalette(multiPaintColor);
+      const label = COLOR_NAMES[hex] ||
+        (typeof QBApi.colorHexToName === "function" ? QBApi.colorHexToName(hex) : "") ||
+        hex;
+      return { hex, label };
+    }
+
+    /** Color de pintura según el módulo del lote (borde del mapa). */
+    function modulePaintColor(lot) {
+      if (!lot || lot.modulo == null) return "";
+      const mod = modById[lot.modulo];
+      if (!mod) return "";
+      return clampToPalette(mod.badge || mod.fill || "");
+    }
+
+    /** Individual → color del módulo; múltiple → pincel elegido. */
+    function resolvePaintColor(lot, posKey, storedColor) {
+      if (multiLotMode && posKey && multiLotKeys.has(posKey)) {
+        return normalizeHexColor(storedColor) || multiPaintColor;
+      }
+      const stored = normalizeHexColor(storedColor);
+      if (stored) return stored;
+      const modColor = modulePaintColor(lot);
+      if (modColor) return modColor;
+      return multiPaintColor;
+    }
+
     let multiPaintColor = MULTI_COLORS[0];
+    try {
+      const savedBrush = clampToPalette(localStorage.getItem("qb-brush-color"));
+      if (savedBrush) multiPaintColor = savedBrush;
+    } catch (_) { /* ok */ }
     document.documentElement.style.setProperty("--multi-color", multiPaintColor);
 
     function saveLaborRecords() {
       localStorage.setItem("qb-labores", JSON.stringify(laborRecords));
     }
 
+    function normTurnoLabel(t) {
+      return String(t || "").toUpperCase().trim().replace(/\s+/g, "");
+    }
+
+    /** Empareja registro de hoja → celda del mapa (r,c). Con duplicados T7·208 usa área del lote. */
     function posKeyFromRecord(rec) {
       if (!rec) return null;
       const loteNum = Number(rec.lote);
-      const turno = String(rec.turno || "").toUpperCase().trim();
+      const turno = normTurnoLabel(rec.turno);
       if (!loteNum) return null;
-      let lot = lots.find(l =>
+
+      let candidates = lots.filter(l =>
         Number(l.lote) === loteNum &&
-        String(l.tunel || "").toUpperCase() === turno
+        normTurnoLabel(l.tunel) === turno
       );
-      if (!lot && turno) {
-        lot = lots.find(l =>
-          Number(l.lote) === loteNum &&
-          String(l.tunel || "").toUpperCase().replace(/\s+/g, "") === turno.replace(/\s+/g, "")
-        );
+      if (!candidates.length && turno) {
+        candidates = lots.filter(l => Number(l.lote) === loteNum);
       }
-      if (!lot) {
-        const same = lots.filter(l => Number(l.lote) === loteNum);
-        if (same.length === 1) lot = same[0];
+      if (!candidates.length) return null;
+      if (candidates.length === 1) return `${candidates[0].r},${candidates[0].c}`;
+
+      const modLabel = String(rec.modulo || "").toUpperCase().replace(/\s+/g, "");
+      if (modLabel) {
+        const byMod = candidates.filter(l => {
+          const m = l.modulo != null ? modById[l.modulo] : null;
+          return m && normTurnoLabel(m.label) === modLabel;
+        });
+        if (byMod.length === 1) return `${byMod[0].r},${byMod[0].c}`;
+        if (byMod.length) candidates = byMod;
       }
-      return lot ? `${lot.r},${lot.c}` : null;
+
+      const recArea = roundHa(rec.area != null ? rec.area : rec.areaLote);
+      if (recArea > 0) {
+        const byArea = candidates.filter(l => roundHa(l.ha) === recArea);
+        if (byArea.length === 1) return `${byArea[0].r},${byArea[0].c}`;
+        if (byArea.length) candidates = byArea;
+      }
+
+      const recAv = roundHa(rec.avance);
+      if (recAv > 0 && candidates.length > 1) {
+        let best = candidates[0];
+        let bestDiff = Math.abs(roundHa(best.ha) - recAv);
+        for (let i = 1; i < candidates.length; i++) {
+          const diff = Math.abs(roundHa(candidates[i].ha) - recAv);
+          if (diff < bestDiff) {
+            best = candidates[i];
+            bestDiff = diff;
+          }
+        }
+        return `${best.r},${best.c}`;
+      }
+
+      return `${candidates[0].r},${candidates[0].c}`;
     }
 
     function applyApiRecords(records, opts = {}) {
       if (!records) return 0;
       let n = 0;
       const changed = [];
+      const pendingKeys = (typeof QBApi.getPendingPosKeys === "function")
+        ? QBApi.getPendingPosKeys()
+        : new Set();
       const entries = Array.isArray(records)
         ? records.map(r => [null, r])
         : Object.entries(records);
@@ -3512,6 +4338,10 @@
         if (!rec || !rec.laborReal) return;
         const posKey = posKeyFromRecord(rec);
         if (!posKey) return;
+        if (!opts.replace && (savingLabor || pendingKeys.has(posKey))) return;
+        const lot = byPos.get(posKey);
+        const fromApi = (typeof QBApi.colorNameToHex === "function" ? QBApi.colorNameToHex(rec.color) : "") ||
+          normalizeHexColor(rec.color) || "";
         const next = {
           sem: Number(rec.sem) || currentWeek,
           fecha: rec.fechaIso || rec.fecha || "",
@@ -3523,15 +4353,20 @@
           variedad: String(rec.variedad || "SEKOYA POP").toUpperCase(),
           area: roundHa(rec.area),
           avance: roundHa(rec.avance),
-          totalJr: Number(rec.totalJr) || 0
+          totalJr: Number(rec.totalJr) || 0,
+          color: fromApi || modulePaintColor(lot) || ""
         };
         const prev = laborRecords[posKey];
         const same = prev &&
           Number(prev.avance) === next.avance &&
           String(prev.laborReal || "") === next.laborReal &&
           Number(prev.sem) === next.sem &&
-          String(prev.fecha || "") === String(next.fecha || "");
-        if (prev && prev.color && !next.color) next.color = prev.color;
+          String(prev.fecha || "") === String(next.fecha || "") &&
+          normalizeHexColor(prev.color) === normalizeHexColor(next.color);
+        if (prev && prev.color && !next.color) {
+          const lotKeep = byPos.get(posKey);
+          next.color = modulePaintColor(lotKeep) || prev.color;
+        }
         laborRecords[posKey] = next;
         n++;
         if (!same) changed.push(posKey);
@@ -3554,19 +4389,32 @@
     async function syncLaborsFromSheet(filters = {}, opts = {}) {
       try {
         const json = await QBApi.getLabors(filters);
-        if (!json?.ok) throw new Error(json?.error || json?.message || "Error al cargar");
+        if (!json?.ok) {
+          if (isApiRateLimited(json)) {
+            notifyRateLimitSoft();
+            return { n: 0, ok: false, rateLimited: true };
+          }
+          return { n: 0, ok: false };
+        }
         const payload = Array.isArray(json.list)
           ? json.list
           : (json.records || []);
         if (opts.replace) {
           laborRecords = {};
           saveLaborRecords();
-          return applyApiRecords(payload, { fullPaint: true });
+          const n = applyApiRecords(payload, { fullPaint: true, replace: true });
+          normalizeStoredLaborColors();
+          refreshAllLaborVisuals();
+          return { n, ok: true };
         }
-        return applyApiRecords(payload, { fullPaint: !!opts.fullPaint });
+        const n = applyApiRecords(payload, { fullPaint: !!opts.fullPaint });
+        return { n, ok: true };
       } catch (err) {
-        console.warn("API GET:", err);
-        return 0;
+        if (isApiRateLimited(err) || /demasiadas solicitudes/i.test(String(err?.message || err))) {
+          notifyRateLimitSoft();
+          return { n: 0, ok: false, rateLimited: true };
+        }
+        return { n: 0, ok: false };
       }
     }
 
@@ -3578,6 +4426,7 @@
       if (mapQuery.modulo) filters.modulo = mapQuery.modulo;
       else if (activeMod != null) filters.modulo = "M" + activeMod;
       if (mapQuery.laborReal) filters.laborReal = mapQuery.laborReal;
+      if (mapQuery.laborPpto) filters.laborPpto = mapQuery.laborPpto;
       const varEl = document.getElementById("fVariedad");
       const variedad = String(varEl?.value || "").trim().toUpperCase();
       if (variedad) filters.variedad = variedad;
@@ -3588,14 +4437,16 @@
       sem: currentWeek,
       fecha: "",
       modulo: "",
-      laborReal: ""
+      laborReal: "",
+      laborPpto: ""
     };
 
     let filterOptions = {
       sem: [currentWeek],
       fecha: [],
       md: modules.map(m => m.label),
-      laborReal: (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase())
+      laborReal: (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase()),
+      laborPpto: (LABOR_OPTS.labor_ppto || []).map(x => String(x).toUpperCase())
     };
 
     function hasActiveMapFilters() {
@@ -3603,7 +4454,8 @@
         (mapQuery.sem != null && Number(mapQuery.sem) !== Number(currentWeek)) ||
         mapQuery.fecha ||
         mapQuery.modulo ||
-        mapQuery.laborReal
+        mapQuery.laborReal ||
+        mapQuery.laborPpto
       );
     }
 
@@ -3665,10 +4517,12 @@
       renderFilterCSelect("filterSemSelect", filterOptions.sem, mapQuery.sem, null);
       renderFilterCSelect("filterFechaSelect", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
       renderFilterCSelect("filterMdSelect", filterOptions.md, mapQuery.modulo, "Todos los módulos");
-      renderFilterCSelect("filterLaborSelect", filterOptions.laborReal, mapQuery.laborReal, "Todas las labores");
+      renderFilterCSelect("filterLaborPptoSelect", filterOptions.laborPpto, mapQuery.laborPpto, "Todas las labores ppto");
+      renderFilterCSelect("filterLaborSelect", filterOptions.laborReal, mapQuery.laborReal, "Todas las labores reales");
       renderFilterCSelect("mobFilterSem", filterOptions.sem, mapQuery.sem, null);
       renderFilterCSelect("mobFilterFecha", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
       renderFilterCSelect("mobFilterMd", filterOptions.md, mapQuery.modulo, "Todos");
+      renderFilterCSelect("mobFilterLaborPpto", filterOptions.laborPpto, mapQuery.laborPpto, "Todas");
       renderFilterCSelect("mobFilterLabor", filterOptions.laborReal, mapQuery.laborReal, "Todas");
       syncFilterBtnState();
     }
@@ -3678,47 +4532,75 @@
       const semEl = document.getElementById(fromMob ? "mobFilterSem" : "filterSemSelect");
       const fechaEl = document.getElementById(fromMob ? "mobFilterFecha" : "filterFechaSelect");
       const mdEl = document.getElementById(fromMob ? "mobFilterMd" : "filterMdSelect");
+      const laborPptoEl = document.getElementById(fromMob ? "mobFilterLaborPpto" : "filterLaborPptoSelect");
       const laborEl = document.getElementById(fromMob ? "mobFilterLabor" : "filterLaborSelect");
       const semVal = semEl?.value ?? "";
       mapQuery.sem = semVal === "" ? currentWeek : (Number(semVal) || semVal);
       mapQuery.fecha = fechaEl?.value || "";
       mapQuery.modulo = mdEl?.value || "";
+      mapQuery.laborPpto = laborPptoEl?.value || "";
       mapQuery.laborReal = laborEl?.value || "";
     }
 
-    async function loadFilterOptions() {
+    async function loadFilterOptions(force) {
       if (!API_URL || !QBApi.getFiltros) {
         refreshFilterPanelUI();
-        if (isMobileMap()) requestAnimationFrame(() => fitToScreen());
+        if (isMobileMap()) requestAnimationFrame(scheduleMapFit);
+        return;
+      }
+      if (!force) {
+        const cached = readFilterCache();
+        if (cached) {
+          filterOptions = cached;
+          refreshFilterPanelUI();
+          if (isMobileMap()) requestAnimationFrame(scheduleMapFit);
+          return;
+        }
+      }
+      if (!canSyncNow()) {
+        refreshFilterPanelUI();
         return;
       }
       try {
         const json = await QBApi.getFiltros();
-        if (!json?.ok) throw new Error(json?.message || "Error filtros");
+        if (!json?.ok) {
+          if (isApiRateLimited(json)) {
+            notifyRateLimitSoft();
+            refreshFilterPanelUI();
+            return;
+          }
+          throw new Error(json?.message || "Error filtros");
+        }
         filterOptions = {
           sem: (json.sem && json.sem.length) ? json.sem : [currentWeek],
           fecha: json.fecha || [],
           md: (json.md && json.md.length) ? json.md : modules.map(m => m.label),
           laborReal: (json.laborReal && json.laborReal.length)
             ? json.laborReal
-            : (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase())
+            : (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase()),
+          laborPpto: (json.laborPpto && json.laborPpto.length)
+            ? json.laborPpto
+            : (LABOR_OPTS.labor_ppto || []).map(x => String(x).toUpperCase())
         };
         if (!filterOptions.sem.includes(Number(currentWeek)) && !filterOptions.sem.includes(String(currentWeek))) {
           filterOptions.sem = [...filterOptions.sem, currentWeek].sort((a, b) => a - b);
         }
+        writeFilterCache(filterOptions);
       } catch (err) {
-        console.warn("API filtros:", err);
+        if (isApiRateLimited(err) || /demasiadas solicitudes/i.test(String(err?.message || err))) {
+          notifyRateLimitSoft();
+        }
       }
       refreshFilterPanelUI();
       if (isMobileMap()) {
-        requestAnimationFrame(() => fitToScreen());
+        requestAnimationFrame(scheduleMapFit);
       }
     }
 
     function openFilterModal() {
       const modal = document.getElementById("filterModal");
       if (!modal) return;
-      loadFilterOptions();
+      loadFilterOptions(true);
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
     }
@@ -3757,8 +4639,11 @@
       }
       const filters = currentMapFilters();
       if (variedad) filters.variedad = String(variedad).toUpperCase();
-      const n = await syncLaborsFromSheet(filters, { replace: true });
-      lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+      const res = await syncLaborsFromSheet(filters, { replace: true });
+      const n = res?.n || 0;
+      if (res?.ok) {
+        lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+      }
       updateMobileChrome();
       applyFilter();
       if (showFeedback) {
@@ -3798,14 +4683,20 @@
         cell.insertBefore(fill, cell.firstChild);
       }
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      fill.style.background = fillColor || mod?.badge || mod?.fill || "#64748b";
+      const posKey = cell.dataset.key || "";
+      const paint = resolvePaintColor(lot, posKey, fillColor);
+      fill.style.background = paint || mod?.badge || mod?.fill || "#64748b";
       fill.style.height = pct + "%";
       const fakeRec = { avance: av, laborReal: laborReal || "" };
       const st = laborStatus(fakeRec, area);
       cell.classList.toggle("labor-done", st.key === "done");
       cell.classList.toggle("labor-progress", st.key === "progress");
+      const colorLabel = colorDetailText(paint);
       if (laborReal) {
-        cell.title = `${st.label} · ${laborReal} · Avance ${av.toFixed(2)} / ${area.toFixed(2)} ha`;
+        cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(area)} ha` +
+          (colorLabel ? ` · ${colorLabel}` : "");
+      } else {
+        cell.title = `Sin labor registrada · Área ${formatHa(area)} ha`;
       }
       return { pct, st, area, av };
     }
@@ -3819,7 +4710,8 @@
         return;
       }
       const rec = laborRecords[key];
-      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, rec?.color);
+      const paint = resolvePaintColor(lot, key, rec?.color);
+      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, paint);
       if (rec?.laborPpto && rec?.laborReal) {
         cell.title += ` · Ppto: ${rec.laborPpto}`;
       } else if (!rec?.laborReal) {
@@ -3827,7 +4719,7 @@
       }
     }
 
-    function updateDrawerPreview(lot, avance, laborReal) {
+    function updateDrawerPreview(lot, avance, laborReal, fillColor) {
       const lotPreviewT = document.getElementById("lotPreviewT");
       const lotPreviewL = document.getElementById("lotPreviewL");
       const lotPreviewH = document.getElementById("lotPreviewH");
@@ -3848,11 +4740,13 @@
       let av = roundHa(avance);
       if (av > area) av = area;
       const pct = area > 0 ? (av / area) * 100 : 0;
-      lotPreviewFill.style.background = mod?.badge || "#64748b";
+      const paint = normalizeHexColor(fillColor) || modulePaintColor(lot) || mod?.badge || "#64748b";
+      lotPreviewFill.style.background = paint;
       lotPreviewFill.style.height = pct + "%";
       const st = laborStatus({ avance: av, laborReal }, area);
+      const colorInfo = colorDetailText(paint);
       lotPreviewStatus.textContent = laborReal
-        ? `${st.label} · ${Math.round(pct)}% · ${av.toFixed(2)} / ${area.toFixed(2)} ha`
+        ? `${st.label} · ${Math.round(pct)}% · ${av.toFixed(2)} / ${area.toFixed(2)} ha · ${colorInfo}`
         : "Elige una labor real para registrar";
     }
 
@@ -3877,28 +4771,60 @@
       }
       const laborReal = fLaborReal.value;
       updateAvanceBar();
-      updateDrawerPreview(lot, avance, laborReal);
+      const paint = modulePaintColor(lot) || normalizeHexColor(laborRecords[posKey]?.color);
+      updateDrawerPreview(lot, avance, laborReal, paint);
       const cell = getCellByKey(posKey);
       if (cell) {
         cell.classList.remove("dim");
-        paintCellProgress(cell, lot, avance, laborReal);
+        paintCellProgress(cell, lot, avance, laborReal, paint);
       }
     }
 
     let toastTimer = null;
     let drawerMsgTimer = null;
-    function showToast(title, isError, subtitle) {
+
+    function positionSaveToast() {
+      const toast = document.getElementById("saveToast");
+      const modal = document.getElementById("multiLotModal");
+      if (!toast) return;
+      toast.classList.remove("toast-below-modal");
+      toast.style.top = "";
+      toast.style.bottom = "";
+      toast.style.left = "";
+
+      if (modal?.classList.contains("open")) {
+        const card = modal.querySelector(".multi-card");
+        if (card) {
+          const rect = card.getBoundingClientRect();
+          const gap = 14;
+          const toastH = toast.offsetHeight || 72;
+          let top = rect.bottom + gap;
+          const maxTop = window.innerHeight - toastH - 12;
+          if (top > maxTop) top = maxTop;
+          toast.style.top = `${Math.round(top)}px`;
+          toast.style.left = `${Math.round(rect.left + rect.width / 2)}px`;
+          toast.style.bottom = "auto";
+          toast.classList.add("toast-below-modal");
+        }
+      }
+    }
+
+    function showToast(title, isError, subtitle, kind) {
       const toast = document.getElementById("saveToast");
       if (!toast) return;
       toast.innerHTML = subtitle
         ? `<strong>${title}</strong><span class="toast-sub">${subtitle}</span>`
         : `<strong>${title}</strong>`;
-      toast.classList.toggle("error", !!isError);
-      toast.classList.remove("show");
+      toast.classList.remove("error", "info", "wait", "show", "toast-below-modal");
+      if (isError) toast.classList.add("error");
+      else if (kind === "info") toast.classList.add("info");
+      else if (kind === "wait") toast.classList.add("wait");
+      positionSaveToast();
       void toast.offsetWidth;
       toast.classList.add("show");
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove("show"), isError ? 3500 : 5000);
+      const dur = isError ? 3500 : (kind === "wait" ? 4200 : 5000);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), dur);
     }
 
     function showDrawerSavedMsg(detail, kind) {
@@ -3949,6 +4875,21 @@
       updateMobileChrome();
     }
 
+    function normalizeStoredLaborColors() {
+      let changed = false;
+      Object.keys(laborRecords).forEach(key => {
+        const lot = byPos.get(key);
+        if (!lot) return;
+        const expected = modulePaintColor(lot);
+        if (!expected) return;
+        if (!normalizeHexColor(laborRecords[key].color)) {
+          laborRecords[key].color = expected;
+          changed = true;
+        }
+      });
+      if (changed) saveLaborRecords();
+    }
+
     // Grid
     const minC = Math.min(...lots.map(l => l.c));
     const maxC = Math.max(...lots.map(l => l.c));
@@ -3957,13 +4898,23 @@
     const byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
     const rowsCount = labelRows.length;
 
+    let baseCellW = 40;
+    let baseCellH = 38;
     let cellW = 40;
     let cellH = 38;
     let mapW = 0;
     let mapH = 0;
-    let scale = 1;
-    let minScale = 1;
-    let maxScale = 3.5;
+    let zoomMul = 1;
+    let minZoomMul = 1;
+    let maxZoomMul = 4;
+    const MAP_TARGET_LONG = 7680;
+    const MAP_MAX_PX = 8192;
+    const MOB_READ_CELL_W = 38;
+    const MOB_READ_CELL_H = 36;
+    const MOB_CELL_W = 22;
+    const MOB_CELL_H = 32;
+    const MOB_OVERVIEW_FS = 6;
+    let mobViewScale = 1;
     let panX = 0;
     let panY = 0;
     let mobChromeOpen = true;
@@ -4004,12 +4955,21 @@
       syncMobChromeVisibility();
       updateMobileChrome();
       requestAnimationFrame(() => {
-        fitToScreen();
-        requestAnimationFrame(fitToScreen);
+        scheduleMapFit();
       });
     }
 
     document.getElementById("mobPanelToggle")?.addEventListener("click", toggleMobChrome);
+
+    function updateMobFiltersHeight() {
+      if (!isMobileMap()) return;
+      const filters = document.getElementById("mobFilters");
+      if (!filters) return;
+      const fh = filters.offsetHeight || 0;
+      if (fh > 0) {
+        document.documentElement.style.setProperty("--mob-filters-h", fh + "px");
+      }
+    }
 
     function getViewportSize() {
       const s = getComputedStyle(viewport);
@@ -4020,23 +4980,63 @@
       let w = Math.max(1, viewport.clientWidth - pl - pr);
       let h = Math.max(1, viewport.clientHeight - pt - pb);
 
-      // Móvil: la barra de filtros es fixed y tapa el mapa → centrar en el hueco visible
       if (isMobileMap() && mobChromeOpen) {
         const filters = document.getElementById("mobFilters");
         const fh = filters && getComputedStyle(filters).display !== "none"
           ? (filters.offsetHeight || 0)
           : 0;
         if (fh > 0) {
-          h = Math.max(1, viewport.clientHeight - pt - fh);
+          h = Math.max(1, viewport.clientHeight - pt - pb - fh);
         }
       }
       return { w, h };
     }
 
+    function scheduleMapFit() {
+      updateMobFiltersHeight();
+      if (isMobileMap() && zoomMul > 1.001) {
+        clampPan();
+        applyTransform();
+        return;
+      }
+      fitToScreen();
+      requestAnimationFrame(() => {
+        updateMobFiltersHeight();
+        if (isMobileMap() && zoomMul > 1.001) {
+          clampPan();
+          applyTransform();
+        } else {
+          fitToScreen();
+        }
+      });
+    }
+
+    function updateMobOverviewScale() {
+      if (!isMobileMap() || zoomMul > 1.001) return;
+      const { w, h } = getViewportSize();
+      const inset = 4;
+      const availW = Math.max(1, w - inset);
+      const availH = Math.max(1, h - inset);
+      mobViewScale = Math.min(1, Math.min(availW / mapW, availH / mapH));
+    }
+
+    function mapDisplaySize() {
+      if (isMobileMap() && zoomMul <= 1.001 && mobViewScale < 0.999) {
+        return { w: mapW * mobViewScale, h: mapH * mobViewScale };
+      }
+      return { w: mapW, h: mapH };
+    }
+
     function applyTransform() {
-      scaler.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-      const pct = Math.round((scale / minScale) * 100);
-      zoomChip.textContent = isMobileMap() ? `Mapa ${pct}%` : `Zoom ${Math.round(scale * 100)}%`;
+      let transform = `translate(${panX}px, ${panY}px)`;
+      if (isMobileMap() && zoomMul <= 1.001 && mobViewScale < 0.999) {
+        transform += ` scale(${mobViewScale})`;
+      }
+      scaler.style.transform = transform;
+      const pct = isMobileMap()
+        ? Math.round((zoomMul / Math.max(0.01, minZoomMul)) * 100)
+        : Math.round(zoomMul * 100);
+      zoomChip.textContent = isMobileMap() ? `Mapa ${pct}%` : `Zoom ${pct}%`;
       viewport.style.cursor = canPan() ? "grab" : "default";
       const mobUi = document.getElementById("mapMobileUi");
       const mobChrome = document.getElementById("mobChrome");
@@ -4051,19 +5051,38 @@
 
     const MAP_BORDER_INSET = 2;
 
-    function rebuildMapMetrics() {
+    function rebuildBaseMetrics() {
       const mobile = isMobileMap();
       const { w: vw, h: vh } = getViewportSize();
       const inset = MAP_BORDER_INSET * 2;
       if (mobile) {
-        // Celdas según viewport para que el plano quepa y se centre
-        const pad = 16;
-        cellW = Math.max(22, Math.min(36, (vw - pad) / cols));
-        cellH = Math.max(20, Math.min(32, (vh - pad) / rowsCount));
+        if (!baseCellW || !baseCellH) {
+          baseCellW = MOB_CELL_W;
+          baseCellH = MOB_CELL_H;
+        }
       } else {
-        cellW = Math.max(22, (vw - inset) / cols);
-        cellH = Math.max(20, (vh - inset) / rowsCount);
+        const fitW = (vw - inset) / cols;
+        const fitH = (vh - inset) / rowsCount;
+        const deskMinW = vw >= 1600 ? 39 : (vw >= 1280 ? 35 : (vw >= 1024 ? 31 : 22));
+        const deskMinH = vh >= 900 ? 37 : (vh >= 720 ? 33 : (vh >= 600 ? 29 : 20));
+        baseCellW = Math.max(deskMinW, fitW);
+        baseCellH = Math.max(deskMinH, fitH);
       }
+    }
+
+    function computeMaxZoomMul() {
+      const baseLong = Math.max(cols * baseCellW, rowsCount * baseCellH);
+      if (!baseLong) return 4;
+      const want8k = MAP_TARGET_LONG / baseLong;
+      const hardCap = MAP_MAX_PX / baseLong;
+      const softCap = isMobileMap() ? 10 : 24;
+      return Math.max(2.5, Math.min(want8k, hardCap, softCap));
+    }
+
+    function applyMapLayout() {
+      const mobile = isMobileMap();
+      cellW = baseCellW * zoomMul;
+      cellH = baseCellH * zoomMul;
       mapW = cols * cellW;
       mapH = rowsCount * cellH;
       grid.style.gridTemplateColumns = `repeat(${cols}, ${cellW}px)`;
@@ -4074,47 +5093,99 @@
       stage.style.height = mapH + "px";
       scaler.style.width = mapW + "px";
       scaler.style.height = mapH + "px";
-      const fsCell = Math.max(7, Math.min(12, Math.min(cellH * 0.28, cellW * 0.22)));
-      grid.style.setProperty("--fs-cell", fsCell + "px");
+      const fsCell = computeCellFontSize(cellW, cellH, mobile);
+      const mobOverview =
+        mobile &&
+        zoomMul <= 1.001 &&
+        Math.abs(cellW - MOB_CELL_W) < 0.01 &&
+        Math.abs(cellH - MOB_CELL_H) < 0.01;
+      if (mobOverview) {
+        grid.style.setProperty("--fs-cell", MOB_OVERVIEW_FS + "px");
+        grid.style.setProperty("--cell-border", "1px");
+        grid.style.setProperty("--map-zoom", "1");
+      } else {
+        grid.style.setProperty("--fs-cell", Math.round(fsCell) + "px");
+        const borderW = Math.max(1, Math.min(3, Math.round(zoomMul)));
+        grid.style.setProperty("--cell-border", borderW + "px");
+        grid.style.setProperty("--map-zoom", String(zoomMul));
+      }
+      syncMapZoomState();
     }
 
-    rebuildMapMetrics();
+    function computeCellFontSize(cw, ch, mobile) {
+      const padV = mobile ? 3 : 3;
+      const padH = mobile ? 3 : 2;
+      const availH = Math.max(1, ch - padV);
+      const availW = Math.max(1, cw - padH);
+      if (mobile) {
+        const fsFromH = availH / (3 * 1.04);
+        const fsFromW = availW / 4.5;
+        const fs = Math.min(fsFromH, fsFromW);
+        if (cw >= MOB_READ_CELL_W - 2 && ch >= MOB_READ_CELL_H - 2) {
+          return Math.max(10, fs);
+        }
+        if (cw >= 24) return Math.max(7, fs);
+        return Math.max(4, fs);
+      }
+      const fsFromH = availH / (3 * 1.03);
+      const fsFromW = availW / 4.55;
+      const fs = Math.min(fsFromH, fsFromW);
+      const minFs = cw >= 40 ? 10 : (cw >= 32 ? 9 : 7);
+      return Math.max(minFs, fs);
+    }
+
+    function syncMapZoomState() {
+      const zoomed = isMobileMap() && zoomMul > minZoomMul * 1.04;
+      grid.classList.toggle("map-zoomed", zoomed);
+    }
 
     function clampPan() {
       const { w, h } = getViewportSize();
-      const scaledW = mapW * scale;
-      const scaledH = mapH * scale;
       const edge = MAP_BORDER_INSET;
-      // Si cabe (o casi), siempre centrar — evita sesgo a la izquierda
-      if (scaledW <= w + 1) panX = (w - scaledW) / 2;
-      else panX = Math.max(w - scaledW - edge, Math.min(edge, panX));
-      if (scaledH <= h + 1) panY = (h - scaledH) / 2;
-      else panY = Math.max(h - scaledH - edge, Math.min(edge, panY));
+      const { w: dispW, h: dispH } = mapDisplaySize();
+      if (dispW <= w + 1) panX = (w - dispW) / 2;
+      else panX = Math.max(w - dispW - edge, Math.min(edge, panX));
+      if (dispH <= h + 1) panY = (h - dispH) / 2;
+      else panY = Math.max(h - dispH - edge, Math.min(edge, panY));
     }
 
     function centerMap() {
       const { w, h } = getViewportSize();
-      panX = (w - mapW * scale) / 2;
-      panY = (h - mapH * scale) / 2;
+      const disp = mapDisplaySize();
+      panX = (w - disp.w) / 2;
+      panY = (h - disp.h) / 2;
       clampPan();
     }
 
     function canPan() {
       const { w, h } = getViewportSize();
-      return mapW * scale > w + 2 || mapH * scale > h + 2;
+      const { w: dispW, h: dispH } = mapDisplaySize();
+      return dispW > w + 2 || dispH > h + 2;
     }
 
-    function applyZoomAt(newScale, focalX, focalY) {
-      const prev = scale;
-      scale = Math.min(maxScale, Math.max(minScale, newScale));
-      if (focalX != null && focalY != null) {
+    function applyZoomAt(newZoomMul, focalX, focalY) {
+      const prevDisp = mapDisplaySize();
+      const prevMul = zoomMul;
+      zoomMul = Math.min(maxZoomMul, Math.max(minZoomMul, newZoomMul));
+      if (isMobileMap() && zoomMul > 1.001) mobViewScale = 1;
+      applyMapLayout();
+      if (isMobileMap() && zoomMul <= 1.001) {
+        updateMobOverviewScale();
+        if (prevMul > 1.001) {
+          centerMap();
+          applyTransform();
+          return;
+        }
+      }
+      if (focalX != null && focalY != null && prevDisp.w > 0 && prevDisp.h > 0) {
         const rect = viewport.getBoundingClientRect();
         const px = focalX - rect.left;
         const py = focalY - rect.top;
-        const mx = (px - panX) / prev;
-        const my = (py - panY) / prev;
-        panX = px - mx * scale;
-        panY = py - my * scale;
+        const fx = (px - panX) / prevDisp.w;
+        const fy = (py - panY) / prevDisp.h;
+        const disp = mapDisplaySize();
+        panX = px - fx * disp.w;
+        panY = py - fy * disp.h;
       }
       clampPan();
       applyTransform();
@@ -4124,19 +5195,38 @@
       applyZoomAt(s, focalX, focalY);
     }
 
-    /** Encaja el mapa centrado con el mismo margen en los 4 lados */
+    /** Encaja el mapa centrado; zoom vectorial (sin scale CSS) para nitidez 8K */
     function fitToScreen() {
-      rebuildMapMetrics();
       const { w, h } = getViewportSize();
-      const inset = isMobileMap() ? 24 : MAP_BORDER_INSET * 2;
-      minScale = Math.min((w - inset) / mapW, (h - inset) / mapH);
-      if (!isFinite(minScale) || minScale <= 0) minScale = 0.15;
-      maxScale = Math.max(minScale * 4, 2.5);
-      scale = minScale;
-      panX = (w - mapW * scale) / 2;
-      panY = (h - mapH * scale) / 2;
+      const inset = isMobileMap() ? 4 : MAP_BORDER_INSET * 2;
+      const availW = Math.max(1, w - inset);
+      const availH = Math.max(1, h - inset);
+
+      if (isMobileMap()) {
+        baseCellW = MOB_CELL_W;
+        baseCellH = MOB_CELL_H;
+        zoomMul = 1;
+        minZoomMul = 1;
+        applyMapLayout();
+        updateMobOverviewScale();
+        maxZoomMul = Math.max(3.5, MOB_READ_CELL_W / MOB_CELL_W);
+      } else {
+        rebuildBaseMetrics();
+        const fitZoom = Math.min(
+          availW / (cols * baseCellW),
+          availH / (rowsCount * baseCellH)
+        );
+        maxZoomMul = computeMaxZoomMul();
+        zoomMul = Math.max(minZoomMul, fitZoom);
+        applyMapLayout();
+      }
+
+      const disp = mapDisplaySize();
+      panX = (w - disp.w) / 2;
+      panY = (h - disp.h) / 2;
       clampPan();
       applyTransform();
+      updateMobFiltersHeight();
     }
 
     labelRows.forEach(r => {
@@ -4161,15 +5251,26 @@
           <span class="l">LT.${lot.lote}</span>
           <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>`;
         cell.addEventListener("click", e => {
-          const drawerOpen = document.getElementById("laborDrawer").classList.contains("open");
-          if (drawerOpen && multiLotMode) {
-            e.preventDefault();
-            e.stopPropagation();
+          const drawerOpen = !isMobileMap() &&
+            document.getElementById("laborDrawer").classList.contains("open");
+          if (!drawerOpen) {
+            selectLot(lot, cell);
+            if (!isMobileMap()) openLaborDrawer(posKey);
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          if (multiLotMode) {
             addMultiLot(posKey, true);
             return;
           }
           selectLot(lot, cell);
-          if (drawerOpen) fillLaborForm(posKey);
+          fillLaborForm(posKey);
+          if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
+            fAvance.value = "0.";
+            updateAvanceBar();
+            previewFromForm();
+          }
         });
         applyLaborVisual(cell, lot);
         grid.appendChild(cell);
@@ -4177,8 +5278,9 @@
     });
 
     function selectLot(lot, cell) {
+      if (!lot) return;
       document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
-      cell.classList.add("active");
+      if (cell) cell.classList.add("active");
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       const posKey = `${lot.r},${lot.c}`;
       const rec = laborRecords[posKey];
@@ -4191,6 +5293,7 @@
       }
       if (trabajado > area) trabajado = area;
       const falta = roundHa(Math.max(0, area - trabajado));
+      const laborTxt = rec?.laborReal ? String(rec.laborReal) : "Sin labor registrada";
 
       if (isMobileMap()) {
         const mobDetail = document.getElementById("mobDetail");
@@ -4206,9 +5309,7 @@
         document.getElementById("mobDHa").textContent = area ? formatHa(area) + " ha" : "—";
         document.getElementById("mobDAvance").textContent = formatHa(trabajado) + " ha";
         document.getElementById("mobDFalta").textContent = formatHa(falta) + " ha";
-        document.getElementById("mobDLabor").textContent = rec?.laborReal
-          ? String(rec.laborReal)
-          : "Sin labor registrada";
+        document.getElementById("mobDLabor").textContent = laborTxt;
         if (mobDetail) {
           mobDetail.classList.add("open");
           mobDetail.setAttribute("aria-hidden", "false");
@@ -4275,8 +5376,86 @@
       setActiveMod(null);
     };
 
-    document.getElementById("zoomIn").onclick = () => applyZoom(scale * 1.2);
-    document.getElementById("zoomOut").onclick = () => applyZoom(scale / 1.2);
+    /* --- Descarte: selector de semanas (SEM 34–37) --- */
+    const descarteModal = document.getElementById("descarteModal");
+    const descarteWeeksEl = document.getElementById("descarteWeeks");
+    const descarteContinueBtn = document.getElementById("descarteContinueBtn");
+    const descarteHint = document.getElementById("descarteHint");
+    let descarteSemanas = new Set();
+
+    function syncDescarteUI() {
+      const chips = descarteWeeksEl?.querySelectorAll(".descarte-week") || [];
+      chips.forEach(btn => {
+        const sem = Number(btn.dataset.sem);
+        const on = descarteSemanas.has(sem);
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      const n = descarteSemanas.size;
+      if (descarteContinueBtn) descarteContinueBtn.disabled = n === 0;
+      if (descarteHint) {
+        if (n === 0) descarteHint.textContent = "Puedes marcar varias semanas a la vez.";
+        else if (n === 1) descarteHint.textContent = "1 semana seleccionada.";
+        else descarteHint.textContent = n + " semanas seleccionadas.";
+      }
+    }
+
+    function openDescarteModal() {
+      if (!descarteModal) return;
+      descarteSemanas = new Set();
+      syncDescarteUI();
+      descarteModal.removeAttribute("inert");
+      descarteModal.classList.add("open");
+      descarteModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeDescarteModal() {
+      if (!descarteModal) return;
+      const focused = document.activeElement;
+      if (focused && descarteModal.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
+      descarteModal.classList.remove("open");
+      descarteModal.setAttribute("inert", "");
+      descarteModal.setAttribute("aria-hidden", "true");
+    }
+
+    function getDescarteSemanas() {
+      return [...descarteSemanas].sort((a, b) => a - b);
+    }
+
+    document.getElementById("descarteBtn")?.addEventListener("click", openDescarteModal);
+    document.getElementById("descarteCancelBtn")?.addEventListener("click", closeDescarteModal);
+    descarteModal?.addEventListener("click", e => {
+      if (e.target.id === "descarteModal") closeDescarteModal();
+    });
+    descarteWeeksEl?.addEventListener("click", e => {
+      const btn = e.target.closest(".descarte-week");
+      if (!btn) return;
+      const sem = Number(btn.dataset.sem);
+      if (!sem) return;
+      if (descarteSemanas.has(sem)) descarteSemanas.delete(sem);
+      else descarteSemanas.add(sem);
+      syncDescarteUI();
+    });
+    descarteContinueBtn?.addEventListener("click", () => {
+      const selected = getDescarteSemanas();
+      if (!selected.length) return;
+      // Placeholder: la data de descarte se conecta después
+      showToast(
+        "Semanas listas",
+        false,
+        selected.map(s => "SEM " + s).join(" · ")
+      );
+      closeDescarteModal();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      if (descarteModal?.classList.contains("open")) closeDescarteModal();
+    });
+
+    document.getElementById("zoomIn").onclick = () => applyZoom(zoomMul * 1.2);
+    document.getElementById("zoomOut").onclick = () => applyZoom(zoomMul / 1.2);
     document.getElementById("zoomReset").onclick = () => fitToScreen();
 
     const mobZoomIn = document.getElementById("mobZoomIn");
@@ -4284,17 +5463,21 @@
     const mobZoomFit = document.getElementById("mobZoomFit");
     if (mobZoomIn) mobZoomIn.onclick = () => {
       const { w, h } = getViewportSize();
-      applyZoom(scale * 1.25, w / 2, h / 2);
+      applyZoom(zoomMul * 1.25, w / 2, h / 2);
     };
     if (mobZoomOut) mobZoomOut.onclick = () => {
+      if (zoomMul <= 1.001) {
+        fitToScreen();
+        return;
+      }
       const { w, h } = getViewportSize();
-      applyZoom(scale / 1.25, w / 2, h / 2);
+      applyZoom(zoomMul / 1.25, w / 2, h / 2);
     };
     if (mobZoomFit) mobZoomFit.onclick = () => fitToScreen();
 
     // Arrastre con dedo / mouse (estilo mapa)
     let dragging = false, sx = 0, sy = 0, startPanX = 0, startPanY = 0, moved = false;
-    let pinchStartDist = 0, pinchStartScale = 1, pinchMidX = 0, pinchMidY = 0;
+    let pinchStartDist = 0, pinchStartZoomMul = 1, pinchMidX = 0, pinchMidY = 0;
 
     function touchDist(touches) {
       const dx = touches[0].clientX - touches[1].clientX;
@@ -4350,7 +5533,7 @@
       if (e.touches.length === 2) {
         dragging = false;
         pinchStartDist = touchDist(e.touches);
-        pinchStartScale = scale;
+        pinchStartZoomMul = zoomMul;
         const mid = touchMid(e.touches);
         pinchMidX = mid.x;
         pinchMidY = mid.y;
@@ -4363,7 +5546,7 @@
       if (e.touches.length === 2 && pinchStartDist > 0) {
         e.preventDefault();
         const dist = touchDist(e.touches);
-        applyZoomAt(pinchStartScale * (dist / pinchStartDist), pinchMidX, pinchMidY);
+        applyZoomAt(pinchStartZoomMul * (dist / pinchStartDist), pinchMidX, pinchMidY);
       } else if (dragging && e.touches.length === 1) {
         e.preventDefault();
         moveDrag(e.touches[0].clientX, e.touches[0].clientY);
@@ -4384,34 +5567,46 @@
 
     viewport.addEventListener("wheel", e => {
       e.preventDefault();
-      if (e.deltaY < 0) applyZoom(scale * 1.1, e.clientX, e.clientY);
-      else applyZoom(scale / 1.1, e.clientX, e.clientY);
+      if (e.deltaY < 0) applyZoom(zoomMul * 1.1, e.clientX, e.clientY);
+      else applyZoom(zoomMul / 1.1, e.clientX, e.clientY);
     }, { passive: false });
 
-    requestAnimationFrame(() => {
-      fitToScreen();
-      requestAnimationFrame(fitToScreen);
-    });
+    requestAnimationFrame(scheduleMapFit);
+
+    if (typeof ResizeObserver !== "undefined") {
+      const mobLayoutObs = new ResizeObserver(() => {
+        if (isMobileMap()) scheduleMapFit();
+      });
+      const mobChromeEl = document.getElementById("mobChrome");
+      const mobFiltersEl = document.getElementById("mobFilters");
+      if (mobChromeEl) mobLayoutObs.observe(mobChromeEl);
+      if (mobFiltersEl) mobLayoutObs.observe(mobFiltersEl);
+      mobLayoutObs.observe(viewport);
+    }
+
     let resizeTimer = null;
     function onMapResize() {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(fitToScreen, 80);
+      resizeTimer = setTimeout(() => {
+        if (isMobileMap()) scheduleMapFit();
+        else fitToScreen();
+      }, 80);
     }
     window.addEventListener("resize", onMapResize);
     window.addEventListener("orientationchange", onMapResize);
     window.matchMedia(MOBILE_MAP_MQ).addEventListener("change", () => {
-      fitToScreen();
-      applyTransform();
+      if (isMobileMap()) scheduleMapFit();
+      else fitToScreen();
       updateMobileChrome();
     });
     window.addEventListener("pageshow", () => {
-      fitToScreen();
-      applyTransform();
+      if (isMobileMap()) scheduleMapFit();
+      else fitToScreen();
     });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
-        fitToScreen();
-        applyTransform();
+        if (isMobileMap()) scheduleMapFit();
+        else fitToScreen();
       }
     });
 
@@ -4434,24 +5629,17 @@
     function createCustomSelect(root, { items, placeholder, onChange }) {
       const hidden = root.querySelector('input[type="hidden"]');
       const trigger = root.querySelector(".cselect-trigger");
-      const search = root.querySelector(".cselect-search input");
       const list = root.querySelector(".cselect-list");
       const normalized = items.map(it => typeof it === "string"
         ? { value: it, label: it }
         : { value: String(it.value), label: String(it.label), search: it.search });
 
-      function render(filter) {
-        const q = String(filter || "").trim().toLowerCase().replace(/\s+/g, "");
-        const filtered = normalized.filter(it => {
-          if (!q) return true;
-          const hay = `${it.label} ${it.value} ${it.search || ""}`.toLowerCase().replace(/\s+/g, "");
-          return hay.includes(q);
-        });
-        if (!filtered.length) {
-          list.innerHTML = `<div class="cselect-empty">Sin resultados</div>`;
+      function render() {
+        if (!normalized.length) {
+          list.innerHTML = `<div class="cselect-empty">Sin opciones</div>`;
           return;
         }
-        list.innerHTML = filtered.map(it => {
+        list.innerHTML = normalized.map(it => {
           const sel = hidden.value === it.value ? " selected" : "";
           return `<button type="button" class="cselect-option${sel}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option">${it.label}</button>`;
         }).join("");
@@ -4483,13 +5671,7 @@
         });
         root.classList.add("open");
         trigger.setAttribute("aria-expanded", "true");
-        if (search) {
-          search.value = "";
-          render("");
-          setTimeout(() => search.focus(), 0);
-        } else {
-          render("");
-        }
+        render();
       }
 
       function close() {
@@ -4502,10 +5684,6 @@
         if (root.classList.contains("open")) close();
         else open();
       });
-      if (search) {
-        search.addEventListener("input", () => render(search.value));
-        search.addEventListener("click", e => e.stopPropagation());
-      }
       list.addEventListener("click", e => {
         const btn = e.target.closest(".cselect-option");
         if (!btn) return;
@@ -4513,7 +5691,7 @@
         close();
       });
 
-      render("");
+      render();
       if (hidden.value) setValue(hidden.value, true);
       else {
         trigger.textContent = placeholder;
@@ -4526,8 +5704,7 @@
           : { value: String(it.value), label: String(it.label), search: it.search });
         normalized.length = 0;
         normalized.push(...mapped);
-        if (search) search.value = "";
-        render("");
+        render();
         if (hidden.value && normalized.some(it => it.value === hidden.value)) {
           setValue(hidden.value, true);
         } else if (hidden.value && normalized.length) {
@@ -4567,7 +5744,12 @@
       refreshFilterPanelUI();
       syncFilterBtnState();
     });
-    initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores", () => {
+    initFilterCSelect("filterLaborPptoC", "filterLaborPptoSelect", "Todas las labores ppto", () => {
+      syncMapQueryFromSelects("desk");
+      refreshFilterPanelUI();
+      syncFilterBtnState();
+    });
+    initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores reales", () => {
       syncMapQueryFromSelects("desk");
       refreshFilterPanelUI();
       syncFilterBtnState();
@@ -4583,6 +5765,11 @@
       applyMapFilters(true);
     });
     initFilterCSelect("mobFilterMdC", "mobFilterMd", "Todos", () => {
+      syncMapQueryFromSelects("mob");
+      refreshFilterPanelUI();
+      applyMapFilters(true);
+    });
+    initFilterCSelect("mobFilterLaborPptoC", "mobFilterLaborPpto", "Todas", () => {
       syncMapQueryFromSelects("mob");
       refreshFilterPanelUI();
       applyMapFilters(true);
@@ -4672,45 +5859,43 @@
       return av;
     }
 
-    function setMultiPaintColor(color, fromCustom) {
-      const next = String(color || MULTI_COLORS[0]).trim();
-      if (!/^#[0-9A-Fa-f]{6}$/.test(next)) return;
-      multiPaintColor = next.toUpperCase();
+    function setMultiPaintColor(color) {
+      const next = clampToPalette(color);
+      multiPaintColor = next;
+      try { localStorage.setItem("qb-brush-color", multiPaintColor); } catch (_) { /* ok */ }
       document.documentElement.style.setProperty("--multi-color", multiPaintColor);
       document.querySelectorAll(".swatch").forEach(btn => {
-        btn.classList.toggle("is-on", (btn.dataset.color || "").toUpperCase() === multiPaintColor);
+        btn.classList.toggle("is-on", (btn.dataset.color || "").toUpperCase() === multiPaintColor.toUpperCase());
       });
-      document.querySelectorAll(".swatch-custom").forEach(el => {
-        el.classList.toggle("is-on", !!fromCustom || !MULTI_COLORS.map(c => c.toUpperCase()).includes(multiPaintColor));
-        const inp = el.querySelector('input[type="color"]');
-        if (inp) inp.value = multiPaintColor;
+      document.querySelectorAll(".brush-current").forEach(el => {
+        el.innerHTML = `<i style="background:${multiPaintColor}" aria-hidden="true"></i>${multiPaintColor}`;
+        el.title = colorDetailText(multiPaintColor);
       });
       syncMultiLotMapPaint();
+      if (!multiLotMode && fLote?.value) previewFromForm();
     }
 
     function renderColorPalettes() {
+      const active = clampToPalette(multiPaintColor).toUpperCase();
+      multiPaintColor = clampToPalette(multiPaintColor);
       const swatches = MULTI_COLORS.map(c =>
-        `<button type="button" class="swatch${c.toUpperCase() === multiPaintColor.toUpperCase() ? " is-on" : ""}" data-color="${c}" style="background:${c}" title="${c}" aria-label="Color ${c}"></button>`
+        `<button type="button" class="swatch${c.toUpperCase() === active ? " is-on" : ""}" data-color="${c}" style="background:${c}" title="${colorDetailText(c)}" aria-label="Color ${colorDetailText(c)}"></button>`
       ).join("");
-      const customOn = !MULTI_COLORS.map(c => c.toUpperCase()).includes(multiPaintColor.toUpperCase());
-      const custom = `<label class="swatch-custom${customOn ? " is-on" : ""}" title="Pincel · elegir otro color">
-        <input type="color" value="${multiPaintColor}" aria-label="Color personalizado" />
-      </label>`;
-      const row = `<div class="multi-palette-row">${swatches}${custom}</div>`;
+      const row = `<div class="multi-palette-row">${swatches}</div>`;
+      const brush = `<span class="brush-current" title="${colorDetailText(multiPaintColor)}"><i style="background:${multiPaintColor}" aria-hidden="true"></i>${multiPaintColor}</span>`;
 
       document.querySelectorAll(".multi-palette").forEach(el => {
         let label = el.querySelector(".multi-palette-label");
         if (!label) {
           label = document.createElement("div");
           label.className = "multi-palette-label";
-          label.textContent = "Pincel de colores";
           el.prepend(label);
-        } else {
-          label.textContent = el.id === "multiPaletteModal"
-            ? "Pincel de colores"
-            : "Pincel de colores · elige y pinta en el mapa";
         }
-        el.querySelectorAll(".multi-palette-row, .swatch, .swatch-custom, .brush-current").forEach(s => s.remove());
+        const base = el.id === "multiPaletteModal"
+          ? "10 colores"
+          : "10 colores · elige y pinta en el mapa";
+        label.innerHTML = `<span>${base}</span>${brush}`;
+        el.querySelectorAll(".multi-palette-row, .swatch-custom").forEach(s => s.remove());
         el.insertAdjacentHTML("beforeend", row);
       });
       document.documentElement.style.setProperty("--multi-color", multiPaintColor);
@@ -4756,7 +5941,7 @@
         const lot = byPos.get(key);
         if (!lot) return;
         const rec = laborRecords[key];
-        paintCellProgress(c, lot, rec?.avance, rec?.laborReal, rec?.color);
+        paintCellProgress(c, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, key, rec?.color));
       });
       selected.forEach(key => paintOneMultiCell(key));
     }
@@ -4859,12 +6044,12 @@
       }
       const first = items[0].lot;
       const av = getMultiLotAvance(items[0].key, first);
-      updateDrawerPreview(first, av, fLaborReal.value);
+      updateDrawerPreview(first, av, fLaborReal.value, multiPaintColor);
       const lotPreviewFill = document.getElementById("lotPreviewFill");
       if (lotPreviewFill) lotPreviewFill.style.background = multiPaintColor;
       const status = document.getElementById("lotPreviewStatus");
       if (status) {
-        status.textContent = `${items.length} lotes · avance ${formatHa(multiLotsTotalAvance())} / ${formatHa(multiLotsTotalHa())} ha`;
+        status.textContent = `${items.length} lotes · avance ${formatHa(multiLotsTotalAvance())} / ${formatHa(multiLotsTotalHa())} ha · ${colorDetailText(multiPaintColor)}`;
       }
     }
 
@@ -4947,9 +6132,10 @@
 
       const lot = byPos.get(posKey);
       const existing = laborRecords[posKey];
-      const av = existing?.avance != null && existing.avance !== ""
+      const prevAv = existing?.avance != null && existing.avance !== ""
         ? roundHa(existing.avance)
-        : roundHa(lot.ha);
+        : 0;
+      const av = prevAv > 0 ? prevAv : roundHa(lot.ha);
       multiLotKeys.set(posKey, { avance: av });
 
       syncMultiLotSummary();
@@ -4957,8 +6143,13 @@
       previewMultiLots();
 
       const modal = document.getElementById("multiLotModal");
-      if (modal?.classList.contains("open")) {
+      const modalOpen = modal?.classList.contains("open");
+      if (modalOpen) {
         renderMultiLotModalList();
+        return;
+      }
+      if (openModalIfNeeded && multiLotKeys.size === 1) {
+        setTimeout(() => openMultiLotModal(), 0);
       }
     }
 
@@ -4974,7 +6165,7 @@
         const lot = byPos.get(posKey);
         if (lot) {
           const rec = laborRecords[posKey];
-          paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, rec?.color);
+          paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, posKey, rec?.color));
         }
       }
 
@@ -5027,7 +6218,7 @@
         setMultiPaintColor(multiPaintColor);
         syncMultiLotSummary();
         syncMultiLotMapPaint();
-        showToast("Modo múltiple", false, "Clic en el mapa para sumar lotes");
+        showToast("Modo múltiple", false, "Marca lotes en el mapa y pulsa Guardar avance");
       } else {
         closeMultiLotModal();
         // Conserva la selección en memoria; solo quita el resaltado visual
@@ -5038,7 +6229,7 @@
           const lot = byPos.get(key);
           if (!lot) return;
           const rec = laborRecords[key];
-          paintCellProgress(c, lot, rec?.avance, rec?.laborReal, rec?.color);
+          paintCellProgress(c, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, key, rec?.color));
         });
         syncMultiLotSummary();
       }
@@ -5071,13 +6262,13 @@
         const up = (v) => String(v || "").toUpperCase();
         laborPptoCSelect.setValue(up(rec.laborPpto), true);
         laborRealCSelect.setValue(up(rec.laborReal), true);
-        fAvance.value = rec.avance != null && rec.avance !== "" ? formatHa(rec.avance) : "";
+        fAvance.value = rec.avance != null && rec.avance !== "" ? formatHa(rec.avance) : "0.";
         fTotalJr.value = rec.totalJr ?? "";
         variedadCSelect.setValue(rec.variedad === "MAGICA" ? "MAGICA" : "SEKOYA POP", true);
         fFecha.value = rec.fecha || fFecha.value;
         fSem.value = rec.sem ?? currentWeek;
       } else {
-        fAvance.value = "";
+        fAvance.value = "0.";
         fTotalJr.value = "";
         variedadCSelect.setValue("SEKOYA POP", true);
         laborPptoCSelect.setValue("", true);
@@ -5102,6 +6293,9 @@
         if (showFeedback) showToast("Labor no permitida", true);
         return { queued: false, area, avance: av, error: true };
       }
+      const paint = multiLotMode
+        ? (normalizeHexColor(fillColor) || multiPaintColor)
+        : (modulePaintColor(lot) || normalizeHexColor(fillColor) || multiPaintColor);
       laborRecords[posKey] = {
         sem: Number(fSem.value) || currentWeek,
         fecha: fFecha.value,
@@ -5113,10 +6307,9 @@
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
         area,
         avance: av,
-        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0))
+        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0)),
+        color: paint
       };
-      if (fillColor) laborRecords[posKey].color = String(fillColor).slice(0, 20);
-      else delete laborRecords[posKey].color;
       saveLaborRecords();
 
       // Pintar ya — no esperar al POST
@@ -5131,7 +6324,7 @@
         const v = QBApi.validateRecord(Object.assign({ posKey }, laborRecords[posKey]));
         if (!v.ok) {
           if (showFeedback) showToast("No se puede guardar", true, v.errors.join(" · "));
-          return { queued: false, area, avance: av, error: true };
+          return { queued: false, area, avance: av, error: true, color: paint };
         }
       }
 
@@ -5142,7 +6335,7 @@
           const res = await QBApi.saveLabor(payload);
           if (res && res.ok === false && !res.queued) {
             if (showFeedback) showToast("Rechazado", true, res.message || "Validación");
-            return { queued: false, area, avance: av, error: true };
+            return { queued: false, area, avance: av, error: true, color: paint };
           }
           queued = !!res.queued;
           updatePendingChips();
@@ -5153,7 +6346,7 @@
       }
       if (showFeedback) flashSavedCell(posKey);
       if (API_URL) scheduleSoftSync(700);
-      return { queued, area, avance: av };
+      return { queued, area, avance: av, color: paint };
     }
 
     async function commitMultiLabors(showFeedback) {
@@ -5209,17 +6402,19 @@
         saveBtn.textContent = "Guardando...";
       }
       if (showFeedback) {
-        showToast("Guardando grupo…", false, items.length + " lote(s)");
+        showToast("Guardando grupo", false, items.length + " lote(s)", "wait");
         showDrawerSavedMsg(items.length + " lote(s) · " + formatHa(totalAv) + " ha", "wait");
       }
 
+      const brush = brushColorForSave();
       const shared = {
         sem: Number(fSem.value) || currentWeek,
         fecha: fFecha.value,
         laborPpto: String(fLaborPpto.value || "").toUpperCase(),
         laborReal,
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
-        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0))
+        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0)),
+        color: brush.label
       };
 
       const records = items.map(({ key, lot }) => {
@@ -5239,7 +6434,7 @@
           area,
           avance: av,
           totalJr: shared.totalJr,
-          color: multiPaintColor
+          color: brush.hex
         };
         laborRecords[key] = Object.assign({}, rec);
         return rec;
@@ -5256,10 +6451,6 @@
           applyLaborVisual(cell, lot);
         }
       });
-      multiLotKeys.clear();
-      syncMultiLotSummary();
-      closeMultiLotModal();
-
       let queuedAny = false;
       let ok = true;
       let savedHa = records.reduce((s, r) => s + roundHa(r.avance), 0);
@@ -5290,14 +6481,17 @@
       }
 
       if (ok) {
+        syncMultiLotSummary();
+        closeMultiLotModal();
+        multiLotKeys.clear();
         records.forEach(rec => flashSavedCell(rec.posKey));
         const first = records[0];
         const firstLot = first && byPos.get(first.posKey);
-        if (firstLot) updateDrawerPreview(firstLot, first.avance, first.laborReal);
+        if (firstLot) updateDrawerPreview(firstLot, first.avance, first.laborReal, multiPaintColor);
         if (API_URL) scheduleSoftSync(500);
       }
 
-      const detail = `${records.length} lote${records.length === 1 ? "" : "s"} · ${formatHa(savedHa)} ha · ${laborReal}`;
+      const detail = `${records.length} lote${records.length === 1 ? "" : "s"} · ${formatHa(savedHa)} ha · ${laborReal} · ${colorDetailText(multiPaintColor)}`;
       if (showFeedback) {
         if (saveBtn) {
           saveBtn.classList.add("saved");
@@ -5374,29 +6568,31 @@
         saveBtn.textContent = "Guardando...";
       }
       if (showFeedback) {
-        showToast("Guardando…", false, "LOTE " + lot.lote);
+        showToast("Guardando tu avance", false, "LOTE " + lot.lote, "wait");
         showDrawerSavedMsg("LOTE " + lot.lote + " · " + formatHa(avance) + " ha", "wait");
       }
 
       let queued = false;
       let failed = false;
+      let savedColor = modulePaintColor(lot);
       try {
-        const res = await saveOneLaborRecord(posKey, lot, avance, showFeedback);
+        const res = await saveOneLaborRecord(posKey, lot, avance, showFeedback, savedColor);
         if (res && res.error) failed = true;
         queued = !!res.queued;
+        if (res && res.color) savedColor = res.color;
       } catch (err) {
-        console.warn("API POST:", err);
         queued = true;
-        if (showFeedback) showToast("Guardado local", true, "Quedó en cola pendiente");
+        if (showFeedback) showToast("Guardado en el celular", false, "Se enviará cuando haya señal", "info");
       }
 
       if (showFeedback) {
         const pct = area > 0 ? Math.round((avance / area) * 100) : 0;
-        const detail = `LOTE ${lot.lote} · ${pct}% · ${avance.toFixed(2)} ha`;
+        const colorTxt = colorDetailText(savedColor);
+        const detail = `LOTE ${lot.lote} · ${pct}% · ${avance.toFixed(2)} ha · ${colorTxt}`;
         if (saveBtn) {
           saveBtn.classList.add("saved");
           saveBtn.textContent = failed ? "Error" : (queued ? "En cola" : "✓ Guardado");
-          saveBtn.title = failed ? "Error" : (queued ? "Pendiente de envío" : "Se guardó correctamente");
+          saveBtn.title = failed ? "Error" : (queued ? "Pendiente de envío" : "Se guardó correctamente · " + colorTxt);
           setTimeout(() => {
             saveBtn.classList.remove("saved");
             saveBtn.textContent = "Guardar avance";
@@ -5422,33 +6618,51 @@
         savingLabor = false;
       }
       requestAnimationFrame(() => {
-        updateDrawerPreview(lot, avance, fLaborReal.value);
+        normalizeStoredLaborColors();
+        refreshAllLaborVisuals();
+        updateDrawerPreview(lot, avance, fLaborReal.value, savedColor);
         updateAvanceBar();
       });
       return !failed;
     }
 
     function openLaborDrawer(posKey) {
+      laborDrawer.removeAttribute("inert");
       laborDrawer.classList.add("open");
       laborDrawer.setAttribute("aria-hidden", "false");
       if (posKey && !multiLotMode) fillLaborForm(posKey);
       else previewFromForm();
+      if (!posKey) {
+        showToast("Reporte de labores", false, "Elige lote, completa datos y pulsa Guardar avance");
+      }
     }
     function closeLaborDrawer() {
+      const focused = document.activeElement;
+      if (focused && laborDrawer.contains(focused) && typeof focused.blur === "function") {
+        focused.blur();
+      }
       laborDrawer.classList.remove("open");
+      laborDrawer.setAttribute("inert", "");
       laborDrawer.setAttribute("aria-hidden", "true");
       if (multiLotMode) {
         // keep selection while drawer can reopen; clear multi paint if empty
       }
     }
 
-    fAvance.addEventListener("input", previewFromForm);
+    fAvance.addEventListener("focus", () => seedAvancePrefix(fAvance));
+    fAvance.addEventListener("input", () => {
+      if (String(fAvance.value || "").trim() === "") {
+        fAvance.value = "0.";
+        try { fAvance.setSelectionRange(2, 2); } catch (_) { /* ok */ }
+      }
+      previewFromForm();
+    });
     fAvance.addEventListener("blur", () => {
       if (multiLotMode) {
         const total = multiLotsTotalHa();
         const raw = String(fAvance.value || "").trim().replace(",", ".");
-        if (raw === "" || raw === ".") {
-          fAvance.value = total ? formatHa(total) : "";
+        if (raw === "" || raw === "." || raw === "0.") {
+          fAvance.value = total ? formatHa(total) : "0.";
           previewFromForm();
           return;
         }
@@ -5464,8 +6678,8 @@
       const lot = byPos.get(fLote.value);
       const area = lot ? roundHa(lot.ha) : 0;
       const raw = String(fAvance.value || "").trim().replace(",", ".");
-      if (raw === "" || raw === ".") {
-        fAvance.value = "";
+      if (raw === "" || raw === "." || raw === "0.") {
+        fAvance.value = "0.";
         previewFromForm();
         return;
       }
@@ -5498,7 +6712,7 @@
       if (sw?.dataset.color) {
         e.preventDefault();
         e.stopPropagation();
-        setMultiPaintColor(sw.dataset.color, false);
+        setMultiPaintColor(sw.dataset.color);
         return;
       }
       const rm = e.target.closest("[data-remove]");
@@ -5508,13 +6722,21 @@
         removeMultiLot(rm.getAttribute("data-remove"));
       }
     });
+    document.getElementById("multiLotModal")?.addEventListener("focusin", e => {
+      const inp = e.target.closest("input[data-avance]");
+      if (inp) seedAvancePrefix(inp);
+      const row = e.target.closest(".multi-lot-row");
+      if (!row) return;
+      // Mantener la fila visible sin reordenar ni re-renderizar la lista
+      row.scrollIntoView({ block: "nearest", behavior: "auto" });
+    });
     document.getElementById("multiLotModal")?.addEventListener("input", e => {
-      if (e.target.matches('input[type="color"]')) {
-        setMultiPaintColor(e.target.value, true);
-        return;
-      }
       const inp = e.target.closest("input[data-avance]");
       if (!inp) return;
+      if (String(inp.value || "").trim() === "") {
+        inp.value = "0.";
+        try { inp.setSelectionRange(2, 2); } catch (_) { /* ok */ }
+      }
       commitMultiLotAvanceInput(inp, { paint: true, format: false });
     });
     document.getElementById("multiLotModal")?.addEventListener("change", e => {
@@ -5527,23 +6749,17 @@
       if (!inp) return;
       commitMultiLotAvanceInput(inp, { paint: true, format: true });
     }, true);
-    document.getElementById("multiLotModal")?.addEventListener("focusin", e => {
-      const row = e.target.closest(".multi-lot-row");
-      if (!row) return;
-      // Mantener la fila visible sin reordenar ni re-renderizar la lista
-      row.scrollIntoView({ block: "nearest", behavior: "auto" });
-    });
     document.getElementById("loteMultiWrap")?.addEventListener("click", e => {
       const sw = e.target.closest(".swatch");
-      if (sw?.dataset.color) setMultiPaintColor(sw.dataset.color, false);
-    });
-    document.getElementById("loteMultiWrap")?.addEventListener("input", e => {
-      if (e.target.matches('input[type="color"]')) {
-        setMultiPaintColor(e.target.value, true);
-      }
+      if (sw?.dataset.color) setMultiPaintColor(sw.dataset.color);
     });
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape") return;
+      const drawer = document.getElementById("laborDrawer");
+      if (drawer?.classList.contains("open")) {
+        closeLaborDrawer();
+        return;
+      }
       const modal = document.getElementById("multiLotModal");
       if (modal?.classList.contains("open")) closeMultiLotModal();
     });
@@ -5585,7 +6801,7 @@
       fArea.value = "";
       laborPptoCSelect.setValue("", true);
       laborRealCSelect.setValue("", true);
-      fAvance.value = "";
+      fAvance.value = "0.";
       fTotalJr.value = "";
       variedadCSelect.setValue("SEKOYA POP", true);
       fSem.value = currentWeek;
@@ -5683,7 +6899,7 @@
       applyMapFilters(true);
     });
     document.getElementById("filterClearBtn")?.addEventListener("click", () => {
-      mapQuery = { sem: currentWeek, fecha: "", modulo: "", laborReal: "" };
+      mapQuery = { sem: currentWeek, fecha: "", modulo: "", laborReal: "", laborPpto: "" };
       activeMod = null;
       document.querySelectorAll("#modList .leg-item").forEach(el => el.classList.remove("active"));
       if (mobModScroll) {
@@ -5694,7 +6910,6 @@
       refreshFilterPanelUI();
       applyMapFilters(true);
     });
-    loadFilterOptions();
     document.getElementById("closeProgressModal").onclick = closeProgressModal;
 
     // --- Exportar / compartir: Imagen · PDF · Excel ---
@@ -5817,7 +7032,8 @@
           const av = Math.min(area, Math.max(0, Number(rec?.avance) || 0));
           const pct = area > 0 ? Math.min(1, av / area) : 0;
           const mod = lot.modulo != null ? modById[lot.modulo] : null;
-          const fillColor = (rec && rec.color) || mod?.badge || mod?.fill || "#94a3b8";
+          const fillColor = resolvePaintColor(lot, `${lot.r},${lot.c}`, rec?.color) ||
+            mod?.badge || mod?.fill || "#94a3b8";
 
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(x, y, cw, ch);
@@ -6024,6 +7240,7 @@
     }
 
     window.QB_onStatusChange = updatePendingChips;
+    window.QB_onRateLimit = notifyRateLimitSoft;
     window.QB_onQueueFlushed = n => {
       updatePendingChips();
       if (n > 0) {
@@ -6033,21 +7250,52 @@
     };
     updatePendingChips();
 
+    function consumeAppRefreshFlag() {
+      try {
+        if (sessionStorage.getItem("qb-app-refresh") === "1") {
+          sessionStorage.removeItem("qb-app-refresh");
+          return true;
+        }
+      } catch { /* ok */ }
+      return new URL(location.href).searchParams.has("_v");
+    }
+
+    normalizeStoredLaborColors();
     refreshAllLaborVisuals();
     updateMobileChrome();
     if (API_URL) {
-      refreshMapData(false).then(n => {
-        if (n > 0) showToast("Mapa actualizado", false, `${n} lotes desde la hoja`);
-      });
+      const pageReadyAt = Date.now();
+      const freshPull = consumeAppRefreshFlag();
+      if (freshPull) {
+        refreshMapData(true, { replace: true, fullPaint: true, nocache: true }).then(n => {
+          loadFilterOptions(true);
+          if (n > 0) {
+            showToast("Mapa actualizado", false, `${n} lotes desde la hoja`);
+          } else {
+            showToast("Mapa al día", false, "Sin labores en este filtro");
+          }
+        });
+      } else {
+        refreshMapData(false).then(n => {
+          if (n > 0) showToast("Mapa listo", false, `${n} lotes cargados`, "info");
+          setTimeout(() => loadFilterOptions(), 2000);
+        });
+      }
       startAutoSync();
+      window.addEventListener("offline", updateNetworkCloud);
       document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") autoSyncFromSheet();
+        if (document.visibilityState === "visible" && Date.now() - pageReadyAt > 8000) {
+          autoSyncFromSheet();
+        }
       });
       window.addEventListener("online", () => {
         updatePendingChips();
-        autoSyncFromSheet();
+        setSyncCloud("ok", "En línea", "Sincronizando cambios…", { autoHideMs: 2200 });
+        if (canSyncNow()) autoSyncFromSheet();
       });
-      window.addEventListener("pageshow", () => autoSyncFromSheet());
+      window.addEventListener("pageshow", ev => {
+        if (ev.persisted && Date.now() - pageReadyAt > 5000) autoSyncFromSheet();
+      });
     }
 
     if ("serviceWorker" in navigator) {
