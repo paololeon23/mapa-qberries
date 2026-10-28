@@ -573,7 +573,7 @@ function getMapa_(d, e) {
   };
 
   try {
-    CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 180);
+    CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 360);
   } catch (ex2) { /* payload grande */ }
 
   return result;

@@ -449,6 +449,10 @@
       min-width: 0;
       width: auto;
     }
+    .avance-row .area-chip {
+      flex: 1;
+      min-width: 0;
+    }
     .btn-finish {
       flex-shrink: 0;
       height: var(--input-h);
@@ -573,6 +577,43 @@
       transform: translateY(0);
       pointer-events: auto;
     }
+    .picker-multi-bar {
+      display: none;
+      flex-shrink: 0;
+      gap: 0.55rem;
+      align-items: center;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e8eeeb;
+    }
+    .picker-sheet.is-multi .picker-multi-bar {
+      display: flex;
+    }
+    .picker-multi-hint {
+      flex: 1;
+      margin: 0;
+      font-size: 0.74rem;
+      font-weight: 650;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .picker-multi-bar .btn-primary {
+      flex-shrink: 0;
+      min-width: 8.2rem;
+      height: 42px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--forest);
+      color: #fff;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .picker-multi-bar .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
     .picker-sheet-inner {
       background: #fff;
       border-radius: 22px 22px 0 0;
@@ -657,13 +698,6 @@
       flex-direction: column;
       gap: 0.45rem;
       padding-bottom: 0.25rem;
-    }
-    .picker-option .opt-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.12);
     }
     .picker-option {
       width: 100%;
@@ -807,21 +841,6 @@
     .area-chip.is-empty .area-k { color: #94a3b8; }
     .area-chip.is-empty strong { color: #94a3b8; }
 
-    .ratio-box {
-      margin-top: 1rem;
-      padding: 0.9rem 0.9rem 1rem;
-      border-radius: 16px;
-      background: #f7faf8;
-      border: 1px solid #e4ece7;
-    }
-    .ratio-box .ratio-title {
-      margin: 0 0 0.75rem;
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #64748b;
-    }
     .ratio-formula {
       margin: 0.55rem 0 0;
       font-size: 0.72rem;
@@ -998,12 +1017,6 @@
       align-items: center;
       gap: 0.4rem;
       margin-bottom: 0.5rem;
-    }
-    .mod-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
     }
     .mod-group-head b {
       font-size: 0.72rem;
@@ -1203,6 +1216,17 @@
     }
 
     .progress-wrap { margin-top: 0.15rem; }
+    .progress-wrap .ratio-formula {
+      margin: 0.35rem 0 0;
+      padding: 0.78rem 0.9rem;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #e4ece7;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--forest);
+      font-variant-numeric: tabular-nums;
+    }
     .progress-bar {
       height: 8px;
       border-radius: 999px;
@@ -1895,6 +1919,25 @@
     </div>
 
     <form id="laborForm" novalidate>
+      <section class="card" id="laborCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Labor</h2>
+            <p class="card-head-sub">Labor real del lote</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
+          <input type="hidden" id="fLaborReal" value="" />
+          <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor...</span>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </section>
+
       <section class="card" id="dayCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
@@ -1946,42 +1989,18 @@
           </div>
         </div>
 
-        <div class="row2">
-          <div class="field">
-            <label for="fVariedadTrigger">Variedad</label>
-            <input type="hidden" id="fVariedad" value="SEKOYA POP" />
-            <button type="button" class="mpick-trigger" id="fVariedadTrigger" aria-haspopup="dialog" aria-expanded="false">
-              <span class="mpick-text" id="fVariedadLabel">S. Pop</span>
-              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-          </div>
-          <div class="field">
-            <label for="fArea">Área</label>
-            <input type="hidden" id="fArea" value="" />
+        <div class="field">
+          <label>Área</label>
+          <input type="hidden" id="fArea" value="" />
+          <input type="hidden" id="fAvance" value="" />
+          <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+          <div class="avance-row">
             <div class="area-chip is-empty" id="areaChip">
               <span class="area-k">Hectáreas</span>
               <strong id="fAreaText">0.00 <small>ha</small></strong>
             </div>
+            <button type="button" class="btn-finish" id="finishLotBtn">Terminar</button>
           </div>
-        </div>
-      </section>
-
-      <section class="card" id="laborCard">
-        <div class="card-head">
-          <div class="card-head-accent" aria-hidden="true"></div>
-          <div class="card-head-text">
-            <h2>Labor</h2>
-            <p class="card-head-sub">Labor real del lote</p>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
-          <input type="hidden" id="fLaborReal" value="" />
-          <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor...</span>
-            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
         </div>
       </section>
 
@@ -1990,23 +2009,17 @@
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Progreso</h2>
-            <p class="card-head-sub">Avance del lote · tope el área</p>
+            <p class="card-head-sub">Ratio JR / área total del día</p>
           </div>
         </div>
 
         <div class="field">
-          <label for="fAvance">Avance (ha)</label>
-          <div class="avance-row">
-            <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="" placeholder="0.00" />
-            <button type="button" class="btn-finish" id="finishLotBtn">Terminar</button>
-          </div>
-          <p class="field-hint" id="fAvanceHint"></p>
+          <label for="fTotalJr">Jornales (JR)</label>
+          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
         </div>
-
         <div class="field progress-wrap">
-          <label>Progreso del lote</label>
-          <div class="progress-bar"><i id="fAvanceBar"></i></div>
-          <div class="progress-meta" id="progressMeta">0%</div>
+          <label>Ratio general</label>
+          <p class="ratio-formula" id="ratioFormula">JR 0.00 / 0.00 ha = 0.00</p>
         </div>
 
         <div class="field">
@@ -2022,35 +2035,6 @@
           <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
         </div>
         <button type="button" class="btn-capture" id="captureBtn">Ver</button>
-      </section>
-
-      <section class="card" id="avanceCard">
-        <div class="card-head">
-          <div class="card-head-accent" aria-hidden="true"></div>
-          <div class="card-head-text">
-            <h2>Avance</h2>
-            <p class="card-head-sub">Jornales sobre el área total</p>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="fTotalJr">Jornales (JR)</label>
-          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
-        </div>
-        <div class="ratio-box">
-          <p class="ratio-title">Cálculo</p>
-          <div class="row2">
-            <div class="field">
-              <label for="fRatio">Ratio</label>
-              <input id="fRatio" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
-            </div>
-            <div class="field">
-              <label>JR / área total</label>
-              <input id="fRatioOut" type="text" readonly placeholder="—" />
-            </div>
-          </div>
-          <p class="ratio-formula" id="ratioFormula">JR = ratio × área total</p>
-        </div>
       </section>
     </form>
 
@@ -2154,6 +2138,10 @@
         <input type="search" id="pickerSearch" placeholder="Buscar..." autocomplete="off" />
       </div>
       <div class="picker-list" id="pickerList"></div>
+      <div class="picker-multi-bar" id="pickerMultiBar">
+        <p class="picker-multi-hint" id="pickerMultiHint">Toca varios lotes</p>
+        <button type="button" class="btn-primary" id="pickerMultiDone">Agregar <span id="pickerMultiCount">0</span></button>
+      </div>
     </div>
   </div>
 
@@ -2299,7 +2287,6 @@
       finishLotBtn: document.getElementById("finishLotBtn"),
       fTotalJr: document.getElementById("fTotalJr"),
       fRatio: document.getElementById("fRatio"),
-      fRatioOut: document.getElementById("fRatioOut"),
       ratioFormula: document.getElementById("ratioFormula"),
       fSem: document.getElementById("fSem"),
       fSemText: document.getElementById("fSemText"),
@@ -2375,8 +2362,7 @@
       value: String(m.id),
       title: m.label,
       sub: (m.name || m.label) + (m.ha != null ? " · " + Number(m.ha).toFixed(2) + " ha" : ""),
-      search: `${m.label} ${m.name || ""} modulo ${m.id}`.toLowerCase(),
-      color: m.fill || m.badge || ""
+      search: `${m.label} ${m.name || ""} modulo ${m.id}`.toLowerCase()
     }));
 
     function lotsForModulo(modId) {
@@ -2432,10 +2418,23 @@
     }
 
     function setPickValue(picker, value, silent) {
-      const item = picker.items.find(i => i.value === value) || null;
+      if (!picker || !picker.hidden) return;
+      const item = (picker.items || []).find(i => i.value === value) || null;
       picker.hidden.value = value || "";
-      setPickLabel(picker.labelEl, item, picker.placeholder);
+      if (picker.labelEl) setPickLabel(picker.labelEl, item, picker.placeholder);
       if (!silent && picker.onChange) picker.onChange(value, item);
+    }
+
+    let loteMulti = new Set();
+
+    function syncPickerMultiCount() {
+      const n = loteMulti.size;
+      const countEl = document.getElementById("pickerMultiCount");
+      const hint = document.getElementById("pickerMultiHint");
+      const done = document.getElementById("pickerMultiDone");
+      if (countEl) countEl.textContent = String(n);
+      if (hint) hint.textContent = n ? (n + " lote(s) marcados") : "Toca varios lotes";
+      if (done) done.disabled = n < 1;
     }
 
     function renderPickerList(q) {
@@ -2454,16 +2453,15 @@
         return;
       }
 
+      const isLote = pickers && activePicker === pickers.lote;
       els.pickerList.innerHTML = filtered.map(item => {
-        const sel = item.value === activePicker.hidden.value ? " selected" : "";
-        const captured = pickers && activePicker === pickers.lote && localLots && localLots[item.value];
+        const captured = isLote && localLots && localLots[item.value];
+        const sel = isLote
+          ? (loteMulti.has(item.value) ? " selected" : "")
+          : (item.value === activePicker.hidden.value ? " selected" : "");
         const taken = captured ? " is-captured" : "";
-        const dot = item.color
-          ? `<span class="opt-dot" style="background:${item.color}"></span>`
-          : "";
         const tag = captured ? '<span class="opt-tag">En el día</span>' : "";
         return `<button type="button" class="picker-option${sel}${taken}" data-value="${item.value.replace(/"/g, "&quot;")}">
-          ${dot}
           <span class="opt-copy">
             <b>${item.title}</b>
             ${item.sub ? `<small>${item.sub}</small>` : ""}
@@ -2477,10 +2475,47 @@
         btn.addEventListener("click", () => {
           const value = btn.dataset.value;
           const picker = activePicker;
+          if (pickers && picker === pickers.lote) {
+            if (loteMulti.has(value)) {
+              loteMulti.delete(value);
+              btn.classList.remove("selected", "is-captured");
+              const tag = btn.querySelector(".opt-tag");
+              if (tag) tag.remove();
+              removeLocalLot(value, true);
+              if (els.fLote.value === value) {
+                const next = [...loteMulti][0];
+                if (next && byPos.get(next)) {
+                  suppressPersist = true;
+                  applyCascadeFromLot(byPos.get(next), true);
+                  suppressPersist = false;
+                  onLoteChange();
+                } else {
+                  setPickValue(pickers.lote, "", true);
+                }
+              }
+            } else {
+              if (!els.fLaborReal.value) {
+                showToast("Selecciona la labor primero", "error");
+                return;
+              }
+              loteMulti.add(value);
+              persistLotAt(value);
+              saveLocalLotsMap();
+              renderLocalLots();
+              btn.classList.add("selected", "is-captured");
+              if (!btn.querySelector(".opt-tag")) {
+                const copy = btn.querySelector(".opt-copy");
+                if (copy) copy.insertAdjacentHTML("beforeend", '<span class="opt-tag">En el día</span>');
+              }
+            }
+            syncPickerMultiCount();
+            saveDraft();
+            return;
+          }
           if (document.activeElement && typeof document.activeElement.blur === "function") {
             document.activeElement.blur();
           }
-          if (picker && (picker === pickers.modulo || picker === pickers.turno || picker === pickers.lote)) {
+          if (picker && (picker === pickers.modulo || picker === pickers.turno)) {
             persistCurrentLot();
           }
           if (picker) setPickValue(picker, value);
@@ -2495,6 +2530,15 @@
       activePicker = picker;
       picker.trigger.setAttribute("aria-expanded", "true");
       els.pickerTitle.textContent = picker.sheetTitle;
+      const isLote = pickers && picker === pickers.lote;
+      els.pickerSheet.classList.toggle("is-multi", !!isLote);
+      if (isLote) {
+        loteMulti = new Set();
+        picker.items.forEach(i => {
+          if ((localLots && localLots[i.value]) || i.value === els.fLote.value) loteMulti.add(i.value);
+        });
+        syncPickerMultiCount();
+      }
       const searchWrap = document.getElementById("pickerSearchWrap");
       const showSearch = !!picker.searchable;
       if (searchWrap) searchWrap.style.display = showSearch ? "" : "none";
@@ -2523,6 +2567,7 @@
         activePicker.trigger.setAttribute("aria-expanded", "false");
         activePicker = null;
       }
+      els.pickerSheet.classList.remove("is-multi");
       // Quitar foco antes de ocultar (evita warning aria-hidden + focus)
       const focused = document.activeElement;
       if (focused && els.pickerSheet.contains(focused) && typeof focused.blur === "function") {
@@ -2810,7 +2855,7 @@
         searchable: false,
         onChange: () => { onLoteChange(); saveDraft(); }
       }),
-      variedad: createPicker({
+      variedad: els.fVariedadTrigger ? createPicker({
         hidden: els.fVariedad,
         trigger: els.fVariedadTrigger,
         labelEl: els.fVariedadLabel,
@@ -2819,7 +2864,7 @@
         sheetTitle: "Elegir variedad",
         searchable: false,
         onChange: () => { persistCurrentLot(); saveDraft(); }
-      }),
+      }) : { hidden: els.fVariedad, items: variedadOptions, placeholder: "SEKOYA POP" },
       laborReal: createPicker({
         hidden: els.fLaborReal,
         trigger: els.fLaborRealTrigger,
@@ -2838,6 +2883,7 @@
     els.pickerClose.addEventListener("click", closePicker);
     els.pickerBackdrop.addEventListener("click", closePicker);
     els.pickerSearch.addEventListener("input", () => renderPickerList(els.pickerSearch.value));
+    document.getElementById("pickerMultiDone")?.addEventListener("click", applyLoteMulti);
 
     let suppressPersist = false;
     let syncingCalc = false;
@@ -2897,7 +2943,7 @@
         variedad: els.fVariedad.value,
         laborReal: els.fLaborReal.value,
         avance: els.fAvance.value,
-        totalJr: els.fTotalJr.value,
+        totalJr: els.fTotalJr ? els.fTotalJr.value : "",
         ratio: els.fRatio ? els.fRatio.value : "",
         color: els.fColor ? els.fColor.value : ""
       };
@@ -2925,7 +2971,7 @@
       setPickValue(pickers.variedad, s.variedad || "SEKOYA POP", true);
       setPickValue(pickers.laborReal, s.laborReal || "", true);
       els.fAvance.value = s.avance ? formatHa(s.avance) : "";
-      els.fTotalJr.value = s.totalJr || "";
+      if (els.fTotalJr) els.fTotalJr.value = s.totalJr || "";
       if (els.fRatio) els.fRatio.value = s.ratio || "";
       setPaintColor(currentPaintColor());
       const lot = s.lote ? byPos.get(s.lote) : null;
@@ -3010,11 +3056,6 @@
       return lot ? roundHa(lot.ha) : 0;
     }
 
-    function moduleColor(modId) {
-      const mod = modById[modId] || modById[Number(modId)];
-      return (mod && (mod.badge || mod.fill)) || "";
-    }
-
     function normalizeHex(v) {
       const s = String(v || "").trim().toUpperCase();
       return /^#[0-9A-F]{6}$/.test(s) ? s : "";
@@ -3087,13 +3128,10 @@
     function updateRatioUI() {
       const tot = totalsFromLots();
       const area = tot.area;
-      const jr = roundHa(els.fTotalJr.value);
+      const jr = roundHa(els.fTotalJr && els.fTotalJr.value);
       const ratio = area > 0 ? roundHa(jr / area) : 0;
-      if (els.fRatioOut) els.fRatioOut.value = area > 0 ? formatHa(ratio) : "—";
       if (els.ratioFormula) {
-        els.ratioFormula.textContent = area > 0
-          ? "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio)
-          : "JR = ratio × área total";
+        els.ratioFormula.textContent = "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
       }
     }
 
@@ -3113,22 +3151,24 @@
       if (syncingCalc) return;
       syncingCalc = true;
       const area = totalsFromLots().area;
-      const jr = roundHa(els.fTotalJr.value);
+      const jr = roundHa(els.fTotalJr && els.fTotalJr.value);
       const ratio = area > 0 ? roundHa(jr / area) : 0;
       if (els.fRatio) els.fRatio.value = (jr && area) ? formatHa(ratio) : "";
       updateRatioUI();
       syncingCalc = false;
     }
 
-    function persistCurrentLot() {
-      if (suppressPersist) return;
-      const posKey = els.fLote.value;
-      if (!posKey) return;
+    function persistLotAt(posKey, extra) {
+      extra = extra || {};
       const lot = byPos.get(posKey);
-      if (!lot) return;
-      const avance = roundHa(els.fAvance.value);
-      const laborReal = String(els.fLaborReal.value || "");
-      if (!laborReal && avance <= 0) return;
+      if (!lot) return false;
+      const prev = localLots[posKey];
+      const isCurrent = posKey === els.fLote.value;
+      const avance = extra.avance != null
+        ? roundHa(extra.avance)
+        : (isCurrent ? roundHa(els.fAvance && els.fAvance.value) : roundHa(prev && prev.avance));
+      const laborReal = String(els.fLaborReal.value || (prev && prev.laborReal) || "");
+      if (!laborReal && avance <= 0) return false;
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       localLots[posKey] = {
         posKey,
@@ -3136,15 +3176,59 @@
         moduloLabel: mod ? mod.label : "",
         turno: String(lot.tunel || els.fTurno.value || "").toUpperCase(),
         lote: lot.lote,
-        variedad: els.fVariedad.value || "SEKOYA POP",
+        variedad: (prev && prev.variedad) || els.fVariedad.value || "SEKOYA POP",
         laborReal,
         area: roundHa(lot.ha),
         avance,
         color: currentPaintColor(),
         capturedAt: Date.now()
       };
+      return true;
+    }
+
+    function persistCurrentLot() {
+      if (suppressPersist) return;
+      if (!persistLotAt(els.fLote.value)) return;
       saveLocalLotsMap();
       renderLocalLots();
+    }
+
+    function applyLoteMulti() {
+      const keys = pickers.lote.items.map(i => i.value).filter(k => loteMulti.has(k));
+      if (!keys.length) {
+        closePicker();
+        return;
+      }
+      persistCurrentLot();
+      if (!els.fLaborReal.value && !keys.some(k => localLots[k] && localLots[k].laborReal)) {
+        showToast("Selecciona la labor primero", "error");
+        return;
+      }
+      keys.forEach(k => persistLotAt(k));
+      saveLocalLotsMap();
+      const last = keys[keys.length - 1];
+      closePicker();
+      const lot = byPos.get(last);
+      if (lot) {
+        suppressPersist = true;
+        applyCascadeFromLot(lot, true);
+        const saved = localLots[last];
+        if (saved) {
+          if (saved.laborReal) setPickValue(pickers.laborReal, saved.laborReal, true);
+          if (saved.variedad) setPickValue(pickers.variedad, saved.variedad, true);
+          els.fAvance.value = saved.avance ? formatHa(saved.avance) : "";
+        }
+        suppressPersist = false;
+        onLoteChange();
+        if (keys.length > 1 && pickers.lote.labelEl) {
+          const item = pickers.lote.items.find(i => i.value === last);
+          pickers.lote.labelEl.className = "mpick-text";
+          pickers.lote.labelEl.textContent = (item ? item.title : "Lotes") + " +" + (keys.length - 1);
+        }
+      }
+      renderLocalLots();
+      saveDraft();
+      showToast(keys.length + " lote(s) en el día", null);
     }
 
     function previewItems() {
@@ -3184,13 +3268,11 @@
       const order = modules.map(m => String(m.id)).concat(Object.keys(groups).filter(k => !modules.some(m => String(m.id) === k)));
       return order.filter(id => groups[id] && groups[id].length).map(id => {
         const mod = modById[id] || modById[Number(id)];
-        const color = (mod && (mod.fill || mod.badge)) || "#64748b";
-        const accent = (mod && (mod.badge || mod.fill)) || color;
+        const color = currentPaintColor() || "#64748b";
         const rows = groups[id].slice().sort((a, b) => Number(a.lote) - Number(b.lote) || String(a.turno).localeCompare(String(b.turno)));
         const areaG = roundHa(rows.reduce((s, i) => s + (Number(i.area) || 0), 0));
         return `<div class="mod-group">
           <div class="mod-group-head">
-            <span class="mod-dot" style="background:${accent}"></span>
             <b>${mod ? mod.label : ("M" + id)}</b>
             <span>${rows.length} · ${formatHa(areaG)} ha</span>
           </div>
@@ -3254,17 +3336,17 @@
       closeSumModal();
     }
 
-    function removeLocalLot(posKey) {
+    function removeLocalLot(posKey, silent) {
       if (!posKey || !localLots[posKey]) return;
       delete localLots[posKey];
       saveLocalLotsMap();
       if (els.fLote.value === posKey) {
-        els.fAvance.value = "";
+        if (els.fAvance) els.fAvance.value = "";
         clearLotDerived();
       }
       renderLocalLots();
       saveDraft();
-      showToast("Lote quitado del día", null);
+      if (!silent) showToast("Lote quitado del día", null);
     }
 
     function onModuloChange() {
@@ -3431,45 +3513,60 @@
     }
 
     function finishCurrentLot() {
-      const area = getLotArea();
-      if (!els.fLote.value || area <= 0) {
+      persistCurrentLot();
+      const keys = Object.keys(localLots);
+      if (els.fLote.value && keys.indexOf(els.fLote.value) < 0) keys.push(els.fLote.value);
+      if (!keys.length) {
         showToast("Selecciona un lote", "error");
         return;
       }
-      els.fAvance.value = formatHa(area);
-      finalizeAvance({ toast: false, format: true });
+      if (!els.fLaborReal.value && !keys.some(k => localLots[k] && localLots[k].laborReal)) {
+        showToast("Selecciona la labor primero", "error");
+        return;
+      }
+      let ha = 0;
+      keys.forEach(posKey => {
+        const lot = byPos.get(posKey);
+        if (!lot) return;
+        const area = roundHa(lot.ha);
+        if (area <= 0) return;
+        if (els.fLote.value === posKey && els.fAvance) els.fAvance.value = formatHa(area);
+        persistLotAt(posKey, { avance: area });
+        ha += area;
+      });
+      saveLocalLotsMap();
       updatePreview();
-      persistCurrentLot();
+      renderLocalLots();
       saveDraft();
-      showToast("Lote terminado · " + formatHa(area) + " ha", null);
+      showToast(keys.length + " lote(s) terminados · " + formatHa(ha) + " ha", null);
     }
 
     els.finishLotBtn?.addEventListener("click", finishCurrentLot);
 
-    els.fAvance.addEventListener("input", () => {
+    els.fAvance?.addEventListener("input", () => {
       capAvanceInput();
       updatePreview();
       persistCurrentLot();
       saveDraft();
     });
-    els.fAvance.addEventListener("change", () => {
+    els.fAvance?.addEventListener("change", () => {
       capAvanceInput();
       updatePreview();
       persistCurrentLot();
       saveDraft();
     });
-    els.fAvance.addEventListener("blur", () => {
+    els.fAvance?.addEventListener("blur", () => {
       finalizeAvance({ toast: true, format: true });
       updatePreview();
       persistCurrentLot();
       saveDraft();
     });
 
-    els.fTotalJr.addEventListener("input", () => {
+    els.fTotalJr?.addEventListener("input", () => {
       updateRatioFromJr();
       saveDraft();
     });
-    els.fTotalJr.addEventListener("change", () => {
+    els.fTotalJr?.addEventListener("change", () => {
       const n = roundHa(els.fTotalJr.value);
       els.fTotalJr.value = n ? formatHa(n) : "";
       updateRatioFromJr();
@@ -3547,7 +3644,7 @@
       setPickLabel(pickers.turno.labelEl, null, pickers.turno.placeholder);
       setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
       els.fAvance.value = "";
-      els.fTotalJr.value = "";
+      if (els.fTotalJr) els.fTotalJr.value = "";
       if (els.fRatio) els.fRatio.value = "";
       if (els.fColor) els.fColor.value = "";
       setPaintColor(currentPaintColor());
@@ -3722,7 +3819,7 @@
 
       try {
         const totArea = roundHa(records.reduce((s, r) => s + (Number(r.area) || 0), 0));
-        const jrTotal = roundHa(els.fTotalJr.value);
+        const jrTotal = roundHa(els.fTotalJr && els.fTotalJr.value);
         records.forEach(r => {
           r.totalJr = totArea > 0 ? roundHa(jrTotal * ((Number(r.area) || 0) / totArea)) : 0;
         });

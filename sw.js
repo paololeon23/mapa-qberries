@@ -1,4 +1,4 @@
-const CACHE = "qb-v77";
+const CACHE = "qb-v81";
 const SHELL = [
   "./",
   "./index.html",
@@ -71,16 +71,23 @@ self.addEventListener("fetch", e => {
     const cached = await caches.match(e.request);
     const shell = isShellPath(url.pathname);
 
-    // Online: red primero en shell para bajar JS/HTML al día al instante
+    function fetchTimeout(ms) {
+      return new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), ms));
+    }
+
+    // Shell: red primero, pero si hay caché no espera más de ~0.8s
     if (shell) {
       try {
-        const net = await fetch(e.request, { cache: "no-store" });
+        const net = await Promise.race([
+          fetch(e.request, { cache: "no-store" }),
+          fetchTimeout(cached ? 800 : 8000)
+        ]);
         if (net && net.ok && net.type !== "opaque") {
           const copy = net.clone();
           e.waitUntil(putInCache(e.request, copy));
           return net;
         }
-      } catch (err) { /* offline o red lenta */ }
+      } catch (err) { /* offline, lenta o timeout */ }
       if (cached) return cached;
     }
 

@@ -3019,9 +3019,6 @@
         </svg>
         Limpiar
       </button>
-      <button type="button" class="btn btn-outline" id="descarteBtn" title="Descarte">
-        Descarte
-      </button>
     </div>
   </header>
 
@@ -3090,16 +3087,6 @@
         <div class="field">
           <label for="fArea">Área lote (ha)</label>
           <input id="fArea" type="number" step="0.01" readonly placeholder="0.00" />
-        </div>
-        <div class="field full">
-          <label>Labor ppto</label>
-          <div class="cselect" id="laborPptoSelect" data-cselect>
-            <input type="hidden" id="fLaborPpto" value="" />
-            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor ppto...</button>
-            <div class="cselect-panel" role="listbox">
-              <div class="cselect-list"></div>
-            </div>
-          </div>
         </div>
         <div class="field full">
           <label>Labor real</label>
@@ -3293,16 +3280,6 @@
           </div>
         </div>
         <div class="filter-block">
-          <h3>Labor ppto</h3>
-          <div class="cselect filter-cselect" id="filterLaborPptoC">
-            <input type="hidden" id="filterLaborPptoSelect" value="" />
-            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores ppto</button>
-            <div class="cselect-panel" role="listbox">
-              <div class="cselect-list"></div>
-            </div>
-          </div>
-        </div>
-        <div class="filter-block">
           <h3>Labor real</h3>
           <div class="cselect filter-cselect" id="filterLaborC">
             <input type="hidden" id="filterLaborSelect" value="" />
@@ -3436,16 +3413,6 @@
             <div class="cselect filter-cselect" id="mobFilterMdC">
               <input type="hidden" id="mobFilterMd" value="" />
               <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por módulo">Todos</button>
-              <div class="cselect-panel" role="listbox">
-                <div class="cselect-list"></div>
-              </div>
-            </div>
-          </label>
-          <label class="mob-filter-field">
-            <span>Labor ppto</span>
-            <div class="cselect filter-cselect" id="mobFilterLaborPptoC">
-              <input type="hidden" id="mobFilterLaborPpto" value="" />
-              <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por labor ppto">Todas</button>
               <div class="cselect-panel" role="listbox">
                 <div class="cselect-list"></div>
               </div>
@@ -4083,11 +4050,8 @@
         <h2>Resumen</h2>
         <div class="kpi-actions">
           <span class="pend-chip-desk" id="deskPendChip" title="Reportes en cola sin enviar"><strong id="deskPendCount">0</strong>&nbsp;pend.</span>
-          <button type="button" class="btn btn-outline kpi-refresh" id="deskRefreshBtn" title="Traer datos de la hoja">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
-              <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
-            </svg>
-            Actualizar
+          <button type="button" class="btn btn-outline" id="descarteBtn" title="Descarte">
+            Descarte
           </button>
         </div>
       </div>
@@ -4098,9 +4062,6 @@
         <div class="kpi"><span>Semana</span><strong>${currentWeek}</strong></div>
       </div>`;
     sidebar.appendChild(kpiBlock);
-    document.getElementById("deskRefreshBtn")?.addEventListener("click", () => {
-      refreshMapData(true, { replace: true, nocache: true });
-    });
 
     const modBlock = document.createElement("div");
     modBlock.className = "side-block mod-block";
@@ -5620,7 +5581,7 @@
     const fTurno = document.getElementById("fTurno");
     const fVariedad = document.getElementById("fVariedad");
     const fArea = document.getElementById("fArea");
-    const fLaborPpto = document.getElementById("fLaborPpto");
+    const fLaborPpto = document.getElementById("fLaborPpto") || { value: "" };
     const fLaborReal = document.getElementById("fLaborReal");
     const fAvance = document.getElementById("fAvance");
     const fTotalJr = document.getElementById("fTotalJr");
@@ -5744,11 +5705,6 @@
       refreshFilterPanelUI();
       syncFilterBtnState();
     });
-    initFilterCSelect("filterLaborPptoC", "filterLaborPptoSelect", "Todas las labores ppto", () => {
-      syncMapQueryFromSelects("desk");
-      refreshFilterPanelUI();
-      syncFilterBtnState();
-    });
     initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores reales", () => {
       syncMapQueryFromSelects("desk");
       refreshFilterPanelUI();
@@ -5765,11 +5721,6 @@
       applyMapFilters(true);
     });
     initFilterCSelect("mobFilterMdC", "mobFilterMd", "Todos", () => {
-      syncMapQueryFromSelects("mob");
-      refreshFilterPanelUI();
-      applyMapFilters(true);
-    });
-    initFilterCSelect("mobFilterLaborPptoC", "mobFilterLaborPpto", "Todas", () => {
       syncMapQueryFromSelects("mob");
       refreshFilterPanelUI();
       applyMapFilters(true);
@@ -5808,11 +5759,7 @@
     });
     variedadCSelect.setValue("SEKOYA POP", true);
 
-    const laborPptoCSelect = createCustomSelect(document.getElementById("laborPptoSelect"), {
-      items: LABOR_OPTS.labor_ppto,
-      placeholder: "Seleccionar labor ppto...",
-      onChange: () => previewFromForm()
-    });
+    const laborPptoCSelect = { setValue() {} };
 
     const laborRealCSelect = createCustomSelect(document.getElementById("laborRealSelect"), {
       items: LABOR_OPTS.labor_real,
