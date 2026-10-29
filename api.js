@@ -84,14 +84,24 @@
     return s.replace(/[\u0000-\u001f\u007f]/g, "");
   }
 
-  function fingerprint(rec) {
+  function lotKey(rec) {
     return [
       String(rec.sem || ""),
+      String(rec.fecha || ""),
       String(rec.turno || "").toUpperCase(),
       String(rec.lote || ""),
       String(rec.laborReal || "").toUpperCase(),
-      String(roundHa(rec.avance))
+      String(rec.modulo || "").toUpperCase()
     ].join("|");
+  }
+
+  function fingerprint(rec) {
+    return lotKey(rec) + "|" + String(roundHa(rec.avance));
+  }
+
+  function stableLocalId(rec) {
+    const raw = "qb_" + lotKey(rec).replace(/[^A-Za-z0-9]/g, "");
+    return (raw || newClientId()).slice(0, 80);
   }
 
   function colorPalette() {
@@ -157,6 +167,15 @@
     if (area > 0 && avance > area) avance = area;
 
     const laborReal = safeText(record.laborReal, 80);
+    const isCercos = laborReal === "CERCOS VIVOS" || laborReal === "CERCO VIVOS";
+    if (isCercos && area > 0) {
+      const maxAv = roundHa(area * 0.4);
+      const defAv = roundHa(area * 0.2);
+      const cap = maxAv >= 0.01 ? maxAv : area;
+      const fallback = defAv >= 0.01 ? defAv : cap;
+      if (avance <= 0) avance = fallback;
+      if (avance > cap) avance = cap;
+    }
     const laborPpto = safeText(record.laborPpto, 80);
     let turno = safeText(record.turno || record.tunel, 20);
     const tNum = turno.replace(/\D/g, "");
@@ -197,11 +216,16 @@
       totalJr: Math.min(100000, Math.max(0, Number(record.totalJr) || 0)),
       color: normalizeColor(record.color)
     };
+    const idKey = lotKey(base);
     const fp = fingerprint(base);
-    const rawId = record.localId ? String(record.localId) : newClientId();
+    const rawId = record.localId ? String(record.localId) : stableLocalId(base);
     base.localId = safeText(rawId, 80).replace(/[^A-Z0-9_\-\.]/gi, "");
-    if (!base.localId) base.localId = newClientId().replace(/[^A-Z0-9_\-\.]/gi, "");
-    base._fp = fp;
+    if (!base.localId) base.localId = stableLocalId(base).replace(/[^A-Z0-9_\-\.]/gi, "");
+    base._fp = idKey;
+    base._sig = fp;
+    if (record.editar === true || record.editar === 1 || record.editar === "1" || record.editar === "true") {
+      base.editar = true;
+    }
 
     return { ok: errors.length === 0, errors, record: base };
   }
@@ -210,16 +234,30 @@
     return validateRecord(record).record;
   }
 
+  function sameLotPayload(a, b) {
+    if (!a || !b) return false;
+    if (a.localId && b.localId && a.localId === b.localId) return true;
+    if (a._fp && b._fp && a._fp === b._fp) return true;
+    return lotKey(a) === lotKey(b);
+  }
+
   function enqueue(payload, ts) {
     const q = getQueue();
-    const exists = q.some(item =>
-      item.payload?.localId === payload.localId ||
-      item.payload?._fp === payload._fp
-    );
-    if (exists) return q.length;
+    const idx = q.findIndex(item => sameLotPayload(item.payload, payload));
+    if (idx >= 0) {
+      q[idx] = { ts: ts || Date.now(), payload };
+      saveQueue(q);
+      return q.length;
+    }
     q.push({ ts: ts || Date.now(), payload });
     saveQueue(q);
     return q.length;
+  }
+
+  function dequeueMatching(payload) {
+    if (!payload) return;
+    const q = getQueue().filter(item => !sameLotPayload(item.payload, payload));
+    saveQueue(q);
   }
 
   function saveLocal(record, synced) {
@@ -396,6 +434,29 @@
     }
   }
 
+  async function getResumen(sem) {
+    const url = apiUrl();
+    if (!url) return null;
+    const params = new URLSearchParams({ action: "resumen" });
+    if (sem != null && sem !== "") params.set("sem", String(sem).slice(0, 4));
+    const token = apiToken();
+    if (token) params.set("token", token);
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 18000) : null;
+    try {
+      const res = await fetch(url + "?" + params.toString(), {
+        method: "GET",
+        cache: "no-store",
+        signal: ctrl ? ctrl.signal : undefined
+      });
+      return await res.json();
+    } catch (err) {
+      return { ok: false, message: String(err.message || err) || "Resumen falló" };
+    } finally {
+      if (t) clearTimeout(t);
+    }
+  }
+
   async function getFiltros() {
     const url = apiUrl();
     if (!url) return null;
@@ -406,6 +467,34 @@
     try { return await res.json(); } catch { return { ok: false, message: "Filtros inválidos" }; }
   }
 
+  async function deleteLabor(record) {
+    const url = apiUrl();
+    if (!url) return { ok: false, message: "Sin API" };
+    const payload = {
+      action: "eliminar",
+      data: {
+        lote: record && record.lote,
+        turno: record && (record.turno || record.tunel),
+        modulo: record && (record.modulo || record.md),
+        sem: record && record.sem,
+        laborReal: record && record.laborReal,
+        fecha: record && record.fecha
+      }
+    };
+    const token = apiToken();
+    if (token) payload.token = token;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err) {
+      return { ok: false, message: String(err.message || err) || "No se pudo eliminar" };
+    }
+  }
+
   async function saveLabor(record) {
     const checked = validateRecord(record);
     if (!checked.ok) {
@@ -413,7 +502,7 @@
     }
     const payload = checked.record;
     const savedAt = Date.now();
-    const lockKey = payload.localId || payload._fp;
+    const lockKey = payload._fp || payload.localId;
 
     if (inflight.has(lockKey)) {
       return inflight.get(lockKey);
@@ -446,6 +535,7 @@
         if (!serverConfirmed(res)) {
           throw new Error((res && (res.message || res.error)) || "Servidor no confirmó el guardado");
         }
+        dequeueMatching(payload);
         markHistorySynced(payload.posKey, savedAt, payload.localId);
         if (window.QB_onStatusChange) window.QB_onStatusChange();
         return Object.assign({ ok: true, synced: true, savedAt, payload }, res);
@@ -483,6 +573,7 @@
     }
 
     const payloads = [];
+    const seen = new Set();
     for (let i = 0; i < records.length; i++) {
       const src = Object.assign({}, shared || {}, records[i]);
       const checked = validateRecord(src);
@@ -492,12 +583,23 @@
       const payload = Object.assign({}, checked.record, {
         color: normalizeColor(src.color) || checked.record.color
       });
+      if (payload._fp && seen.has(payload._fp)) continue;
+      if (payload._fp) seen.add(payload._fp);
       payloads.push(payload);
       saveLocal(Object.assign({}, payload, { color: src.color || payload.color }), false);
     }
 
     const apiItems = payloads;
+    const lockKey = "batch:" + apiItems.map(p => p._fp || p.localId).sort().join(",");
+    if (inflight.has(lockKey)) {
+      return inflight.get(lockKey);
+    }
+    const anyBusy = apiItems.find(p => inflight.has(p._fp || p.localId));
+    if (anyBusy) {
+      return inflight.get(anyBusy._fp || anyBusy.localId);
+    }
 
+    const job = (async () => {
     if (!apiUrl()) {
       return { ok: true, local: true, count: apiItems.length, payloads };
     }
@@ -524,6 +626,7 @@
         };
       }
       if (!serverConfirmed(res)) throw new Error((res && res.message) || "Servidor no confirmó el grupo");
+      apiItems.forEach(p => dequeueMatching(p));
       payloads.forEach(p => markHistorySynced(p.posKey, Date.now(), p.localId));
       if (window.QB_onStatusChange) window.QB_onStatusChange();
       return Object.assign({ ok: true, synced: true, count: apiItems.length, payloads }, res);
@@ -538,6 +641,16 @@
         payloads,
         error: String(err.message || err)
       };
+    }
+    })();
+
+    inflight.set(lockKey, job);
+    apiItems.forEach(p => inflight.set(p._fp || p.localId, job));
+    try {
+      return await job;
+    } finally {
+      inflight.delete(lockKey);
+      apiItems.forEach(p => inflight.delete(p._fp || p.localId));
     }
   }
 
@@ -554,10 +667,14 @@
 
       let hitRateLimit = false;
       for (const item of q) {
-        const id = item.payload?.localId || item.payload?._fp || String(item.ts);
+        const id = item.payload?._fp || item.payload?.localId || String(item.ts);
         if (seen.has(id)) continue;
         seen.add(id);
         if (hitRateLimit) {
+          pending.push(item);
+          continue;
+        }
+        if (inflight.has(id)) {
           pending.push(item);
           continue;
         }
@@ -613,8 +730,10 @@
     postLabor,
     postLaborBatch,
     getLabors,
+    getResumen,
     getFiltros,
     saveLabor,
+    deleteLabor,
     saveLaborsBatch,
     validateRecord,
     flushQueue,

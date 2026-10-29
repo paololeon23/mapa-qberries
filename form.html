@@ -521,6 +521,93 @@
       background: #f1f5f3;
       color: #94a3b8;
     }
+    .card.is-gated {
+      position: relative;
+    }
+    .card.is-gated::after {
+      content: "Primero elige la labor";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--forest);
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+    #dayCard.is-gated::after,
+    #progressCard.is-gated::after {
+      content: none;
+      display: none;
+    }
+    .gate-overlay {
+      display: none;
+    }
+    .day-body,
+    .progress-body {
+      position: relative;
+    }
+    .card.is-gated .gate-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      padding: 0.6rem 0.7rem;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.9);
+      pointer-events: auto;
+      overflow: hidden;
+    }
+    .gate-mascot {
+      display: block;
+      width: min(82vw, 140px);
+      max-height: none;
+      height: auto;
+      margin-top: 0.7rem;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .gate-labor-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-height: 44px;
+      padding: 0.55rem 1.15rem;
+      border: 0;
+      border-radius: 14px;
+      background: var(--forest);
+      color: #fff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+      line-height: 1.2;
+      box-shadow: 0 4px 14px rgba(15, 51, 39, 0.2);
+      pointer-events: auto;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+    }
+    .field input:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      background: #f1f5f3;
+      color: #94a3b8;
+    }
     .mpick-text {
       flex: 1;
       min-width: 0;
@@ -1039,69 +1126,186 @@
     .mini-cell {
       position: relative;
       overflow: hidden;
-      flex: 1 1 calc(25% - 0.28rem);
-      min-width: 68px;
-      min-height: 70px;
-      border-radius: 10px;
-      border: 2px solid #d1d5db;
+      flex: 1 1 calc(20% - 0.22rem);
+      min-width: 52px;
+      max-width: 72px;
+      min-height: 52px;
+      border-radius: 8px;
+      border: 1.5px solid #d1d5db;
       background: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0.28rem 0.15rem 0.3rem;
+      padding: 0.16rem 0.08rem 0.18rem;
       box-sizing: border-box;
     }
     .mini-cell.is-on {
-      box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.12);
+      box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.18);
     }
-    .mod-lots[data-n="1"] .mini-cell {
-      flex: 0 1 34%;
-      min-width: 88px;
-    }
+    .mod-lots[data-n="1"] .mini-cell,
     .mod-lots[data-n="2"] .mini-cell {
-      flex: 1 1 calc(50% - 0.2rem);
+      flex: 0 0 58px;
+      min-width: 52px;
+      max-width: 64px;
     }
     #sumModal .mini-cell-wrap {
-      flex: 1 1 calc(25% - 0.28rem);
-      min-width: 68px;
+      flex: 0 1 calc(25% - 0.2rem);
+      min-width: 70px;
+      max-width: 88px;
       display: flex;
       flex-direction: column;
-      gap: 0.28rem;
+      gap: 0.24rem;
     }
-    #sumModal .mod-lots[data-n="1"] .mini-cell-wrap {
-      flex: 0 1 34%;
-      min-width: 88px;
-    }
+    #sumModal .mod-lots[data-n="1"] .mini-cell-wrap,
     #sumModal .mod-lots[data-n="2"] .mini-cell-wrap {
-      flex: 1 1 calc(50% - 0.2rem);
+      flex: 0 0 58px;
+      min-width: 52px;
+      max-width: 64px;
     }
     #sumModal .mini-cell-wrap .mini-cell {
       width: 100%;
       flex: none;
       min-width: 0;
+      max-width: none;
+      min-height: 48px;
     }
-    #sumModal .mini-del {
-      width: 100%;
-      height: 32px;
-      padding: 0 0.4rem;
-      border: 1px solid #fecaca;
-      border-radius: 9px;
-      background: #fff7f7;
-      color: #b42318;
-      font: inherit;
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
+    #sumModal .mini-actions {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 0.14rem;
+    }
+    #sumModal .mini-del,
+    #sumModal .mini-edit {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      height: 28px;
+      padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.28rem;
       cursor: pointer;
     }
-    #sumModal .mini-del svg {
-      width: 13px;
-      height: 13px;
+    #sumModal .mini-del {
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      background: #fff7f7;
+      color: #b42318;
+    }
+    #sumModal .mini-edit {
+      border: 1px solid #c5ddd0;
+      border-radius: 8px;
+      background: #f4fbf6;
+      color: #0f3327;
+    }
+    #sumModal .mini-del svg,
+    #sumModal .mini-edit svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+    #sumModal .mod-edit-box {
+      flex-shrink: 0;
+      margin-top: 0.75rem;
+      padding: 0.8rem 0.85rem 0.85rem;
+      border: 1px solid #d7e6dc;
+      border-radius: 14px;
+      background: #f7faf8;
+    }
+    #sumModal .mod-edit-box[hidden] {
+      display: none;
+    }
+    #sumModal .mod-edit-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.7rem;
+    }
+    #sumModal .mod-edit-kicker {
+      margin: 0;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    #sumModal .mod-edit-head strong {
+      display: block;
+      margin-top: 0.14rem;
+      font-size: 0.98rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--forest);
+    }
+    #sumModal .mod-edit-mod {
+      flex-shrink: 0;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      background: #e8f2eb;
+      color: var(--forest);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    #sumModal .mod-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 44px;
+      gap: 0.55rem;
+      align-items: end;
+    }
+    #sumModal .mod-edit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+      min-width: 0;
+    }
+    #sumModal .mod-edit-field span {
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    #sumModal .mod-edit-field strong,
+    #sumModal .mod-edit-field input {
+      height: 42px;
+      padding: 0 0.7rem;
+      border: 1px solid #d7e6dc;
+      border-radius: 11px;
+      background: #fff;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #0f3327;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    #sumModal .mod-edit-field input.is-over {
+      border-color: #f87171;
+      color: #b42318;
+    }
+    #sumModal .mod-edit-save {
+      width: 44px;
+      height: 42px;
+      padding: 0;
+      border: 0;
+      border-radius: 11px;
+      background: var(--forest);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 51, 39, 0.18);
+    }
+    #sumModal .mod-edit-save svg {
+      width: 18px;
+      height: 18px;
       pointer-events: none;
     }
     #sumModal .hist-sheet {
@@ -1118,19 +1322,57 @@
       left: 0; right: 0; bottom: 0;
       height: 0%;
       opacity: 0.72;
+      transition: height 0.12s ease;
     }
     .mini-cell .t,
     .mini-cell .l,
     .mini-cell .h {
       position: relative;
       z-index: 1;
-      font-size: 0.62rem;
+      font-size: 0.5rem;
       font-weight: 800;
       text-transform: uppercase;
-      line-height: 1.15;
+      line-height: 1.1;
       color: #0b0f0d;
     }
-    .mini-cell .l { font-size: 0.66rem; }
+    .mini-cell .l { font-size: 0.54rem; }
+    body.is-cercos .mini-cell {
+      justify-content: flex-end;
+      padding-top: 0;
+      background: #fff !important;
+      border-color: #111 !important;
+    }
+    body.is-cercos .mini-cell .t,
+    body.is-cercos .mini-cell .l,
+    body.is-cercos .mini-cell .h {
+      color: #111 !important;
+      font-size: 0.42rem;
+    }
+    body.is-cercos .mini-cell .l { font-size: 0.45rem; }
+    body.is-cercos .mini-cell::before {
+      content: "";
+      flex: 0 0 20%;
+      order: -1;
+      width: 100%;
+      background: transparent;
+      border: 0;
+      pointer-events: none;
+    }
+    body.is-cercos .mini-cell::after {
+      content: "";
+      position: absolute;
+      top: 20%;
+      left: 0;
+      right: 0;
+      border-top: 1.5px solid #111;
+      z-index: 3;
+      pointer-events: none;
+    }
+    body.is-cercos .mini-fill {
+      top: 0;
+      bottom: auto;
+      opacity: 0.88;
+    }
     .board-empty {
       text-align: center;
       padding: 0.85rem 0.4rem;
@@ -1880,7 +2122,8 @@
   <div class="desktop-gate" id="desktopGate" aria-hidden="true">
     <div class="desktop-gate-card">
       <h1>QB Labores es para celular</h1>
-      <p>Abre esta app en tu teléfono o tablet, o instálala como PWA. En computadora de escritorio no está disponible.</p>
+      <p>En computadora se abre el mapa. Si no redirige, entra al plano de cosecha.</p>
+      <p style="margin-top:0.85rem"><a href="index.html" style="color:#0f3327;font-weight:800">Abrir mapa</a></p>
     </div>
   </div>
   <header class="app-head">
@@ -1938,7 +2181,7 @@
         </div>
       </section>
 
-      <section class="card" id="dayCard">
+      <section class="card is-gated" id="dayCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
@@ -1961,10 +2204,11 @@
           </div>
         </div>
 
+        <div class="day-body">
         <div class="field">
           <label for="fModuloTrigger">Módulo <span class="req">*</span></label>
           <input type="hidden" id="fModulo" value="" />
-          <button type="button" class="mpick-trigger" id="fModuloTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <button type="button" class="mpick-trigger is-disabled" id="fModuloTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
             <span class="mpick-text is-empty" id="fModuloLabel">Seleccionar módulo...</span>
             <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
@@ -1984,27 +2228,26 @@
             <input type="hidden" id="fLote" value="" />
             <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
               <span class="mpick-text is-empty" id="fLoteLabel">Elige turno</span>
-              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-          </div>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
         </div>
 
-        <div class="field">
-          <label>Área</label>
-          <input type="hidden" id="fArea" value="" />
-          <input type="hidden" id="fAvance" value="" />
-          <input type="hidden" id="fVariedad" value="SEKOYA POP" />
-          <div class="avance-row">
-            <div class="area-chip is-empty" id="areaChip">
-              <span class="area-k">Hectáreas</span>
-              <strong id="fAreaText">0.00 <small>ha</small></strong>
-            </div>
-            <button type="button" class="btn-finish" id="finishLotBtn">Terminar</button>
+        <input type="hidden" id="fArea" value="" />
+        <input type="hidden" id="fAvance" value="" />
+        <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+          <div class="field">
+          <label for="fTotalJr">Jornales (JR)</label>
+          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" disabled />
           </div>
+          </div>
+        <div class="gate-overlay" aria-hidden="true">
+          <img class="gate-mascot" src="assets/arandano.png?v=3" alt="" />
+          <button type="button" class="gate-labor-btn">Primero elige la labor</button>
         </div>
       </section>
 
-      <section class="card" id="progressCard">
+      <section class="card is-gated" id="progressCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
@@ -2013,10 +2256,7 @@
           </div>
         </div>
 
-        <div class="field">
-          <label for="fTotalJr">Jornales (JR)</label>
-          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" />
-        </div>
+        <div class="progress-body">
         <div class="field progress-wrap">
           <label>Ratio general</label>
           <p class="ratio-formula" id="ratioFormula">JR 0.00 / 0.00 ha = 0.00</p>
@@ -2027,7 +2267,7 @@
           <input type="hidden" id="fColor" value="" />
           <div class="color-grid" id="colorGrid"></div>
           <p class="field-hint" id="colorHint">Lunes a viernes · un color por día</p>
-        </div>
+          </div>
 
         <div class="preview">
           <div class="preview-label">Lotes agregados por módulo</div>
@@ -2035,7 +2275,12 @@
           <div class="progress-meta" id="previewStatus">Selecciona un lote</div>
         </div>
         <button type="button" class="btn-capture" id="captureBtn">Ver</button>
-      </section>
+        </div>
+        <div class="gate-overlay" aria-hidden="true">
+          <img class="gate-mascot" src="assets/arandano.png?v=3" alt="" />
+          <button type="button" class="gate-labor-btn">Primero elige la labor</button>
+      </div>
+    </section>
     </form>
 
   </main>
@@ -2085,6 +2330,28 @@
         <div class="sum-kpi"><span>Avance</span><strong id="sumKpiAv">0.00 ha</strong></div>
       </div>
       <div class="hist-sheet-body" id="sumBoard"></div>
+      <div class="mod-edit-box" id="sumEditBox" hidden>
+        <div class="mod-edit-head">
+          <div>
+            <p class="mod-edit-kicker">Editar avance</p>
+            <strong id="sumEditLote">—</strong>
+          </div>
+          <span class="mod-edit-mod" id="sumEditMod">—</span>
+        </div>
+        <div class="mod-edit-grid">
+          <div class="mod-edit-field">
+            <span>Área lote</span>
+            <strong id="sumEditArea">0.00 ha</strong>
+          </div>
+          <label class="mod-edit-field">
+            <span>Avance ha</span>
+            <input id="sumEditAvance" type="text" inputmode="decimal" autocomplete="off" aria-label="Avance en hectáreas" />
+          </label>
+          <button type="button" class="mod-edit-save" id="sumEditSave" aria-label="Guardar avance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2150,23 +2417,35 @@
   <script src="data.js?v=8"></script>
   <script>
     (function lockDesktopAndShell() {
-      const finePointer = window.matchMedia("(pointer: fine)").matches;
-      const hoverCapable = window.matchMedia("(hover: hover)").matches;
+      const phoneMq = "(max-width: 900px), ((max-height: 520px) and (max-width: 1024px))";
+      function isPhoneViewport() {
+        return window.matchMedia(phoneMq).matches;
+      }
+      function isDesktopShell() {
+        // Si el viewport ya es de celular (DevTools / teléfono), quédate en el formulario.
+        if (isPhoneViewport()) return false;
+        const fine = window.matchMedia("(pointer: fine)").matches;
+        const hover = window.matchMedia("(hover: hover)").matches;
       const coarse = window.matchMedia("(pointer: coarse)").matches;
-      const touchPoints = Number(navigator.maxTouchPoints) || 0;
-      // Solo celular/tablet. PC con mouse+hover queda bloqueado (no basta achicar la ventana).
-      const isDesktop =
-        (finePointer && hoverCapable && !coarse) ||
-        (finePointer && hoverCapable && touchPoints === 0);
-      if (isDesktop) {
-        document.documentElement.classList.add("is-desktop-lock");
-        document.body.classList.add("is-desktop-lock");
-        const gate = document.getElementById("desktopGate");
-        if (gate) gate.setAttribute("aria-hidden", "false");
+        const touch = Number(navigator.maxTouchPoints) || 0;
+        return (fine && hover && !coarse) || (fine && hover && touch === 0);
+      }
+      if (isDesktopShell()) {
         window.__QB_FORM_LOCKED__ = true;
+        location.replace("index.html");
         return;
       }
       window.__QB_FORM_LOCKED__ = false;
+      const goMapIfDesktop = () => {
+        if (isDesktopShell()) location.replace("index.html");
+      };
+      const deskMq = window.matchMedia("(pointer: fine) and (hover: hover)");
+      const widthMq = window.matchMedia(phoneMq);
+      if (deskMq.addEventListener) deskMq.addEventListener("change", goMapIfDesktop);
+      else if (deskMq.addListener) deskMq.addListener(goMapIfDesktop);
+      if (widthMq.addEventListener) widthMq.addEventListener("change", goMapIfDesktop);
+      else if (widthMq.addListener) widthMq.addListener(goMapIfDesktop);
+      window.addEventListener("resize", goMapIfDesktop);
       function setAppH() {
         const vv = window.visualViewport;
         const h = vv ? Math.round(vv.height) : window.innerHeight;
@@ -2301,6 +2580,12 @@
       colorHint: document.getElementById("colorHint"),
       sumModal: document.getElementById("sumModal"),
       sumBoard: document.getElementById("sumBoard"),
+      sumEditBox: document.getElementById("sumEditBox"),
+      sumEditLote: document.getElementById("sumEditLote"),
+      sumEditMod: document.getElementById("sumEditMod"),
+      sumEditArea: document.getElementById("sumEditArea"),
+      sumEditAvance: document.getElementById("sumEditAvance"),
+      sumEditSave: document.getElementById("sumEditSave"),
       sumKpiLots: document.getElementById("sumKpiLots"),
       sumKpiArea: document.getElementById("sumKpiArea"),
       sumKpiAv: document.getElementById("sumKpiAv"),
@@ -2334,10 +2619,59 @@
     }
 
     function laborDisplay(s) {
-      // Título limpio en español (evita "AplicacióN")
+      const up = String(s || "").toUpperCase().trim();
+      if (up === "CERCOS VIVOS" || up === "CERCO VIVOS") return "Cercos vivos";
       return String(s || "")
         .toLocaleLowerCase("es")
         .replace(/(^|[\s\/\-])(\S)/g, (_, sep, ch) => sep + ch.toLocaleUpperCase("es"));
+    }
+
+    function isCercosLabor(v) {
+      const s = String(v || "")
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return s === "CERCOS VIVOS" || s === "CERCO VIVOS";
+    }
+
+    const CERCOS_FOOT_SET = new Set(
+      ((window.QB_CONFIG && QB_CONFIG.CERCOS_FOOT_LOTS) || []).map(x => String(x).toUpperCase().replace(/\s+/g, ""))
+    );
+
+    function lotHasCercosFoot(lot) {
+      if (!lot) return false;
+      const t = String(lot.tunel || "").toUpperCase().replace(/\s+/g, "");
+      const n = Number(lot.lote);
+      if (CERCOS_FOOT_SET.has(t + "|" + n + "|" + roundHa(lot.ha).toFixed(2))) return true;
+      return CERCOS_FOOT_SET.has(t + "|" + n);
+    }
+
+    function cercosCapHa(area, lot) {
+      const frac = lotHasCercosFoot(lot) ? 0.4 : 0.2;
+      const cap = roundHa(roundHa(area) * frac);
+      return cap > 0 ? cap : 0;
+    }
+
+    function laborUsableHa(area, laborReal, lot) {
+      const a = roundHa(area);
+      const labor = laborReal != null ? laborReal : (els.fLaborReal && els.fLaborReal.value);
+      return isCercosLabor(labor) ? cercosCapHa(a, lot) : a;
+    }
+
+    function currentUsableArea() {
+      const lot = byPos.get(els.fLote && els.fLote.value);
+      return laborUsableHa(getLotArea(), els.fLaborReal && els.fLaborReal.value, lot);
+    }
+
+    function fillHeightPct(av, area, lot) {
+      if (isCercosLabor(els.fLaborReal && els.fLaborReal.value)) {
+        const topCap = roundHa(area * 0.2);
+        const topAv = Math.min(roundHa(av), topCap);
+        return topCap > 0 ? (topAv / topCap) * 20 : 0;
+      }
+      return area > 0 ? Math.min(100, Math.max(0, (av / area) * 100)) : 0;
     }
 
     const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
@@ -2463,8 +2797,8 @@
         const tag = captured ? '<span class="opt-tag">En el día</span>' : "";
         return `<button type="button" class="picker-option${sel}${taken}" data-value="${item.value.replace(/"/g, "&quot;")}">
           <span class="opt-copy">
-            <b>${item.title}</b>
-            ${item.sub ? `<small>${item.sub}</small>` : ""}
+          <b>${item.title}</b>
+          ${item.sub ? `<small>${item.sub}</small>` : ""}
             ${tag}
           </span>
           <span class="opt-check" aria-hidden="true"></span>
@@ -2526,7 +2860,13 @@
     }
 
     function openPicker(picker) {
-      if (!picker || picker.trigger.disabled) return;
+      if (!picker || !picker.trigger) return;
+      if (picker !== pickers.laborReal && !hasLabor()) {
+        showToast("Selecciona la labor primero", "error");
+        if (pickers.laborReal) openPicker(pickers.laborReal);
+        return;
+      }
+      if (picker.trigger.disabled) return;
       activePicker = picker;
       picker.trigger.setAttribute("aria-expanded", "true");
       els.pickerTitle.textContent = picker.sheetTitle;
@@ -2588,7 +2928,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.2.4";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.36";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -2873,12 +3213,55 @@
         placeholder: "Seleccionar labor...",
         sheetTitle: "Elegir labor",
         searchable: false,
-        onChange: () => { updatePreview(); persistCurrentLot(); saveDraft(); }
+        onChange: () => {
+          syncLaborGate();
+          Object.keys(localLots).forEach(k => {
+            const lot = byPos.get(k);
+            if (!lot || !localLots[k]) return;
+            localLots[k].laborReal = els.fLaborReal.value;
+            localLots[k].avance = laborUsableHa(lot.ha, els.fLaborReal.value, lot);
+          });
+          updatePreview();
+          persistCurrentLot();
+          saveDraft();
+          renderLocalLots();
+        }
       })
     };
 
+    function hasLabor() {
+      return !!(els.fLaborReal && String(els.fLaborReal.value || "").trim());
+    }
+
+    function syncLaborGate() {
+      const ok = hasLabor();
+      document.body.classList.toggle("is-cercos", isCercosLabor(els.fLaborReal && els.fLaborReal.value));
+      document.getElementById("dayCard")?.classList.toggle("is-gated", !ok);
+      document.getElementById("progressCard")?.classList.toggle("is-gated", !ok);
+      if (els.fTotalJr) els.fTotalJr.disabled = !ok;
+      setPickerEnabled(pickers.modulo, ok);
+      if (!ok) {
+        setPickerEnabled(pickers.turno, false);
+        setPickerEnabled(pickers.lote, false);
+        return;
+      }
+      const modId = els.fModulo.value;
+      const turno = els.fTurno.value;
+      setPickerEnabled(pickers.turno, !!modId);
+      setPickerEnabled(pickers.lote, !!modId && !!turno);
+    }
+
     setPickerEnabled(pickers.turno, false);
     setPickerEnabled(pickers.lote, false);
+    syncLaborGate();
+
+    document.querySelectorAll(".gate-labor-btn").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        openPicker(pickers.laborReal);
+      });
+    });
 
     els.pickerClose.addEventListener("click", closePicker);
     els.pickerBackdrop.addEventListener("click", closePicker);
@@ -2958,10 +3341,9 @@
       setPickValue(pickers.modulo, modId, true);
       setPickValue(pickers.turno, turno, true);
       setPickValue(pickers.lote, lotPosKey(lot), true);
-      setPickerEnabled(pickers.turno, !!modId);
-      setPickerEnabled(pickers.lote, !!modId && !!turno);
       pickers.turno.placeholder = modId ? "Seleccionar turno..." : "Elige módulo";
       pickers.lote.placeholder = turno ? "Seleccionar lote..." : "Elige turno";
+      syncLaborGate();
       if (!silent) onLoteChange();
     }
 
@@ -2990,6 +3372,7 @@
         }
       }
       setFechaHoy();
+      syncLaborGate();
       onLoteChange();
       updateRatioFromJr();
       updatePreview();
@@ -3164,11 +3547,16 @@
       if (!lot) return false;
       const prev = localLots[posKey];
       const isCurrent = posKey === els.fLote.value;
-      const avance = extra.avance != null
+      const area = roundHa(lot.ha);
+      const laborReal = String(els.fLaborReal.value || (prev && prev.laborReal) || "");
+      let avance = extra.avance != null
         ? roundHa(extra.avance)
         : (isCurrent ? roundHa(els.fAvance && els.fAvance.value) : roundHa(prev && prev.avance));
-      const laborReal = String(els.fLaborReal.value || (prev && prev.laborReal) || "");
-      if (!laborReal && avance <= 0) return false;
+      const cap = laborUsableHa(area, laborReal, lot);
+      if (avance <= 0) avance = cap;
+      if (cap > 0 && avance > cap) avance = cap;
+      if (!laborReal) return false;
+      if (isCurrent && els.fAvance) els.fAvance.value = avance ? formatHa(avance) : "";
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       localLots[posKey] = {
         posKey,
@@ -3178,9 +3566,10 @@
         lote: lot.lote,
         variedad: (prev && prev.variedad) || els.fVariedad.value || "SEKOYA POP",
         laborReal,
-        area: roundHa(lot.ha),
+        area,
         avance,
         color: currentPaintColor(),
+        edited: extra.avance != null ? true : !!(prev && prev.edited),
         capturedAt: Date.now()
       };
       return true;
@@ -3257,7 +3646,7 @@
 
     function lotBoardHtml(items, activeKey, withDelete) {
       if (!items.length) {
-        return '<div class="board-empty">Aún no hay lotes. Completa el avance para ir agregando.</div>';
+        return '<div class="board-empty">Aún no hay lotes. Elige módulo, turno y lote.</div>';
       }
       const groups = {};
       items.forEach(item => {
@@ -3271,7 +3660,7 @@
         const color = currentPaintColor() || "#64748b";
         const rows = groups[id].slice().sort((a, b) => Number(a.lote) - Number(b.lote) || String(a.turno).localeCompare(String(b.turno)));
         const areaG = roundHa(rows.reduce((s, i) => s + (Number(i.area) || 0), 0));
-        return `<div class="mod-group">
+        return `<div class="mod-group" data-mod="${id}">
           <div class="mod-group-head">
             <b>${mod ? mod.label : ("M" + id)}</b>
             <span>${rows.length} · ${formatHa(areaG)} ha</span>
@@ -3280,28 +3669,34 @@
             ${rows.map(item => {
               const area = roundHa(item.area);
               const av = roundHa(item.avance);
-              const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              const pct = fillHeightPct(av, area);
               const on = item.posKey === activeKey ? " is-on" : "";
               const fill = normalizeHex(item.color) || currentPaintColor() || color;
               const cell = `<button type="button" class="mini-cell${on}" data-open="${item.posKey}">
                   <div class="mini-fill" style="background:${fill};height:${pct}%"></div>
                   <span class="t">${item.turno || "—"}</span>
-                  <span class="l">LOTE ${item.lote}</span>
+                  <span class="l">L${item.lote}</span>
                   <span class="h">${formatHa(area)}</span>
                 </button>`;
               if (!withDelete) return cell;
               return `<div class="mini-cell-wrap">
                 ${cell}
-                <button type="button" class="mini-del" data-del="${item.posKey}" aria-label="Eliminar lote ${item.lote}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                  <span>Quitar</span>
-                </button>
+                <div class="mini-actions">
+                  <button type="button" class="mini-edit" data-edit="${item.posKey}" aria-label="Editar avance lote ${item.lote}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                  <button type="button" class="mini-del" data-del="${item.posKey}" aria-label="Eliminar lote ${item.lote}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </div>
               </div>`;
             }).join("")}
           </div>
         </div>`;
       }).join("");
     }
+
+    let sumEditKey = null;
 
     function renderLocalLots() {
       const items = previewItems();
@@ -3312,6 +3707,7 @@
         if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
         if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
         if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+        if (sumEditKey) fillSumEditBox(sumEditKey);
       }
       updateRatioUI();
     }
@@ -3355,12 +3751,11 @@
       pickers.lote.items = [];
       setPickValue(pickers.turno, "", true);
       setPickValue(pickers.lote, "", true);
-      setPickerEnabled(pickers.turno, !!modId);
-      setPickerEnabled(pickers.lote, false);
       pickers.turno.placeholder = modId ? "Seleccionar turno..." : "Elige módulo";
       pickers.lote.placeholder = "Elige turno";
       setPickLabel(pickers.turno.labelEl, null, pickers.turno.placeholder);
       setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
+      syncLaborGate();
       clearLotDerived();
     }
 
@@ -3369,9 +3764,9 @@
       const turno = els.fTurno.value;
       pickers.lote.items = loteOptionsFor(modId, turno);
       setPickValue(pickers.lote, "", true);
-      setPickerEnabled(pickers.lote, !!modId && !!turno);
       pickers.lote.placeholder = turno ? "Seleccionar lote..." : "Elige turno";
       setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
+      syncLaborGate();
       clearLotDerived();
     }
 
@@ -3400,7 +3795,7 @@
         return;
       }
       els.fAvanceHint.textContent = capped
-        ? "Máximo " + area.toFixed(2) + " ha (área del lote)"
+        ? "Máximo " + area.toFixed(2) + " ha" + (isCercosLabor(els.fLaborReal && els.fLaborReal.value) ? " (sobrante 20%)" : " (área del lote)")
         : "Máx. " + area.toFixed(2) + " ha";
       els.fAvanceHint.classList.toggle("warn", capped);
     }
@@ -3408,7 +3803,7 @@
     /** Solo al salir del campo o al guardar: 2 decimales y tope del lote */
     function finalizeAvance(opts) {
       opts = opts || {};
-      const area = getLotArea();
+      const area = currentUsableArea();
       els.fAvance.removeAttribute("max");
       let typed = readAvanceTyped();
       if (typed == null) {
@@ -3446,10 +3841,9 @@
         if (saved) {
           if (saved.laborReal) setPickValue(pickers.laborReal, saved.laborReal, true);
           if (saved.variedad) setPickValue(pickers.variedad, saved.variedad, true);
-          els.fAvance.value = saved.avance ? formatHa(saved.avance) : "";
-        } else {
-          els.fAvance.value = "";
         }
+        const av = roundHa(saved && saved.avance) || roundHa(lot.ha);
+        if (els.fAvance) els.fAvance.value = av ? formatHa(av) : "";
         suppressPersist = false;
       }
       setAreaDisplay(lot.ha);
@@ -3471,7 +3865,7 @@
 
     function updatePreview() {
       const lot = byPos.get(els.fLote.value);
-      const area = getLotArea();
+      const area = currentUsableArea();
       const typed = readAvanceTyped();
       let av = typed == null ? 0 : roundHa(typed);
       if (area > 0 && av > area) av = area;
@@ -3487,13 +3881,13 @@
       if (els.previewStatus) {
         els.previewStatus.textContent = tot.n
           ? tot.n + " lote(s) · área " + formatHa(tot.area) + " ha"
-          : "Selecciona un lote y pon el avance";
+          : "Selecciona un lote";
       }
       renderLocalLots();
     }
 
     function capAvanceInput() {
-      const area = getLotArea();
+      const area = currentUsableArea();
       const typed = readAvanceTyped();
       if (typed == null || area <= 0) {
         updateAvanceHint(area, false);
@@ -3528,7 +3922,7 @@
       keys.forEach(posKey => {
         const lot = byPos.get(posKey);
         if (!lot) return;
-        const area = roundHa(lot.ha);
+        const area = laborUsableHa(lot.ha, els.fLaborReal && els.fLaborReal.value, lot);
         if (area <= 0) return;
         if (els.fLote.value === posKey && els.fAvance) els.fAvance.value = formatHa(area);
         persistLotAt(posKey, { avance: area });
@@ -3588,6 +3982,7 @@
       if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
       if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
       if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+      hideSumEditBox();
       if (els.sumBoard) els.sumBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, true);
       modal.removeAttribute("inert");
       modal.classList.add("open");
@@ -3599,6 +3994,7 @@
       if (!modal) return;
       const focused = document.activeElement;
       if (focused && modal.contains(focused) && typeof focused.blur === "function") focused.blur();
+      hideSumEditBox();
       modal.classList.remove("open");
       modal.setAttribute("inert", "");
       modal.setAttribute("aria-hidden", "true");
@@ -3609,17 +4005,166 @@
     els.sumModal?.addEventListener("click", e => {
       if (e.target.id === "sumModal") closeSumModal();
     });
+
+    function hideSumEditBox() {
+      const box = els.sumEditBox;
+      if (box) box.setAttribute("hidden", "");
+      els.sumBoard?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
+      sumEditKey = null;
+    }
+
+    function fillSumEditBox(posKey) {
+      const item = localLots[posKey];
+      const box = els.sumEditBox;
+      if (!item || !box) return false;
+      const mod = item.modulo != null ? (modById[item.modulo] || modById[Number(item.modulo)]) : null;
+      const area = areaForEdit(posKey);
+      if (els.sumEditLote) els.sumEditLote.textContent = (item.turno || "—") + " · LOTE " + item.lote;
+      if (els.sumEditMod) els.sumEditMod.textContent = (mod && mod.label) || ("M" + (item.modulo || "—"));
+      if (els.sumEditArea) els.sumEditArea.textContent = formatHa(area) + " ha";
+      if (els.sumEditAvance) {
+        els.sumEditAvance.value = formatHa(item.avance);
+        els.sumEditAvance.setAttribute("data-edit-input", posKey);
+        els.sumEditAvance.setAttribute("data-max-area", formatHa(area));
+        els.sumEditAvance.classList.remove("is-over");
+      }
+      if (els.sumEditSave) els.sumEditSave.setAttribute("data-edit-ok", posKey);
+      box.removeAttribute("hidden");
+      els.sumBoard?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
+      const cell = els.sumBoard?.querySelector('.mini-cell[data-open="' + posKey + '"]');
+      if (cell) cell.classList.add("is-on");
+      sumEditKey = posKey;
+      paintEditAvance(posKey, roundHa(item.avance), area);
+      return true;
+    }
+
+    function areaForEdit(posKey) {
+      const lot = byPos.get(posKey);
+      const item = localLots[posKey];
+      return roundHa((lot && lot.ha) || (item && item.area));
+    }
+
+    function clampEditAvance(raw, area) {
+      const lot = byPos.get(sumEditKey || (els.sumEditAvance && els.sumEditAvance.getAttribute("data-edit-input")));
+      const cap = laborUsableHa(area, els.fLaborReal && els.fLaborReal.value, lot);
+      let av = roundHa(raw);
+      if (av < 0) av = 0;
+      let capped = false;
+      if (cap > 0 && av > cap) {
+        av = cap;
+        capped = true;
+      }
+      return { av, capped, area: cap };
+    }
+
+    function paintEditAvance(posKey, av, area) {
+      const pct = fillHeightPct(av, area);
+      const sel = '.mini-cell[data-open="' + posKey + '"] .mini-fill';
+      els.sumBoard?.querySelectorAll(sel).forEach(el => { el.style.height = pct + "%"; });
+      els.lotBoard?.querySelectorAll(sel).forEach(el => { el.style.height = pct + "%"; });
+      const stored = roundHa(localLots[posKey] && localLots[posKey].avance);
+      const tot = totalsFromLots();
+      const live = roundHa(tot.av - stored + av);
+      if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(live) + " ha";
+    }
+
+    function liveSumAvance(opts) {
+      opts = opts || {};
+      const posKey = (els.sumEditAvance && els.sumEditAvance.getAttribute("data-edit-input")) || sumEditKey;
+      if (!posKey || !localLots[posKey] || !els.sumEditAvance) return false;
+      const area = areaForEdit(posKey);
+      const typed = String(els.sumEditAvance.value || "").trim();
+      if (!typed || typed === "." || typed === ",") {
+        paintEditAvance(posKey, 0, area);
+        els.sumEditAvance.classList.remove("is-over");
+        return false;
+      }
+      const { av, capped } = clampEditAvance(typed, area);
+      if (capped) {
+        els.sumEditAvance.value = formatHa(av);
+        if (opts.toast) showToast("Máximo " + formatHa(area) + " ha", "error");
+      }
+      els.sumEditAvance.classList.toggle("is-over", capped);
+      paintEditAvance(posKey, av, area);
+      if (av > 0) {
+        if (!persistLotAt(posKey, { avance: av })) {
+          localLots[posKey].avance = av;
+          localLots[posKey].edited = true;
+        }
+        saveLocalLotsMap();
+        const tot = totalsFromLots();
+        if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+        updateRatioUI();
+      }
+      if (opts.reformat && av > 0) els.sumEditAvance.value = formatHa(av);
+      return av > 0 ? av : 0;
+    }
+
+    function applyAvanceEdit(posKey, raw) {
+      if (!posKey || !localLots[posKey]) return false;
+      const area = areaForEdit(posKey);
+      const { av, capped } = clampEditAvance(raw, area);
+      if (!(av > 0)) {
+        showToast("Pon el avance en ha", "error");
+        return false;
+      }
+      persistLotAt(posKey, { avance: av });
+      saveLocalLotsMap();
+      sumEditKey = posKey;
+      renderLocalLots();
+      fillSumEditBox(posKey);
+      saveDraft();
+      showToast(
+        capped
+          ? "Avance limitado a " + formatHa(av) + " ha"
+          : "Avance " + formatHa(av) + " ha",
+        capped ? "error" : null
+      );
+      return true;
+    }
+
     function onLotBoardClick(e) {
+      const edit = e.target.closest("[data-edit]");
+      if (edit) {
+        e.preventDefault();
+        e.stopPropagation();
+        const posKey = edit.getAttribute("data-edit");
+        if (sumEditKey === posKey && els.sumEditBox && !els.sumEditBox.hasAttribute("hidden")) {
+          hideSumEditBox();
+          return;
+        }
+        fillSumEditBox(posKey);
+        if (els.sumEditAvance) {
+          els.sumEditAvance.focus();
+          els.sumEditAvance.select();
+        }
+        return;
+      }
       const del = e.target.closest("[data-del]");
       if (del) {
         e.preventDefault();
         e.stopPropagation();
-        removeLocalLot(del.getAttribute("data-del"));
+        const key = del.getAttribute("data-del");
+        if (sumEditKey === key) hideSumEditBox();
+        removeLocalLot(key);
         return;
       }
       const open = e.target.closest("[data-open]");
       if (open) openLocalLot(open.getAttribute("data-open"));
     }
+    els.sumEditSave?.addEventListener("click", () => {
+      const posKey = els.sumEditSave.getAttribute("data-edit-ok") || sumEditKey;
+      applyAvanceEdit(posKey, els.sumEditAvance && els.sumEditAvance.value);
+    });
+    els.sumEditAvance?.addEventListener("input", () => liveSumAvance());
+    els.sumEditAvance?.addEventListener("change", () => liveSumAvance({ reformat: true, toast: true }));
+    els.sumEditAvance?.addEventListener("blur", () => liveSumAvance({ reformat: true, toast: true }));
+    els.sumEditAvance?.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const posKey = els.sumEditAvance.getAttribute("data-edit-input") || sumEditKey;
+      applyAvanceEdit(posKey, els.sumEditAvance.value);
+    });
     els.lotBoard?.addEventListener("click", onLotBoardClick);
     els.sumBoard?.addEventListener("click", onLotBoardClick);
     document.addEventListener("keydown", e => {
@@ -3645,6 +4190,7 @@
       setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
       els.fAvance.value = "";
       if (els.fTotalJr) els.fTotalJr.value = "";
+      syncLaborGate();
       if (els.fRatio) els.fRatio.value = "";
       if (els.fColor) els.fColor.value = "";
       setPaintColor(currentPaintColor());
@@ -3764,7 +4310,8 @@
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       let avance = roundHa(item.avance);
       const area = roundHa(lot.ha);
-      if (area > 0 && avance > area) avance = area;
+      const cap = laborUsableHa(area, laborReal, lot);
+      if (cap > 0 && avance > cap) avance = cap;
       return {
         posKey: item.posKey,
         sem: Number(els.fSem.value) || currentWeek,
@@ -3778,13 +4325,20 @@
         area,
         avance,
         totalJr: 0,
-        color: currentPaintColor()
+        color: currentPaintColor(),
+        editar: true
       };
     }
 
     let savingForm = false;
     async function saveForm() {
       if (savingForm) return;
+      if (!hasLabor()) {
+        showToast("Selecciona la labor real", "error");
+        openPicker(pickers.laborReal);
+        return;
+      }
+      Object.keys(localLots).forEach(k => persistLotAt(k));
       persistCurrentLot();
       const items = localLotsEntries();
       const records = items.map(recordFromItem).filter(Boolean);
@@ -3804,12 +4358,7 @@
           openPicker(pickers.lote);
           return;
         }
-        if (!els.fLaborReal.value) {
-          showToast("Selecciona la labor real", "error");
-          openPicker(pickers.laborReal);
-          return;
-        }
-        showToast("Captura el lote o completa labor y avance", "error");
+        showToast("Captura el lote para guardar el avance", "error");
         return;
       }
 
@@ -3974,7 +4523,7 @@
       resetForm(true, true);
       showToast("Nuevo día · detalle en 0", null);
     } else {
-      loadDraft();
+    loadDraft();
     }
     setFechaHoy();
     updateStatus();

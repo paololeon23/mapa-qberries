@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -15,14 +15,20 @@
     /* App real en celular = form.html (QB Labores). El mapa solo en PWA o con ?mapa=1 */
     (function () {
       try {
-        var mobile = window.matchMedia("(max-width: 900px), ((max-height: 520px) and (max-width: 1024px))").matches;
-        var pwa = window.matchMedia("(display-mode: standalone)").matches
-          || window.matchMedia("(display-mode: fullscreen)").matches
-          || window.navigator.standalone === true;
-        var allowMap = /(?:\?|&)mapa=1\b/.test(location.search) || /(?:\?|&)from=app\b/.test(location.search);
-        if (mobile && !pwa && !allowMap) {
-          location.replace("./form.html");
+        var mq = "(max-width: 900px), ((max-height: 520px) and (max-width: 1024px))";
+        function shouldForm() {
+          var mobile = window.matchMedia(mq).matches;
+          var pwa = window.matchMedia("(display-mode: standalone)").matches
+            || window.matchMedia("(display-mode: fullscreen)").matches
+            || window.navigator.standalone === true;
+          var allowMap = /(?:\?|&)mapa=1\b/.test(location.search) || /(?:\?|&)from=app\b/.test(location.search);
+          return mobile && !pwa && !allowMap;
         }
+        if (shouldForm()) location.replace("./form.html");
+        var mql = window.matchMedia(mq);
+        var go = function () { if (shouldForm()) location.replace("./form.html"); };
+        if (mql.addEventListener) mql.addEventListener("change", go);
+        else if (mql.addListener) mql.addListener(go);
       } catch (e) { /* ok */ }
     })();
   </script>
@@ -261,44 +267,46 @@
     /* --- Stats ribbon --- */
     .sidebar {
       flex: 0 0 auto;
-      background: #f4f7f5;
-      border-bottom: 1px solid #d6e0da;
-      padding: 0.65rem 1.25rem;
+      background: #eef3f0;
+      border-bottom: 1px solid #dce6e0;
+      padding: 0.7rem 1.15rem;
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      grid-template-columns: minmax(0, 25%) minmax(0, 50%) minmax(0, 15%) minmax(0, 10%);
       align-items: stretch;
-      gap: 0.75rem;
+      gap: 0.7rem;
       overflow: hidden;
     }
     .side-block {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 0.35rem;
+      gap: 0.45rem;
       min-width: 0;
       background: #fff;
-      border: 1px solid #d6e0da;
-      border-radius: 12px;
-      padding: 0.45rem 0.7rem 0.5rem;
-      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.04);
+      border: 1px solid #e4ece7;
+      border-radius: 16px;
+      padding: 0.55rem 0.75rem 0.6rem;
+      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.035);
     }
     .side-block.kpi-block {
-      flex: 0 0 auto;
+      min-width: 0;
+      overflow: hidden;
     }
     .side-block.mod-block {
       min-width: 0;
-      overflow: visible;
+      overflow: hidden;
+      justify-content: flex-start;
     }
     .side-block h2 {
       margin: 0;
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #64748b;
+      color: #94a3b8;
       white-space: nowrap;
-      padding-bottom: 0.2rem;
-      border-bottom: 1px solid #eef3f0;
+      padding: 0;
+      border: 0;
     }
     .kpi-head-row {
       display: flex;
@@ -346,6 +354,64 @@
     }
     .pend-chip-desk.show { display: inline-flex; }
 
+    .week-wrap {
+      max-height: 8.4rem;
+      overflow: auto;
+      scrollbar-width: thin;
+      border: 1px solid #1e4e8c;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .week-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    .week-table th {
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fff;
+      background: #1e4e8c;
+      text-align: left;
+      padding: 0.32rem 0.45rem;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .week-table td {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      padding: 0.22rem 0.45rem;
+      white-space: nowrap;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .week-table td.num,
+    .week-table th.num {
+      text-align: right;
+    }
+    .week-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    .week-table tfoot td {
+      border-top: 2px solid #1e4e8c;
+      border-bottom: 0;
+      font-weight: 800;
+      background: #eef3f9;
+      color: #0f172a;
+      padding: 0.32rem 0.45rem;
+    }
+    .week-table tfoot td.ratio {
+      color: #c41e3a;
+    }
+    .week-table .is-empty td {
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: center;
+      padding: 0.55rem 0.35rem;
+      border: 0;
+    }
     .kpis {
       display: flex;
       gap: 0.4rem;
@@ -387,72 +453,94 @@
     }
 
     .mod-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+      gap: 0.45rem;
+      align-items: stretch;
+      flex: 1 1 auto;
+      min-height: 0;
       min-width: 0;
-      overflow: visible;
     }
     .leg-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.32rem;
-      padding: 0.28rem 0.55rem;
-      border-radius: 999px;
-      border: 1px solid #e2ebe6;
-      background: #f7fbf8;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0.12rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 12px;
+      border: 0;
+      background: #f4f7f5;
       cursor: pointer;
-      transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
-      white-space: nowrap;
-      flex: 0 0 auto;
+      transition: background .15s, box-shadow .15s, color .15s;
+      min-width: 0;
+      height: 100%;
       user-select: none;
+      overflow: hidden;
     }
     .leg-item:hover {
       background: #fff;
-      border-color: #2f8a58;
+      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.06);
     }
     .leg-item.active {
       background: #ecfdf3;
-      border-color: var(--qb-green);
-      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.18);
+      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.14);
       color: #14532d;
     }
     .leg-item.active b { color: #14532d; }
-    .leg-item.active .ha { color: #3f7a52; }
+    .leg-item.active .ha { color: #14532d; }
+    .leg-item .mod-top {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-width: 0;
+      width: 100%;
+    }
     .leg-swatch {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.08);
+      border: 0;
       flex-shrink: 0;
     }
     .leg-item b {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 800;
-      color: #0f3327;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .leg-item .ha {
-      font-size: 0.64rem;
-      font-weight: 600;
-      color: #64748b;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #0f3327;
       font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .leg-item .ha small {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-left: 0.15rem;
+    }
+    .leg-item .lots {
+      font-size: 0.62rem;
+      font-weight: 650;
+      color: #64748b;
+      white-space: nowrap;
     }
     @media (max-width: 1280px) {
       .mod-list {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        padding-bottom: 0.1rem;
+        grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+        gap: 0.32rem;
       }
-      .mod-list::-webkit-scrollbar { height: 3px; }
-      .mod-list::-webkit-scrollbar-thumb {
-        background: #c5d4cc;
-        border-radius: 99px;
-      }
-      .leg-item .ha { display: none; }
+      .leg-item { padding: 0.42rem 0.5rem; }
+      .leg-item .ha { font-size: 0.86rem; }
     }
     @media (max-width: 980px) {
       .side-block h2 { font-size: 0.55rem; }
@@ -465,67 +553,102 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 0.35rem;
+      gap: 0.45rem;
       background: #fff;
-      border: 1px solid #d6e0da;
-      border-radius: 12px;
-      padding: 0.45rem 0.55rem 0.5rem;
-      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.04);
-      flex-shrink: 0;
+      border: 1px solid #e4ece7;
+      border-radius: 16px;
+      padding: 0.55rem 0.6rem 0.55rem;
+      box-shadow: 0 1px 2px rgba(15, 51, 39, 0.035);
+      min-width: 0;
+      overflow: hidden;
     }
     .labor-actions h2,
     .share-actions h2 {
       margin: 0;
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #64748b;
+      color: #94a3b8;
       white-space: nowrap;
-      padding-bottom: 0.2rem;
-      border-bottom: 1px solid #eef3f0;
+      padding: 0;
+      border: 0;
     }
     .labor-actions-row,
     .share-actions-row {
-      display: inline-flex;
-      align-items: center;
+      display: grid;
       gap: 0.35rem;
-      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .labor-actions-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .share-actions-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .labor-actions .btn,
     .share-actions .btn {
-      height: 32px;
-      min-width: 32px;
-      padding: 0 0.65rem;
-      font-size: 0.7rem;
-      gap: 0.28rem;
+      height: auto;
+      min-height: 52px;
+      min-width: 0;
+      padding: 0.38rem 0.2rem 0.4rem;
+      flex-direction: column;
+      gap: 0.22rem;
+      border-radius: 12px;
+      border: 1px solid #e8eeeb;
+      background: #f7fbf8;
+      color: #334155;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .labor-actions .btn:hover,
+    .share-actions .btn:hover {
+      background: #fff;
+      border-color: #cbd5d1;
+      color: #0f3327;
     }
     .labor-actions .btn svg,
     .share-actions .btn svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
     }
     .labor-actions .btn-text,
     .share-actions .btn-text {
-      display: inline;
+      display: block;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
-    @media (max-width: 1180px) {
-      .labor-actions .btn-text,
-      .share-actions .btn-text { display: none; }
-      .labor-actions .btn,
-      .share-actions .btn {
-        padding: 0;
-        width: 34px;
-        justify-content: center;
-      }
+    .labor-actions .btn-labor {
+      background: #fff1f1;
+      border-color: #fecaca;
+      color: #b42318;
     }
-    .share-actions .btn.is-image:hover { border-color: #1E88E5; color: #1E88E5; }
-    .share-actions .btn.is-pdf:hover { border-color: var(--qb-red); color: var(--qb-red); }
-    .share-actions .btn.is-excel:hover { border-color: #43A047; color: #43A047; }
+    .labor-actions .btn-labor svg {
+      width: 22px;
+      height: 22px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--qb-red);
+      color: #fff;
+      stroke: #fff;
+    }
+    .labor-actions .btn-labor:hover {
+      background: #ffe4e4;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+    .share-actions .btn.is-image:hover { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+    .share-actions .btn.is-pdf:hover { border-color: #fca5a5; color: #b91c1c; background: #fef2f2; }
+    .share-actions .btn.is-excel:hover { border-color: #86efac; color: #15803d; background: #f0fdf4; }
     .labor-actions .btn.is-filter.has-active {
       background: #ecfdf3;
-      border-color: #2f8a58;
-      color: #0f3327;
+      border-color: #bbf7d0;
+      color: #14532d;
       box-shadow: 0 0 0 2px rgba(47, 138, 88, 0.12);
     }
 
@@ -790,6 +913,105 @@
       transition: height .35s cubic-bezier(.2,.8,.2,1);
     }
     .cell .t, .cell .l, .cell .h { position: relative; z-index: 1; }
+    .grid.is-cercos .cell:not(.empty) {
+      overflow: hidden;
+      padding: 0;
+      background: #fff !important;
+      border-color: #111 !important;
+      box-shadow: none;
+    }
+    .grid.is-cercos .cell:not(.empty).m1,
+    .grid.is-cercos .cell:not(.empty).m2,
+    .grid.is-cercos .cell:not(.empty).m3,
+    .grid.is-cercos .cell:not(.empty).m4,
+    .grid.is-cercos .cell:not(.empty).m5,
+    .grid.is-cercos .cell:not(.empty).m10 {
+      background: #fff !important;
+      border-color: #111 !important;
+    }
+    .grid.is-cercos .cell:not(.empty) .t,
+    .grid.is-cercos .cell:not(.empty) .l,
+    .grid.is-cercos .cell:not(.empty) .h {
+      color: #111 !important;
+      font-size: calc(var(--fs-cell, 11px) * 0.84);
+    }
+    .grid.is-cercos .cell:not(.empty)::before {
+      content: "";
+      flex: 0 0 20%;
+      order: -1;
+      width: 100%;
+      background: transparent;
+      border: 0;
+      pointer-events: none;
+    }
+    .grid.is-cercos .cell:not(.empty)::after {
+      content: "";
+      position: absolute;
+      top: 20%;
+      left: 0;
+      right: 0;
+      border-top: var(--cell-border, 1px) solid #111;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .grid.is-cercos .cell-fill {
+      top: 0;
+      bottom: auto;
+      opacity: 0.88;
+    }
+    .grid.is-cercos .cell.labor-done,
+    .grid.is-cercos .cell.labor-progress {
+      box-shadow: none;
+    }
+    .grid.is-cercos .cell:hover {
+      box-shadow: none;
+    }
+    .grid.is-cercos .cell.active {
+      outline: 1px solid var(--multi-color, #111);
+      box-shadow: none;
+    }
+    .grid.is-cercos .cell.multi-selected {
+      outline: 1px solid var(--multi-color, #111);
+      box-shadow: none;
+    }
+    .grid.is-cercos .cell.multi-selected .cell-fill {
+      top: 0;
+      bottom: auto;
+      opacity: 0.88;
+    }
+    .grid.is-cercos .cell.has-cercos-foot .cercos-foot {
+      flex: 0 0 20%;
+      order: 99;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+    .grid.is-cercos .cell.has-cercos-foot .cercos-close {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 20%;
+      height: 0;
+      border-top: var(--cell-border, 1px) solid #111;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .grid.is-cercos .cell-fill-foot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.88;
+    }
+    .grid:not(.is-cercos) .cercos-foot,
+    .grid:not(.is-cercos) .cercos-close,
+    .grid:not(.is-cercos) .cell-fill-foot {
+      display: none;
+    }
     .cell.labor-progress { box-shadow: inset 0 0 0 1px rgba(15, 51, 39, 0.12); }
     .cell.labor-done { box-shadow: inset 0 0 0 2px var(--forest-soft); }
     .cell.labor-flash {
@@ -801,70 +1023,177 @@
       30% { box-shadow: inset 0 0 0 3px var(--forest), 0 0 0 4px rgba(47, 138, 88, 0.35); }
     }
 
-    .lot-preview {
-      grid-column: 1 / -1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.55rem;
-      margin-top: 0.15rem;
-      padding: 0.85rem 0.75rem 0.9rem;
-      border: 1.5px solid #d6e0da;
-      border-radius: 14px;
-      background: #f4f7f5;
-    }
-    .lot-preview > label {
-      display: block;
-      width: 100%;
-      margin: 0;
-      font-size: 0.62rem;
+    .ratio-formula {
+      margin: 0.2rem 0 0;
+      font-size: 0.78rem;
       font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: #64748b;
-      text-align: left;
+      color: #1a5c40;
+      font-variant-numeric: tabular-nums;
     }
-    .lot-preview-cell {
-      position: relative;
-      width: 100%;
-      max-width: 220px;
-      height: 96px;
-      margin: 0.15rem auto 0.1rem;
-      background: #fff;
-      border: 1.5px solid #c5d4cc;
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.32rem;
+    }
+    .color-swatch {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      overflow: hidden;
-      border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(15, 51, 39, 0.05);
+      gap: 0.18rem;
+      min-height: 48px;
+      padding: 0.32rem 0.1rem;
+      border-radius: 12px;
+      border: 1px solid #e2ebe6;
+      background: #f7fbf8;
+      cursor: pointer;
+      color: #0f3327;
     }
-    .lot-preview-cell .cell-fill { opacity: 0.85; }
-    .lot-preview-cell .t,
-    .lot-preview-cell .l,
-    .lot-preview-cell .h {
-      font-size: 13px;
+    .color-swatch .sw-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .color-swatch small {
+      font-size: 0.6rem;
       font-weight: 800;
-      letter-spacing: 0.03em;
       text-transform: uppercase;
+    }
+    .color-swatch.is-on {
+      border-color: #2f8a58;
+      box-shadow: 0 0 0 2px rgba(109, 179, 68, 0.18);
+      background: #ecfdf3;
+    }
+    .color-swatch.is-locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: grayscale(0.25);
+    }
+    .color-swatch.is-future {
+      opacity: 0.22;
+      filter: grayscale(0.55);
+    }
+    .desk-lot-board {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 0.15rem;
+      text-align: left;
+    }
+    .desk-lot-board .mod-group {
+      padding: 0.5rem;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e8eeeb;
+    }
+    .desk-lot-board .mod-group-head {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .desk-lot-board .mod-group-head b {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--forest);
+    }
+    .desk-lot-board .mod-group-head span {
+      margin-left: auto;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .desk-lot-board .mod-lots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.32rem;
+    }
+    .desk-lot-board .mini-cell {
+      position: relative;
+      overflow: hidden;
+      flex: 1 1 calc(25% - 0.28rem);
+      min-width: 68px;
+      min-height: 70px;
+      border-radius: 10px;
+      border: 2px solid #d1d5db;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.28rem 0.15rem 0.3rem;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .desk-lot-board .mini-cell.is-on {
+      box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.12);
+    }
+    .desk-lot-board .mod-lots[data-n="1"] .mini-cell {
+      flex: 0 1 34%;
+      min-width: 88px;
+    }
+    .desk-lot-board .mod-lots[data-n="2"] .mini-cell {
+      flex: 1 1 calc(50% - 0.2rem);
+    }
+    .desk-lot-board .mini-fill {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 0%;
+      opacity: 0.72;
+    }
+    .desk-lot-board .mini-cell .t,
+    .desk-lot-board .mini-cell .l,
+    .desk-lot-board .mini-cell .h {
       position: relative;
       z-index: 1;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
       line-height: 1.15;
+      color: #0b0f0d;
     }
-    .lot-preview-cell .l {
-      font-size: 15px;
-      margin: 0.1rem 0;
+    .desk-lot-board .mini-cell .l { font-size: 0.66rem; }
+    .desk-lot-board .board-empty {
+      margin: 0;
+      text-align: center;
+      padding: 0.85rem 0.4rem;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
     .lot-preview-status {
-      margin: 0.15rem 0 0;
+      margin: 0.4rem 0 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--forest-soft);
+    }
+    .field-grid.is-gated {
+      position: relative;
+    }
+    .field-grid.is-gated > .field.full:first-child {
+      position: relative;
+      z-index: 5;
+    }
+    .field-grid.is-gated::after {
+      content: "Primero elige la labor";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 4.5rem;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.84);
+      color: #0f3327;
+      font-size: 0.88rem;
+      font-weight: 800;
       text-align: center;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #1a5c40;
-      line-height: 1.35;
-      max-width: 100%;
     }
 
     .save-toast {
@@ -1282,6 +1611,52 @@
       50% { transform: scale(1.02); }
     }
 
+    .cell-del-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10020;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .cell-del-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .cell-del-card {
+      width: min(380px, 100%);
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d6e0da;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.22);
+      overflow: hidden;
+    }
+    .cell-del-head {
+      padding: 0.9rem 1rem 0.7rem;
+      background: #0f3327;
+      color: #fff;
+    }
+    .cell-del-head h3 { margin: 0; font-size: 0.95rem; }
+    .cell-del-head p { margin: 0.2rem 0 0; font-size: 0.72rem; opacity: 0.75; }
+    .cell-del-body {
+      padding: 1rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.45;
+    }
+    .cell-del-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0 1rem 1rem;
+    }
+    .cell-del-actions .btn { flex: 1; }
+
     /* Confirm clear modal */
     .confirm-modal {
       position: fixed;
@@ -1611,13 +1986,48 @@
     }
     .drawer-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
 
-    .drawer-body {
+    .labor-form {
       flex: 1 1 auto;
       min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      padding: 0.75rem 1rem 1rem;
+      padding: 0.9rem 1.05rem 1.1rem;
       scrollbar-width: thin;
+      background: #f8fafc;
+    }
+    .labor-form .field input,
+    .labor-form .cselect-trigger {
+      height: 42px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #0f172a;
+      box-shadow: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .labor-form .field input:focus,
+    .labor-form .cselect-trigger:focus,
+    .labor-form .cselect.open .cselect-trigger {
+      border-color: #1e4e8c;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(30, 78, 140, 0.14);
+    }
+    .labor-form .field input[readonly],
+    .labor-form .cselect-trigger:disabled,
+    .labor-form .cselect-trigger.is-disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .labor-form .field label {
+      color: #334155;
+      letter-spacing: 0.04em;
     }
     .field-grid {
       display: grid;
@@ -1627,6 +2037,50 @@
     }
     .field { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
     .field.full { grid-column: 1 / -1; }
+    .desk-day-meta {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.15rem 0.85rem;
+      padding: 0.7rem 0.9rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .desk-day-meta .meta-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+      min-width: 0;
+    }
+    .desk-day-meta .meta-cell:first-child {
+      padding-right: 0.85rem;
+    }
+    .desk-day-meta .meta-cell + .meta-cell {
+      padding-left: 0.85rem;
+      border-left: 1px solid #e2e8f0;
+    }
+    .desk-day-meta .meta-k {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .desk-day-meta .meta-v {
+      font-size: 1.02rem;
+      font-weight: 800;
+      color: #0f3327;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .desk-day-meta .meta-v.is-date {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: none;
+      white-space: normal;
+    }
     .lote-label-row {
       display: flex;
       align-items: center;
@@ -1662,6 +2116,7 @@
       width: 100%;
       height: auto;
       min-height: 34px;
+      margin-top: 0.4rem;
       padding: 0.45rem 2rem 0.45rem 0.6rem;
       white-space: normal;
       line-height: 1.25;
@@ -2055,6 +2510,7 @@
       position: relative;
       width: 100%;
     }
+    .cselect.open { z-index: 20; }
     .cselect-trigger {
       width: 100%;
       height: 34px;
@@ -2112,7 +2568,10 @@
       padding: 0.25rem;
     }
     .cselect-option {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
       width: 100%;
       border: 0;
       background: transparent;
@@ -2137,6 +2596,112 @@
     .cselect-option.selected {
       background: #0f3327;
       color: #fff;
+    }
+    .cselect-option.is-captured {
+      background: #f3faf6;
+    }
+    .cselect-option.is-captured.selected {
+      background: #0f3327;
+    }
+    .cselect-option b {
+      font-size: inherit;
+      font-weight: 700;
+    }
+    .cselect-option .opt-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+    }
+    .cselect-option .opt-tag {
+      display: inline-block;
+      width: fit-content;
+      padding: 0.08rem 0.38rem;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .cselect-option.selected .opt-tag {
+      background: #ecfdf3;
+      color: #14532d;
+    }
+    .cselect.is-cards .cselect-list {
+      max-height: min(52vh, 340px);
+      padding: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.38rem;
+    }
+    .cselect.is-cards .cselect-option {
+      align-items: center;
+      padding: 0.72rem 0.8rem;
+      border-radius: 14px;
+      border: 1px solid #e8eeeb;
+      background: #fff;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .cselect.is-cards .cselect-option:hover {
+      background: #f8faf9;
+      border-color: #d6e0da;
+    }
+    .cselect.is-cards .cselect-option.selected,
+    .cselect.is-cards .cselect-option.is-captured {
+      background: #ecfdf3;
+      border-color: #86efac;
+      color: #0f3327;
+    }
+    .cselect.is-cards .cselect-option b {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #0f3327;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .cselect.is-cards .cselect-option small {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: none;
+    }
+    .cselect.is-cards .opt-check {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      background: #fff;
+      position: relative;
+    }
+    .cselect.is-cards .cselect-option.selected .opt-check,
+    .cselect.is-cards .cselect-option.is-captured .opt-check {
+      border-color: #0f3327;
+      background: #0f3327;
+    }
+    .cselect.is-cards .cselect-option.selected .opt-check::after,
+    .cselect.is-cards .cselect-option.is-captured .opt-check::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 3px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-left: 0;
+      transform: rotate(45deg);
+    }
+    .cselect.is-cards .opt-tag {
+      margin-top: 0.28rem;
+      background: #dcfce7;
+      color: #166534;
     }
     .cselect-empty {
       padding: 0.75rem;
@@ -2448,7 +3013,8 @@
     /* Celular: mapa + panel operativo (resumen, módulos, actualizar) */
     .mob-chrome,
     .mob-detail,
-    .mob-filters {
+    .mob-filters,
+    .mob-zoom {
       display: none;
     }
     /* Móvil: portrait ≤768px o landscape de celular (poco alto + ancho ≤1024) */
@@ -2468,7 +3034,8 @@
       .labor-drawer,
       .drawer-backdrop,
       .progress-modal,
-      .confirm-modal {
+      .confirm-modal,
+      .cell-del-modal {
         display: none !important;
       }
       /* Toast visible también en móvil */
@@ -2521,13 +3088,14 @@
       }
       .mob-brand-copy strong {
         display: block;
-        font-size: 0.82rem;
+        font-size: clamp(0.6rem, 3.15vw, 0.74rem);
         font-weight: 800;
         color: #0f3327;
-        line-height: 1.15;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.22;
+        letter-spacing: -0.03em;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
       }
       .mob-refresh {
         flex-shrink: 0;
@@ -2703,9 +3271,46 @@
         font-size: 0.54rem;
       }
       .mob-foot-bar strong { color: #0f3327; font-weight: 800; }
+      .map-wrap > .mob-zoom {
+        display: flex;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 86;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0.28rem;
+        margin: 0;
+        padding: 0.28rem;
+        width: auto;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid #e2ebe6;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(15, 51, 39, 0.14);
+        backdrop-filter: blur(12px);
+        pointer-events: auto;
+      }
+      .map-wrap > .mob-zoom button {
+        width: 34px;
+        height: 34px;
+        border: 1px solid #e2ebe6;
+        border-radius: 10px;
+        background: #fff;
+        color: #0f3327;
+        font: inherit;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1;
+        box-shadow: 0 1px 4px rgba(15, 51, 39, 0.06);
+      }
+      .map-wrap > .mob-zoom button:active { transform: scale(0.94); background: #f3f4f6; }
+      .map-wrap > .mob-zoom button.mob-fit { font-size: 0.84rem; }
       .map-wrap {
         flex: 1;
         min-height: 0;
+        position: relative;
         padding: 6px;
         border-radius: 0;
         touch-action: none;
@@ -2734,6 +3339,18 @@
         line-height: 1;
         overflow: visible;
       }
+      .grid.is-cercos .cell:not(.empty) {
+        overflow: hidden;
+        padding: 0;
+        background: #fff !important;
+        border-color: #111 !important;
+      }
+      .grid.is-cercos .cell:not(.empty)::before {
+        flex: 0 0 20%;
+        order: -1;
+        background: transparent;
+        border: 0;
+      }
       .cell .t,
       .cell .l,
       .cell .h {
@@ -2760,80 +3377,86 @@
       }
       .mob-detail {
         display: block;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 75;
-        transform: translateY(105%);
-        transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
+        position: absolute;
+        left: 0.5rem;
+        top: 3.15rem;
+        right: auto;
+        bottom: auto;
+        width: min(176px, 52vw);
+        z-index: 85;
+        transform: translateY(-6px);
+        opacity: 0;
         pointer-events: none;
+        transition: transform 0.2s ease, opacity 0.2s ease;
       }
       .mob-detail.open {
-        transform: translateY(0);
+        transform: none;
+        opacity: 1;
         pointer-events: auto;
       }
       .mob-detail-card {
         background: #fff;
-        border-radius: 18px 18px 0 0;
-        padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
-        box-shadow: 0 -12px 40px rgba(15, 51, 39, 0.16);
-        border-top: 1px solid #e2ebe6;
+        border-radius: 12px;
+        padding: 0.45rem 0.5rem 0.5rem;
+        box-shadow: 0 8px 22px rgba(15, 51, 39, 0.16);
+        border: 1px solid #e2ebe6;
       }
       .mob-detail-head {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 0.65rem;
-        margin-bottom: 0.65rem;
+        gap: 0.35rem;
+        margin-bottom: 0.35rem;
       }
       .mob-detail-pill {
         display: inline-flex;
         align-items: center;
-        padding: 0.2rem 0.55rem;
+        padding: 0.1rem 0.38rem;
         border-radius: 999px;
-        font-size: 0.68rem;
+        font-size: 0.55rem;
         font-weight: 800;
         color: #fff;
       }
       .mob-detail-head h3 {
-        margin: 0.35rem 0 0;
-        font-size: 1rem;
+        margin: 0.12rem 0 0;
+        font-size: 0.72rem;
         font-weight: 800;
         color: #0f3327;
+        line-height: 1.2;
       }
       .mob-detail-close {
-        width: 32px;
-        height: 32px;
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
         border: 1px solid #e2ebe6;
-        border-radius: 10px;
+        border-radius: 7px;
         background: #f7fbf8;
         color: #64748b;
-        font-size: 1.2rem;
+        font-size: 0.95rem;
         line-height: 1;
         cursor: pointer;
       }
       .mob-detail-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.45rem;
+        gap: 0.25rem;
       }
       .mob-detail-grid div {
         background: #f7fbf8;
         border: 1px solid #e2ebe6;
-        border-radius: 10px;
-        padding: 0.45rem 0.55rem;
+        border-radius: 8px;
+        padding: 0.22rem 0.32rem;
       }
       .mob-detail-grid dt {
-        font-size: 0.58rem;
+        font-size: 0.48rem;
         font-weight: 700;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
         color: #64748b;
       }
       .mob-detail-grid dd {
-        margin: 0.15rem 0 0;
-        font-size: 0.82rem;
+        margin: 0.08rem 0 0;
+        font-size: 0.66rem;
         font-weight: 800;
         color: #0f3327;
       }
@@ -2856,13 +3479,75 @@
         right: 0;
         bottom: 0;
         z-index: 72;
-        --mob-filters-h: 11.25rem;
+        --mob-filters-h: 4.75rem;
         padding: 0.55rem 0.85rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
         background: rgba(255, 255, 255, 0.97);
         border-top: 1px solid #e2ebe6;
         box-shadow: 0 -8px 28px rgba(15, 51, 39, 0.1);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
+      }
+      .mob-filters-open {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        min-height: 48px;
+        padding: 0.55rem 0.8rem;
+        border: 1.5px solid #d6e0da;
+        border-radius: 14px;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mob-filters-open:active { background: #f4f7f5; }
+      .mob-filters-k {
+        flex-shrink: 0;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #0f3327;
+      }
+      .mob-filters-sum {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #475569;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mob-filters-chevron {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: #0f3327;
+      }
+      .mob-week-wrap {
+        display: block;
+        margin-top: 0.5rem;
+        max-height: 7.4rem;
+        overflow: auto;
+        scrollbar-width: thin;
+        border: 1px solid #1e4e8c;
+        border-radius: 8px;
+        background: #fff;
+        -webkit-overflow-scrolling: touch;
+      }
+      .mob-week-wrap .week-table th {
+        font-size: 0.56rem;
+        padding: 0.28rem 0.4rem;
+      }
+      .mob-week-wrap .week-table td {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+      }
+      .mob-week-wrap .week-table tfoot td {
+        padding: 0.28rem 0.4rem;
       }
       .mob-filters-label {
         margin: 0 0 0.35rem;
@@ -2873,13 +3558,37 @@
         color: #64748b;
       }
       .mob-filter-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.4rem;
-        max-height: min(42vh, 14rem);
-        overflow-y: auto;
+        display: none;
+      }
+      .filter-modal { z-index: 200; }
+      .filter-panel {
+        top: unset;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        max-height: min(68dvh, 540px);
+        border-left: none;
+        border-top: 1px solid #d6e0da;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(110%);
+        box-shadow: 0 -16px 40px rgba(15, 51, 39, 0.18);
+      }
+      .filter-modal.open .filter-panel { transform: translateY(0); }
+      .filter-body {
+        overflow: auto;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 0.1rem;
+      }
+      .filter-cselect.open { z-index: 8; }
+      .filter-cselect .cselect-panel {
+        position: static;
+        margin-top: 0.4rem;
+        max-height: min(180px, 28vh);
+        box-shadow: none;
+      }
+      .filter-cselect .cselect-list {
+        max-height: min(160px, 26vh);
       }
       .mob-filter-field {
         display: flex;
@@ -2910,32 +3619,6 @@
       .mob-filters .filter-cselect .cselect-list {
         max-height: min(220px, 40vh);
       }
-      .mob-zoom {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid #e0e0e0;
-        border-radius: 14px;
-        padding: 0.35rem;
-        box-shadow: 0 6px 20px rgba(15, 51, 39, 0.14);
-        backdrop-filter: blur(12px);
-      }
-      .mob-zoom button {
-        width: 42px;
-        height: 42px;
-        border: 1px solid #e5e7eb;
-        border-radius: 11px;
-        background: #fff;
-        color: #0f3327;
-        font: inherit;
-        font-size: 1.15rem;
-        font-weight: 700;
-        cursor: pointer;
-        line-height: 1;
-      }
-      .mob-zoom button:active { transform: scale(0.94); background: #f3f4f6; }
-      .mob-zoom button.mob-fit { font-size: 0.95rem; }
       .mob-fab-panel {
         width: 52px;
         height: 52px;
@@ -2960,6 +3643,7 @@
       body.mob-chrome-hidden .mob-fab-panel svg {
         transform: rotate(180deg);
       }
+      body.mob-chrome-hidden .mob-chrome,
       body.mob-chrome-hidden .mob-filters {
         display: none !important;
       }
@@ -2985,6 +3669,7 @@
     @media (min-width: 769px) and (min-height: 521px), (min-width: 1025px) {
       .map-mobile-ui { display: none !important; }
       .mob-filters { display: none !important; }
+      .mob-zoom { display: none !important; }
     }
   </style>
 </head>
@@ -3013,6 +3698,11 @@
         </button>
         <button type="button" class="btn" id="zoomReset" title="Restablecer zoom">100%</button>
       </div>
+      <button type="button" class="btn btn-icon" id="deskRefreshBtn" title="Actualizar" aria-label="Actualizar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+        </svg>
+      </button>
       <button type="button" class="btn btn-primary" id="clearBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
@@ -3026,99 +3716,85 @@
   <aside class="labor-drawer" id="laborDrawer" aria-hidden="true" inert>
     <div class="drawer-head" style="position:relative">
       <h2>Reporte de labores</h2>
-      <p>Selecciona lote · labor · avance · Guardar avance</p>
+      <p>Labor · módulo · turno · lote · mismo flujo que el celular</p>
       <button type="button" class="drawer-close" id="closeLaborDrawer" aria-label="Cerrar">×</button>
     </div>
-    <form class="drawer-body" id="laborForm" novalidate>
-      <div class="field-grid">
-        <div class="field">
-          <label for="fSem">Sem</label>
-          <input id="fSem" type="number" readonly />
-        </div>
-        <div class="field">
-          <label for="fFecha">Fecha</label>
-          <input id="fFecha" type="date" required />
-        </div>
-        <div class="field full">
-          <div class="lote-label-row">
-            <label for="fLoteTrigger">Lote</label>
-            <button type="button" class="multi-toggle" id="multiLotToggle" aria-pressed="false" title="Seleccionar varios lotes en el mapa">Múltiple</button>
-          </div>
-          <div id="loteSingleWrap">
-            <div class="cselect" id="loteSelect" data-cselect>
-              <input type="hidden" id="fLote" value="" required />
-              <button type="button" class="cselect-trigger is-empty" id="fLoteTrigger" aria-haspopup="listbox" aria-expanded="false">
-                Seleccionar lote...
-              </button>
-              <div class="cselect-panel" role="listbox">
-                <div class="cselect-list" id="fLoteList"></div>
-              </div>
-            </div>
-          </div>
-          <div id="loteMultiWrap" hidden>
-            <button type="button" class="cselect-trigger multi-summary is-empty" id="multiLotSummary" aria-haspopup="dialog">
-              Selecciona lotes en el mapa...
-            </button>
-            <div class="multi-palette-inline" id="multiPaletteInline">
-              <div class="multi-palette" role="group" aria-label="Pincel de colores">
-                <div class="multi-palette-label">10 colores · elige y pinta en el mapa</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <label for="fModulo">Módulo</label>
-          <input id="fModulo" type="text" readonly placeholder="MÓDULO" />
-        </div>
-        <div class="field">
-          <label for="fTurno">Turno</label>
-          <input id="fTurno" type="text" readonly placeholder="TURNO" />
-        </div>
-        <div class="field">
-          <label>Variedad</label>
-          <div class="cselect" id="variedadSelect" data-cselect>
-            <input type="hidden" id="fVariedad" value="SEKOYA POP" />
-            <button type="button" class="cselect-trigger" aria-haspopup="listbox" aria-expanded="false">SEKOYA POP</button>
-            <div class="cselect-panel" role="listbox">
-              <div class="cselect-list"></div>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <label for="fArea">Área lote (ha)</label>
-          <input id="fArea" type="number" step="0.01" readonly placeholder="0.00" />
-        </div>
+    <form class="labor-form" id="laborForm" novalidate>
+      <div class="field-grid is-gated" id="laborFieldGrid">
         <div class="field full">
           <label>Labor real</label>
           <div class="cselect" id="laborRealSelect" data-cselect>
             <input type="hidden" id="fLaborReal" value="" />
-            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar labor real...</button>
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Seleccionar</button>
             <div class="cselect-panel" role="listbox">
               <div class="cselect-list"></div>
             </div>
           </div>
         </div>
-        <div class="field">
-          <label for="fAvance">Avance (ha)</label>
-          <input id="fAvance" type="text" inputmode="decimal" autocomplete="off" value="0." placeholder="0." />
-        </div>
-        <div class="field">
-          <label for="fTotalJr">Total (JR)</label>
-          <input id="fTotalJr" type="number" step="0.1" min="0" value="" placeholder="0" />
-        </div>
-        <div class="field avance-wrap">
-          <label>Progreso del lote</label>
-          <div class="avance-bar"><i id="fAvanceBar"></i></div>
-        </div>
-        <div class="lot-preview">
-          <label>Vista previa en el mapa</label>
-          <div class="lot-preview-cell" id="lotPreviewCell">
-            <div class="cell-fill" id="lotPreviewFill"></div>
-            <span class="t" id="lotPreviewT">—</span>
-            <span class="l" id="lotPreviewL">LOTE —</span>
-            <span class="h" id="lotPreviewH">—</span>
+        <div class="desk-day-meta" aria-label="Semana y fecha de hoy">
+          <div class="meta-cell">
+            <span class="meta-k">Semana</span>
+            <span class="meta-v" id="fSemText">—</span>
+            <input type="hidden" id="fSem" />
           </div>
-          <p class="lot-preview-status" id="lotPreviewStatus">Selecciona un lote para ver el avance</p>
+          <div class="meta-cell">
+            <span class="meta-k">Fecha</span>
+            <span class="meta-v is-date" id="fFechaText">—</span>
+            <input type="hidden" id="fFecha" />
+          </div>
+        </div>
+        <div class="field full">
+          <label for="fModuloTrigger">Módulo</label>
+          <div class="cselect" id="moduloSelect" data-cselect>
+            <input type="hidden" id="fModulo" value="" />
+            <button type="button" class="cselect-trigger is-empty" id="fModuloTrigger" aria-haspopup="listbox" aria-expanded="false">Seleccionar</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list" id="fModuloList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fTurnoTrigger">Turno</label>
+          <div class="cselect" id="turnoSelect" data-cselect>
+            <input type="hidden" id="fTurno" value="" />
+            <button type="button" class="cselect-trigger is-empty" id="fTurnoTrigger" aria-haspopup="listbox" aria-expanded="false" disabled>Seleccionar</button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list" id="fTurnoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fLoteTrigger">Lote</label>
+          <div class="cselect is-cards" id="loteSelect" data-cselect>
+            <input type="hidden" id="fLote" value="" required />
+            <button type="button" class="cselect-trigger is-empty" id="fLoteTrigger" aria-haspopup="listbox" aria-expanded="false" disabled>
+              Seleccionar
+            </button>
+            <div class="cselect-panel" role="listbox">
+              <div class="cselect-list" id="fLoteList"></div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="fVariedad" value="SEKOYA POP" />
+        <input type="hidden" id="fArea" value="" />
+        <input type="hidden" id="fAvance" value="" />
+        <div class="field full">
+          <label for="fTotalJr">Jornales (JR)</label>
+          <input id="fTotalJr" type="number" step="0.1" min="0" value="" placeholder="0.00" />
+        </div>
+        <div class="field full">
+          <label>Ratio general</label>
+          <p class="ratio-formula" id="deskRatioFormula">JR 0.00 / 0.00 ha = 0.00</p>
+        </div>
+        <div class="field full">
+          <label>Color de pintura</label>
+          <div class="color-grid" id="deskColorGrid"></div>
+          <p class="field-hint" id="deskColorHint" style="margin:0.3rem 0 0;font-size:0.68rem;color:#64748b;font-weight:600;">Lunes a viernes · un color por día</p>
+        </div>
+        <div class="field full">
+          <label>Lotes del día</label>
+          <div class="desk-lot-board" id="deskLotBoard"></div>
+          <p class="lot-preview-status" id="lotPreviewStatus">Selecciona un lote</p>
         </div>
       </div>
     </form>
@@ -3138,8 +3814,9 @@
         <p id="multiLotSub">Color · avance por lote · áreas</p>
       </div>
       <div class="multi-card-body">
-        <div class="multi-palette" id="multiPaletteModal" role="group" aria-label="Pincel de colores">
-          <div class="multi-palette-label">10 colores</div>
+        <div class="field" style="margin-bottom:0.7rem">
+          <label>Color de pintura</label>
+          <div class="color-grid" id="multiColorGrid"></div>
         </div>
         <div id="multiLotList"></div>
       </div>
@@ -3147,6 +3824,20 @@
         <div class="multi-total" id="multiLotTotal">0 lotes · 0.00 ha</div>
         <button type="button" class="btn" id="multiLotClearBtn">Quitar todos</button>
         <button type="button" class="btn btn-primary" id="multiLotCloseBtn">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell-del-modal" id="cellDelModal" aria-hidden="true">
+    <div class="cell-del-card" role="dialog" aria-labelledby="cellDelTitle">
+      <div class="cell-del-head">
+        <h3 id="cellDelTitle">Eliminar registro</h3>
+        <p id="cellDelSub">Solo escritorio · quita un lote guardado por error</p>
+      </div>
+      <div class="cell-del-body" id="cellDelBody">—</div>
+      <div class="cell-del-actions">
+        <button type="button" class="btn" id="cellDelCancel">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="cellDelOk">Eliminar</button>
       </div>
     </div>
   </div>
@@ -3244,7 +3935,7 @@
       <div class="filter-head">
         <div>
           <h2 id="filterTitle">Filtros del mapa</h2>
-          <span class="sub">SEM · Fecha · MD · Labor ppto · Labor real</span>
+          <span class="sub">SEM · Fecha · MD · Labor real</span>
         </div>
         <button type="button" id="closeFilterModal">Cerrar</button>
       </div>
@@ -3352,12 +4043,12 @@
           </div>
           <span class="map-sync-label" id="mapSyncLabel">Cargando…</span>
         </div>
+        <div class="mob-zoom" id="mobZoomBar">
+          <button type="button" id="mobZoomIn" title="Acercar" aria-label="Acercar">+</button>
+          <button type="button" class="mob-fit" id="mobZoomFit" title="Ver todo" aria-label="Ver todo">◎</button>
+          <button type="button" id="mobZoomOut" title="Alejar" aria-label="Alejar">−</button>
+        </div>
         <div class="map-mobile-ui" id="mapMobileUi" aria-hidden="true">
-          <div class="mob-zoom">
-            <button type="button" id="mobZoomIn" title="Acercar" aria-label="Acercar">+</button>
-            <button type="button" class="mob-fit" id="mobZoomFit" title="Ver todo" aria-label="Ver todo">◎</button>
-            <button type="button" id="mobZoomOut" title="Alejar" aria-label="Alejar">−</button>
-          </div>
           <button type="button" class="mob-fab-panel" id="mobPanelToggle" title="Ocultar panel" aria-label="Ocultar panel" aria-pressed="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
               <path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>
@@ -3372,6 +4063,23 @@
             </svg>
           </a>
         </div>
+        <div class="mob-detail" id="mobDetail" aria-hidden="true">
+        <div class="mob-detail-card">
+          <div class="mob-detail-head">
+            <div>
+              <span class="mob-detail-pill" id="mobDPill">M—</span>
+              <h3 id="mobDTitle">Lote</h3>
+            </div>
+            <button type="button" class="mob-detail-close" id="mobDetailClose" aria-label="Cerrar">×</button>
+          </div>
+          <dl class="mob-detail-grid">
+            <div><dt>Área</dt><dd id="mobDHa">—</dd></div>
+            <div><dt>Trabajado</dt><dd id="mobDAvance">—</dd></div>
+            <div><dt>Falta</dt><dd id="mobDFalta">—</dd></div>
+            <div><dt>Labor</dt><dd id="mobDLabor">—</dd></div>
+          </dl>
+        </div>
+      </div>
         <div class="hint">100%: fijo · Con zoom: arrastra para explorar todo el mapa · <span id="zoomChip">Zoom 100%</span></div>
         <div class="detail" id="detail">
           <button class="x" id="closeDetail" type="button" aria-label="Cerrar">×</button>
@@ -3386,8 +4094,12 @@
         </div>
       </div>
       <div class="mob-filters" id="mobFilters">
-        <p class="mob-filters-label">Filtros</p>
-        <div class="mob-filter-grid">
+        <button type="button" class="mob-filters-open" id="mobFiltersOpen" aria-haspopup="dialog" aria-controls="filterModal">
+          <span class="mob-filters-k">Filtros</span>
+          <span class="mob-filters-sum" id="mobFiltersSum">Semana · Fecha · MD · Labor</span>
+          <svg class="mob-filters-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="mob-filter-grid" id="mobFilterGrid" hidden>
           <label class="mob-filter-field">
             <span>Semana</span>
             <div class="cselect filter-cselect" id="mobFilterSemC">
@@ -3429,22 +4141,29 @@
             </div>
           </label>
         </div>
-      </div>
-      <div class="mob-detail" id="mobDetail" aria-hidden="true">
-        <div class="mob-detail-card">
-          <div class="mob-detail-head">
-            <div>
-              <span class="mob-detail-pill" id="mobDPill">M—</span>
-              <h3 id="mobDTitle">Lote</h3>
-            </div>
-            <button type="button" class="mob-detail-close" id="mobDetailClose" aria-label="Cerrar">×</button>
-          </div>
-          <dl class="mob-detail-grid">
-            <div><dt>Área</dt><dd id="mobDHa">—</dd></div>
-            <div><dt>Trabajado</dt><dd id="mobDAvance">—</dd></div>
-            <div><dt>Falta</dt><dd id="mobDFalta">—</dd></div>
-            <div><dt>Labor</dt><dd id="mobDLabor">—</dd></div>
-          </dl>
+        <div class="mob-week-wrap" id="mobWeekWrap">
+          <table class="week-table" id="mobWeekResumenTable">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Módulo</th>
+                <th class="num">Área</th>
+                <th class="num">JR</th>
+                <th class="num">Ratio</th>
+              </tr>
+            </thead>
+            <tbody id="mobWeekResumenBody">
+              <tr class="is-empty"><td colspan="5">Sin datos de la semana</td></tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">TOTAL</td>
+                <td class="num" id="mobWeekTotArea">0.00</td>
+                <td class="num" id="mobWeekTotJr">0.00</td>
+                <td class="num ratio" id="mobWeekTotRatio">0.00</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </section>
@@ -3489,6 +4208,24 @@
       d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
       const week1 = new Date(d.getFullYear(), 0, 4);
       return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    }
+    function hoyIso() {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Lima",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+    }
+    function formatFechaDisplay(iso) {
+      if (!iso) return "—";
+      return new Date(iso + "T12:00:00").toLocaleDateString("es-PE", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "America/Lima"
+      }).replace(/\./g, "");
     }
 
     function roundHa(v) {
@@ -3665,7 +4402,7 @@
       const waitSec = Math.max(15, Math.ceil((syncPausedUntil - Date.now()) / 1000));
       setSyncCloud(
         "wait",
-        "Un momento…",
+        "Sincronización de información",
         "Seguimos en ~" + waitSec + " s · puedes seguir editando",
         { autoHideMs: 0 }
       );
@@ -3734,7 +4471,7 @@
         visibleLots++;
         const area = roundHa(lot.ha);
         visibleHa += area;
-        const rec = laborRecords[`${lot.r},${lot.c}`];
+        const rec = recForMapLot(`${lot.r},${lot.c}`);
         if (rec?.laborReal) {
           withLabor++;
           avanceHa += roundHa(rec.avance);
@@ -3772,7 +4509,7 @@
       if (showCloud) {
         pushSyncActivity(
           forceReplace ? "Actualizando mapa" : (showFeedback ? "Sincronizando" : "Cargando datos"),
-          "Un momento, por favor…",
+          "Sincronización de información",
           showBusy
         );
       }
@@ -3998,6 +4735,7 @@
     }
 
     document.getElementById("mobRefreshBtn")?.addEventListener("click", openRefreshModal);
+    document.getElementById("deskRefreshBtn")?.addEventListener("click", openRefreshModal);
     document.getElementById("refreshDataBtn")?.addEventListener("click", () => {
       closeRefreshModal();
       refreshMapData(true, { replace: true, nocache: true });
@@ -4047,19 +4785,34 @@
     kpiBlock.className = "side-block kpi-block";
     kpiBlock.innerHTML = `
       <div class="kpi-head-row">
-        <h2>Resumen</h2>
+        <h2>Semana ${currentWeek}</h2>
         <div class="kpi-actions">
           <span class="pend-chip-desk" id="deskPendChip" title="Reportes en cola sin enviar"><strong id="deskPendCount">0</strong>&nbsp;pend.</span>
-          <button type="button" class="btn btn-outline" id="descarteBtn" title="Descarte">
-            Descarte
-          </button>
         </div>
       </div>
-      <div class="kpis">
-        <div class="kpi"><span>Lotes</span><strong>${uniqueLotes}</strong></div>
-        <div class="kpi"><span>Área</span><strong>${Number(data.totalHa).toFixed(2)}<span class="unit">ha</span></strong></div>
-        <div class="kpi"><span>Módulos</span><strong>${modules.length}</strong></div>
-        <div class="kpi"><span>Semana</span><strong>${currentWeek}</strong></div>
+      <div class="week-wrap">
+        <table class="week-table" id="weekResumenTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Módulo</th>
+              <th class="num">Área</th>
+              <th class="num">JR</th>
+              <th class="num">Ratio</th>
+            </tr>
+          </thead>
+          <tbody id="weekResumenBody">
+            <tr class="is-empty"><td colspan="5">Sin datos de la semana</td></tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">TOTAL</td>
+              <td class="num" id="weekTotArea">0.00</td>
+              <td class="num" id="weekTotJr">0.00</td>
+              <td class="num ratio" id="weekTotRatio">0.00</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>`;
     sidebar.appendChild(kpiBlock);
 
@@ -4071,14 +4824,18 @@
     list.id = "modList";
     modules.forEach(m => {
       const count = lots.filter(l => l.modulo === m.id).length;
+      const haTxt = formatHa(m.ha);
       const div = document.createElement("div");
       div.className = "leg-item";
       div.dataset.mod = m.id;
-      div.title = `${m.label} · ${count} lotes · ${m.ha} ha`;
+      div.title = `${m.label} · ${count} lotes · ${haTxt} ha`;
       div.innerHTML = `
-        <span class="leg-swatch" style="background:${m.fill}"></span>
-        <b>${m.label}</b>
-        <span class="ha">${m.ha} ha</span>`;
+        <div class="mod-top">
+          <span class="leg-swatch" style="background:${m.fill}"></span>
+          <b>${m.label}</b>
+        </div>
+        <span class="ha">${haTxt}<small>ha</small></span>
+        <span class="lots">${count} lote${count === 1 ? "" : "s"}</span>`;
       div.addEventListener("click", () => {
         setActiveMod(activeMod === m.id ? null : m.id);
       });
@@ -4092,11 +4849,11 @@
     laborActions.innerHTML = `
       <h2>Acciones</h2>
       <div class="labor-actions-row">
-        <button type="button" class="btn btn-labor" id="openLaborBtn" title="Registrar labores">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <button type="button" class="btn btn-labor" id="openLaborBtn" title="Agregar labores">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
             <path d="M12 5v14M5 12h14"/>
           </svg>
-          <span class="btn-text">Labores</span>
+          <span class="btn-text">Agregar</span>
         </button>
         <button type="button" class="btn btn-outline" id="viewProgressBtn" title="Ver avances por labores">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -4134,13 +4891,6 @@
           </svg>
           <span class="btn-text">PDF</span>
         </button>
-        <button type="button" class="btn btn-outline is-excel" data-export="excel" title="Descargar Excel de lotes y labores">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="4" y="3" width="16" height="18" rx="2"/>
-            <path d="M4 9h16M4 15h16M10 3v18"/>
-          </svg>
-          <span class="btn-text">Excel</span>
-        </button>
       </div>`;
     sidebar.appendChild(shareActions);
 
@@ -4164,6 +4914,33 @@
       "#CE93D8": "Viernes"
     });
     const MULTI_COLORS = Object.keys(COLOR_NAMES);
+    const DAY_COLORS = [
+      { dow: 1, hex: "#64B5F6", name: "Lunes", short: "Lun" },
+      { dow: 2, hex: "#81C784", name: "Martes", short: "Mar" },
+      { dow: 3, hex: "#FFD54F", name: "Miércoles", short: "Mié" },
+      { dow: 4, hex: "#FF8A65", name: "Jueves", short: "Jue" },
+      { dow: 5, hex: "#CE93D8", name: "Viernes", short: "Vie" }
+    ];
+
+    function limaDow(iso) {
+      const src = iso || new Date().toLocaleDateString("en-CA", { timeZone: "America/Lima" });
+      const d = new Date(String(src).slice(0, 10) + "T12:00:00-05:00");
+      const js = d.getDay();
+      return js === 0 ? 7 : js;
+    }
+    function todayColorEntry() {
+      const dow = limaDow();
+      if (dow >= 1 && dow <= 5) return DAY_COLORS[dow - 1];
+      return DAY_COLORS[4];
+    }
+    function isDayUnlocked(dow) {
+      const today = limaDow();
+      if (today >= 6) return true;
+      return dow <= today;
+    }
+    function currentPaintColor() {
+      return todayColorEntry().hex;
+    }
 
     function normalizeHexColor(color) {
       const raw = String(color || "").trim();
@@ -4219,11 +4996,7 @@
       return multiPaintColor;
     }
 
-    let multiPaintColor = MULTI_COLORS[0];
-    try {
-      const savedBrush = clampToPalette(localStorage.getItem("qb-brush-color"));
-      if (savedBrush) multiPaintColor = savedBrush;
-    } catch (_) { /* ok */ }
+    let multiPaintColor = currentPaintColor();
     document.documentElement.style.setProperty("--multi-color", multiPaintColor);
 
     function saveLaborRecords() {
@@ -4299,6 +5072,8 @@
         if (!rec || !rec.laborReal) return;
         const posKey = posKeyFromRecord(rec);
         if (!posKey) return;
+        const wantLabor = String((opts.laborReal || mapQuery.laborReal || "")).toUpperCase().trim();
+        if (wantLabor && String(rec.laborReal || "").toUpperCase() !== wantLabor) return;
         if (!opts.replace && (savingLabor || pendingKeys.has(posKey))) return;
         const lot = byPos.get(posKey);
         const fromApi = (typeof QBApi.colorNameToHex === "function" ? QBApi.colorNameToHex(rec.color) : "") ||
@@ -4360,6 +5135,8 @@
         const payload = Array.isArray(json.list)
           ? json.list
           : (json.records || []);
+        if (json.resumen) renderWeekResumen(json.resumen);
+        else refreshWeekResumen();
         if (opts.replace) {
           laborRecords = {};
           saveLaborRecords();
@@ -4388,17 +5165,224 @@
       else if (activeMod != null) filters.modulo = "M" + activeMod;
       if (mapQuery.laborReal) filters.laborReal = mapQuery.laborReal;
       if (mapQuery.laborPpto) filters.laborPpto = mapQuery.laborPpto;
-      const varEl = document.getElementById("fVariedad");
-      const variedad = String(varEl?.value || "").trim().toUpperCase();
-      if (variedad) filters.variedad = variedad;
       return filters;
+    }
+
+    function modSortKey(label) {
+      const n = Number(String(label || "").replace(/\D/g, ""));
+      return Number.isFinite(n) ? n : 999;
+    }
+
+    function collapseWeekRows(rows) {
+      const byFecha = {};
+      (rows || []).forEach(r => {
+        if (!r) return;
+        const fechaIso = String(r.fechaIso || r.fecha || "").slice(0, 10);
+        const fecha = r.fecha && String(r.fecha).indexOf("/") >= 0
+          ? r.fecha
+          : (fechaIso ? fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—");
+        const k = fechaIso || fecha;
+        if (!byFecha[k]) byFecha[k] = { fecha, fechaIso, mods: [], area: 0, jr: 0 };
+        String(r.modulo || "").split(/[-,;/|]+/).forEach(part => {
+          const md = String(part || "").trim();
+          if (md && md !== "—" && byFecha[k].mods.indexOf(md) < 0) byFecha[k].mods.push(md);
+        });
+        byFecha[k].area += Number(r.area) || 0;
+        byFecha[k].jr += Number(r.jr) || 0;
+      });
+      return Object.values(byFecha).map(g => {
+        const mods = g.mods.slice().sort((a, b) => modSortKey(a) - modSortKey(b) || String(a).localeCompare(String(b)));
+        const area = roundHa(g.area);
+        const jr = roundHa(g.jr);
+        return {
+          fecha: g.fecha,
+          fechaIso: g.fechaIso,
+          modulo: mods.join("-") || "—",
+          area,
+          jr,
+          ratio: area > 0 ? roundHa(jr / area) : 0
+        };
+      }).sort((a, b) => String(a.fechaIso || a.fecha).localeCompare(String(b.fechaIso || b.fecha)));
+    }
+
+    function weekRowsFromRecords() {
+      const sem = Number(mapQuery.sem != null ? mapQuery.sem : currentWeek);
+      const groups = {};
+      Object.values(laborRecords || {}).forEach(r => {
+        if (!r) return;
+        if (Number(r.sem) !== sem) return;
+        const fechaIso = String(r.fecha || r.fechaIso || "").slice(0, 10);
+        const md = String(r.modulo || "").trim() || "—";
+        const k = fechaIso + "|" + md;
+        if (!groups[k]) groups[k] = { fechaIso, modulo: md, lots: {}, jr: 0 };
+        const lotKey = String(r.turno || "") + "|" + String(r.lote);
+        if (!groups[k].lots[lotKey]) groups[k].lots[lotKey] = Number(r.area) || 0;
+        groups[k].jr += Number(r.totalJr) || 0;
+      });
+      const raw = Object.values(groups).map(g => {
+        const area = roundHa(Object.values(g.lots).reduce((s, n) => s + (Number(n) || 0), 0));
+        const jr = roundHa(g.jr);
+        return {
+          fecha: g.fechaIso ? g.fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—",
+          fechaIso: g.fechaIso,
+          modulo: g.modulo,
+          area,
+          jr,
+          ratio: area > 0 ? roundHa(jr / area) : 0
+        };
+      });
+      return collapseWeekRows(raw);
+    }
+
+    function fillWeekTable(bodyId, totAreaId, totJrId, totRatioId, list) {
+      const body = document.getElementById(bodyId);
+      if (!body) return;
+      if (!list.length) {
+        body.innerHTML = '<tr class="is-empty"><td colspan="5">Sin datos de la semana</td></tr>';
+        const za = document.getElementById(totAreaId);
+        const zj = document.getElementById(totJrId);
+        const zr = document.getElementById(totRatioId);
+        if (za) za.textContent = "0.00";
+        if (zj) zj.textContent = "0.00";
+        if (zr) zr.textContent = "0.00";
+        return;
+      }
+      let area = 0, jr = 0;
+      body.innerHTML = list.map(r => {
+        const a = roundHa(r.area);
+        const j = roundHa(r.jr);
+        const ratio = r.ratio != null ? roundHa(r.ratio) : (a > 0 ? roundHa(j / a) : 0);
+        area += a;
+        jr += j;
+        return `<tr>
+          <td>${r.fecha || "—"}</td>
+          <td>${r.modulo || "—"}</td>
+          <td class="num">${formatHa(a)}</td>
+          <td class="num">${formatHa(j)}</td>
+          <td class="num">${formatHa(ratio)}</td>
+        </tr>`;
+      }).join("");
+      area = roundHa(area);
+      jr = roundHa(jr);
+      const totA = document.getElementById(totAreaId);
+      const totJ = document.getElementById(totJrId);
+      const totR = document.getElementById(totRatioId);
+      if (totA) totA.textContent = formatHa(area);
+      if (totJ) totJ.textContent = formatHa(jr);
+      if (totR) totR.textContent = formatHa(area > 0 ? roundHa(jr / area) : 0);
+    }
+
+    function renderWeekResumen(rows) {
+      const list = collapseWeekRows(Array.isArray(rows) && rows.length ? rows : weekRowsFromRecords());
+      fillWeekTable("weekResumenBody", "weekTotArea", "weekTotJr", "weekTotRatio", list);
+      fillWeekTable("mobWeekResumenBody", "mobWeekTotArea", "mobWeekTotJr", "mobWeekTotRatio", list);
+      if (typeof updateMobFiltersHeight === "function") {
+        requestAnimationFrame(updateMobFiltersHeight);
+      }
+    }
+
+    async function refreshWeekResumen() {
+      const sem = mapQuery.sem != null ? mapQuery.sem : currentWeek;
+      if (QBApi.getResumen && API_URL) {
+        try {
+          const json = await QBApi.getResumen(sem);
+          if (json?.ok && Array.isArray(json.resumen) && json.resumen.length) {
+            renderWeekResumen(json.resumen);
+            return;
+          }
+        } catch (e) { /* fallback local */ }
+      }
+      renderWeekResumen();
+    }
+
+    function defaultMapLaborReal() {
+      try {
+        if (window.matchMedia("(max-width: 768px), ((max-height: 520px) and (max-width: 1024px))").matches) return "";
+      } catch (e) { /* ok */ }
+      return "DESHIERBO";
+    }
+
+    function unionLabors(sheetList) {
+      const seen = new Set();
+      const out = [];
+      const add = (v) => {
+        const s = String(v || "").toUpperCase().trim();
+        if (!s || seen.has(s)) return;
+        seen.add(s);
+        out.push(s);
+      };
+      (LABOR_OPTS.labor_real || []).forEach(add);
+      (sheetList || []).forEach(add);
+      return out;
+    }
+
+    function isCercosLabor(v) {
+      const s = String(v || "")
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return s === "CERCOS VIVOS" || s === "CERCO VIVOS";
+    }
+
+    const CERCOS_FOOT_SET = new Set(
+      ((window.QB_CONFIG && QB_CONFIG.CERCOS_FOOT_LOTS) || []).map(x => String(x).toUpperCase().replace(/\s+/g, ""))
+    );
+
+    function lotHasCercosFoot(lot) {
+      if (!lot) return false;
+      const t = String(lot.tunel || "").toUpperCase().replace(/\s+/g, "");
+      const n = Number(lot.lote);
+      if (CERCOS_FOOT_SET.has(t + "|" + n + "|" + roundHa(lot.ha).toFixed(2))) return true;
+      return CERCOS_FOOT_SET.has(t + "|" + n);
+    }
+
+    function cercosFrac(lot) {
+      return lotHasCercosFoot(lot) ? 0.4 : 0.2;
+    }
+
+    function cercosCapHa(area, lot) {
+      const cap = roundHa(roundHa(area) * cercosFrac(lot));
+      return cap > 0 ? cap : 0;
+    }
+
+    function laborUsableHa(area, laborReal, lot) {
+      const a = roundHa(area);
+      return isCercosLabor(laborReal) ? cercosCapHa(a, lot) : a;
+    }
+
+    function defaultLaborAvance(area, laborReal, lot) {
+      return laborUsableHa(area, laborReal, lot);
+    }
+
+    function clampLaborAvance(av, area, laborReal, lot) {
+      const cap = laborUsableHa(area, laborReal, lot);
+      let n = roundHa(av);
+      if (n < 0) n = 0;
+      if (cap > 0 && n > cap) n = cap;
+      return n;
+    }
+
+    function recForMapLot(posKey) {
+      const rec = laborRecords[posKey];
+      if (!rec || !rec.laborReal) return null;
+      const want = String(mapQuery.laborReal || "").toUpperCase().trim();
+      if (want && String(rec.laborReal || "").toUpperCase() !== want) return null;
+      return rec;
+    }
+
+    function syncCercosMapLayout() {
+      const on = isCercosLabor(mapQuery.laborReal);
+      document.getElementById("grid")?.classList.toggle("is-cercos", on);
+      document.body.classList.toggle("labor-cercos", on);
     }
 
     let mapQuery = {
       sem: currentWeek,
       fecha: "",
       modulo: "",
-      laborReal: "",
+      laborReal: defaultMapLaborReal(),
       laborPpto: ""
     };
 
@@ -4406,7 +5390,7 @@
       sem: [currentWeek],
       fecha: [],
       md: modules.map(m => m.label),
-      laborReal: (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase()),
+      laborReal: unionLabors([]),
       laborPpto: (LABOR_OPTS.labor_ppto || []).map(x => String(x).toUpperCase())
     };
 
@@ -4423,6 +5407,14 @@
     function syncFilterBtnState() {
       const btn = document.getElementById("openFilterBtn");
       if (btn) btn.classList.toggle("has-active", hasActiveMapFilters());
+      const sum = document.getElementById("mobFiltersSum");
+      if (sum) {
+        const bits = ["Sem " + (mapQuery.sem || currentWeek)];
+        bits.push(mapQuery.fecha || "Todas las fechas");
+        if (mapQuery.modulo) bits.push(mapQuery.modulo);
+        if (mapQuery.laborReal) bits.push(mapQuery.laborReal);
+        sum.textContent = bits.join(" · ");
+      }
     }
 
     function buildFilterItems(values, emptyLabel) {
@@ -4513,6 +5505,7 @@
         const cached = readFilterCache();
         if (cached) {
           filterOptions = cached;
+          filterOptions.laborReal = unionLabors(cached.laborReal);
           refreshFilterPanelUI();
           if (isMobileMap()) requestAnimationFrame(scheduleMapFit);
           return;
@@ -4536,9 +5529,7 @@
           sem: (json.sem && json.sem.length) ? json.sem : [currentWeek],
           fecha: json.fecha || [],
           md: (json.md && json.md.length) ? json.md : modules.map(m => m.label),
-          laborReal: (json.laborReal && json.laborReal.length)
-            ? json.laborReal
-            : (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase()),
+          laborReal: unionLabors(json.laborReal),
           laborPpto: (json.laborPpto && json.laborPpto.length)
             ? json.laborPpto
             : (LABOR_OPTS.labor_ppto || []).map(x => String(x).toUpperCase())
@@ -4574,6 +5565,11 @@
     }
 
     async function applyMapFilters(showFeedback) {
+      syncCercosMapLayout();
+      if (mapQuery.laborReal && typeof laborRealCSelect !== "undefined" && laborRealCSelect) {
+        laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
+      }
+      refreshAllLaborVisuals();
       syncFilterBtnState();
       if (mapQuery.modulo) {
         const mid = Number(String(mapQuery.modulo).replace(/\D/g, ""));
@@ -4588,7 +5584,7 @@
           });
         }
       }
-      const n = await refreshMapData(!!showFeedback);
+      const n = await refreshMapData(!!showFeedback, { replace: true, fullPaint: true });
       closeFilterModal();
       return n;
     }
@@ -4618,10 +5614,11 @@
       return n;
     }
 
-    function laborStatus(rec, area) {
+    function laborStatus(rec, area, laborReal, lot) {
       const av = Number(rec?.avance) || 0;
       if (!rec?.laborReal) return { key: "none", label: "Sin labor registrada" };
-      if (av >= area * 0.98) return { key: "done", label: "Completado" };
+      const cap = laborUsableHa(area, laborReal || rec.laborReal, lot);
+      if (cap > 0 && av >= cap * 0.98) return { key: "done", label: "Completado" };
       if (av > 0) return { key: "progress", label: "En progreso" };
       return { key: "pending", label: "Pendiente" };
     }
@@ -4635,30 +5632,55 @@
       if (!cell || !lot) return;
       const area = roundHa(lot.ha) || 1;
       let av = roundHa(avance);
-      if (av > area) av = area;
-      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      const cap = laborUsableHa(area, laborReal || mapQuery.laborReal, lot);
+      if (cap > 0 && av > cap) av = cap;
+      const pct = cap > 0 ? Math.min(100, (av / cap) * 100) : 0;
       let fill = cell.querySelector(".cell-fill");
       if (!fill) {
         fill = document.createElement("div");
         fill.className = "cell-fill";
         cell.insertBefore(fill, cell.firstChild);
       }
-      const mod = lot.modulo != null ? modById[lot.modulo] : null;
+      let fillFoot = cell.querySelector(".cell-fill-foot");
       const posKey = cell.dataset.key || "";
       const paint = resolvePaintColor(lot, posKey, fillColor);
-      fill.style.background = paint || mod?.badge || mod?.fill || "#64748b";
-      fill.style.height = pct + "%";
+      if (!laborReal || av <= 0) {
+        fill.style.background = "transparent";
+        fill.style.height = "0%";
+        fill.style.top = "";
+        fill.style.bottom = "";
+        if (fillFoot) fillFoot.style.height = "0%";
+        cell.classList.remove("labor-done", "labor-progress");
+        cell.title = `LT.${lot.lote} · ${String(lot.tunel || "").toUpperCase()} · ${formatHa(area)} ha`;
+        return { pct: 0, st: { key: "empty" }, area, av: 0 };
+      }
+      const cercos = isCercosLabor(laborReal || mapQuery.laborReal);
+      if (cercos) {
+        const topCap = roundHa(area * 0.2);
+        const topAv = Math.min(av, topCap);
+        const botAv = lotHasCercosFoot(lot) ? Math.max(0, av - topCap) : 0;
+        fill.style.top = "0";
+        fill.style.bottom = "auto";
+        fill.style.background = paint || "#64B5F6";
+        fill.style.height = (topCap > 0 ? (topAv / topCap) * 20 : 0) + "%";
+        if (fillFoot) {
+          fillFoot.style.background = paint || "#64B5F6";
+          fillFoot.style.height = (topCap > 0 ? (botAv / topCap) * 20 : 0) + "%";
+        }
+      } else {
+        fill.style.top = "auto";
+        fill.style.bottom = "0";
+        fill.style.background = paint || "#64B5F6";
+        fill.style.height = pct + "%";
+        if (fillFoot) fillFoot.style.height = "0%";
+      }
       const fakeRec = { avance: av, laborReal: laborReal || "" };
-      const st = laborStatus(fakeRec, area);
+      const st = laborStatus(fakeRec, area, laborReal, lot);
       cell.classList.toggle("labor-done", st.key === "done");
       cell.classList.toggle("labor-progress", st.key === "progress");
       const colorLabel = colorDetailText(paint);
-      if (laborReal) {
-        cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(area)} ha` +
-          (colorLabel ? ` · ${colorLabel}` : "");
-      } else {
-        cell.title = `Sin labor registrada · Área ${formatHa(area)} ha`;
-      }
+      cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(cap || area)} ha` +
+        (colorLabel ? ` · ${colorLabel}` : "");
       return { pct, st, area, av };
     }
 
@@ -4670,70 +5692,112 @@
         paintOneMultiCell(key);
         return;
       }
-      const rec = laborRecords[key];
+      const rec = recForMapLot(key);
       const paint = resolvePaintColor(lot, key, rec?.color);
       paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, paint);
       if (rec?.laborPpto && rec?.laborReal) {
         cell.title += ` · Ppto: ${rec.laborPpto}`;
-      } else if (!rec?.laborReal) {
-        cell.title = "Sin labor registrada";
       }
     }
 
-    function updateDrawerPreview(lot, avance, laborReal, fillColor) {
-      const lotPreviewT = document.getElementById("lotPreviewT");
-      const lotPreviewL = document.getElementById("lotPreviewL");
-      const lotPreviewH = document.getElementById("lotPreviewH");
-      const lotPreviewFill = document.getElementById("lotPreviewFill");
-      const lotPreviewStatus = document.getElementById("lotPreviewStatus");
-      const lotPreviewCell = document.getElementById("lotPreviewCell");
-      if (!lot) {
-        lotPreviewStatus.textContent = "Selecciona un lote para ver el avance";
-        lotPreviewFill.style.height = "0%";
+    function deskCapturedLots() {
+      if (multiLotKeys.size) return getMultiLots();
+      const key = fLote && fLote.value;
+      const lot = key ? byPos.get(key) : null;
+      if (!lot) return [];
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      return [{ key, lot, avance: roundHa(fAvance && fAvance.value) || defaultLaborAvance(lot.ha, labor, lot) }];
+    }
+
+    function updateDeskRatio() {
+      const items = deskCapturedLots();
+      const area = roundHa(items.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+      const jr = roundHa(fTotalJr && fTotalJr.value);
+      const ratio = area > 0 ? roundHa(jr / area) : 0;
+      const el = document.getElementById("deskRatioFormula");
+      if (el) el.textContent = "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
+      return { area, jr, ratio, n: items.length };
+    }
+
+    function renderDeskLotBoard() {
+      const board = document.getElementById("deskLotBoard");
+      const status = document.getElementById("lotPreviewStatus");
+      const items = deskCapturedLots();
+      const tot = updateDeskRatio();
+      if (status) {
+        status.textContent = tot.n
+          ? tot.n + " lote(s) · área " + formatHa(tot.area) + " ha"
+          : "Selecciona un lote";
+      }
+      if (!board) return;
+      if (!items.length) {
+        board.innerHTML = '<div class="board-empty">Aún no hay lotes. Elige módulo, turno y lote.</div>';
         return;
       }
-      lotPreviewT.textContent = String(lot.tunel).toUpperCase();
-      lotPreviewL.textContent = "LOTE " + lot.lote;
-      lotPreviewH.textContent = lot.ha != null ? Number(lot.ha).toFixed(2) : "—";
-      const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      if (mod) lotPreviewCell.style.borderColor = mod.badge || "#cbd5e1";
-      const area = roundHa(lot.ha) || 1;
-      let av = roundHa(avance);
-      if (av > area) av = area;
-      const pct = area > 0 ? (av / area) * 100 : 0;
-      const paint = normalizeHexColor(fillColor) || modulePaintColor(lot) || mod?.badge || "#64748b";
-      lotPreviewFill.style.background = paint;
-      lotPreviewFill.style.height = pct + "%";
-      const st = laborStatus({ avance: av, laborReal }, area);
-      const colorInfo = colorDetailText(paint);
-      lotPreviewStatus.textContent = laborReal
-        ? `${st.label} · ${Math.round(pct)}% · ${av.toFixed(2)} / ${area.toFixed(2)} ha · ${colorInfo}`
-        : "Elige una labor real para registrar";
+      const groups = {};
+      items.forEach(x => {
+        const id = String(x.lot.modulo != null ? x.lot.modulo : "x");
+        if (!groups[id]) groups[id] = [];
+        groups[id].push(x);
+      });
+      const paint = currentPaintColor();
+      const activeKey = fLote && fLote.value;
+      board.innerHTML = Object.keys(groups).map(id => {
+        const mod = modById[id] || modById[Number(id)];
+        const rows = groups[id].slice().sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
+        const areaG = roundHa(rows.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+        return `<div class="mod-group">
+          <div class="mod-group-head">
+            <b>${mod ? mod.label : ("M" + id)}</b>
+            <span>${rows.length} · ${formatHa(areaG)} ha</span>
+          </div>
+          <div class="mod-lots" data-n="${rows.length}">
+            ${rows.map(x => {
+              const area = roundHa(x.lot.ha);
+              let av = roundHa(x.avance);
+              if (av <= 0) av = area;
+              if (area > 0 && av > area) av = area;
+              const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              const on = x.key === activeKey ? " is-on" : "";
+              return `<button type="button" class="mini-cell${on}" data-open="${x.key}">
+                <div class="mini-fill" style="background:${paint};height:${pct}%"></div>
+                <span class="t">${String(x.lot.tunel || "").toUpperCase()}</span>
+                <span class="l">LOTE ${x.lot.lote}</span>
+                <span class="h">${formatHa(area)}</span>
+              </button>`;
+            }).join("")}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function updateDrawerPreview() {
+      renderDeskLotBoard();
     }
 
     function previewFromForm() {
       if (multiLotMode) {
         previewMultiLots();
+        renderDeskLotBoard();
         return;
       }
       const posKey = fLote.value;
       if (!posKey) {
-        updateDrawerPreview(null);
+        updateDrawerPreview();
         return;
       }
       const lot = byPos.get(posKey);
       if (!lot) return;
       const area = roundHa(lot.ha) || 0;
-      const raw = String(fAvance.value || "").trim().replace(",", ".");
-      let avance = 0;
-      if (raw !== "" && raw !== "." && !isNaN(parseFloat(raw))) {
-        avance = roundHa(raw);
-        if (area > 0 && avance > area) avance = area;
-      }
       const laborReal = fLaborReal.value;
+      let avance = roundHa(fAvance && fAvance.value);
+      if (avance <= 0) avance = defaultLaborAvance(area, laborReal, lot);
+      avance = clampLaborAvance(avance, area, laborReal, lot) || defaultLaborAvance(area, laborReal, lot);
+      if (fAvance) fAvance.value = avance ? formatHa(avance) : "";
+      if (fArea) fArea.value = area ? formatHa(area) : "";
       updateAvanceBar();
-      const paint = modulePaintColor(lot) || normalizeHexColor(laborRecords[posKey]?.color);
-      updateDrawerPreview(lot, avance, laborReal, paint);
+      const paint = currentPaintColor();
+      updateDrawerPreview();
       const cell = getCellByKey(posKey);
       if (cell) {
         cell.classList.remove("dim");
@@ -4828,6 +5892,7 @@
     }
 
     function refreshAllLaborVisuals() {
+      syncCercosMapLayout();
       document.querySelectorAll(".cell:not(.empty)").forEach(cell => {
         const lot = byPos.get(cell.dataset.key);
         if (lot) applyLaborVisual(cell, lot);
@@ -4894,11 +5959,11 @@
       const mobile = isMobileMap();
       const show = mobile && mobChromeOpen;
       if (mobChrome) {
-        mobChrome.style.display = show ? "flex" : "none";
+        mobChrome.style.display = "";
         mobChrome.setAttribute("aria-hidden", show ? "false" : "true");
       }
       if (mobFilters) {
-        mobFilters.style.display = show ? "block" : "none";
+        mobFilters.style.display = "";
         mobFilters.setAttribute("aria-hidden", show ? "false" : "true");
       }
       document.body.classList.toggle("mob-chrome-hidden", mobile && !mobChromeOpen);
@@ -5000,10 +6065,9 @@
       zoomChip.textContent = isMobileMap() ? `Mapa ${pct}%` : `Zoom ${pct}%`;
       viewport.style.cursor = canPan() ? "grab" : "default";
       const mobUi = document.getElementById("mapMobileUi");
-      const mobChrome = document.getElementById("mobChrome");
       const mobile = isMobileMap();
       if (mobUi) {
-        mobUi.style.display = mobile ? "flex" : "none";
+        mobUi.style.display = "";
         mobUi.setAttribute("aria-hidden", mobile ? "false" : "true");
       }
       syncMobChromeVisibility();
@@ -5200,7 +6264,7 @@
           continue;
         }
         const m = lot.modulo;
-        cell.className = "cell" + (m ? ` m${m}` : "");
+        cell.className = "cell" + (m ? ` m${m}` : "") + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
         cell.dataset.key = `${lot.r},${lot.c}`;
         cell.dataset.lote = String(lot.lote);
         cell.dataset.tunel = lot.tunel;
@@ -5210,7 +6274,8 @@
           <div class="cell-fill"></div>
           <span class="t">${String(lot.tunel).toUpperCase()}</span>
           <span class="l">LT.${lot.lote}</span>
-          <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>`;
+          <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
+          ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
         cell.addEventListener("click", e => {
           const drawerOpen = !isMobileMap() &&
             document.getElementById("laborDrawer").classList.contains("open");
@@ -5237,6 +6302,15 @@
         grid.appendChild(cell);
       }
     });
+    syncCercosMapLayout();
+    grid.addEventListener("contextmenu", e => {
+      if (isMobileMap()) return;
+      const cell = e.target.closest(".cell[data-key]");
+      if (!cell) return;
+      e.preventDefault();
+      e.stopPropagation();
+      openCellDeleteModal(cell.dataset.key);
+    });
 
     function selectLot(lot, cell) {
       if (!lot) return;
@@ -5244,7 +6318,7 @@
       if (cell) cell.classList.add("active");
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       const posKey = `${lot.r},${lot.c}`;
-      const rec = laborRecords[posKey];
+      const rec = recForMapLot(posKey);
       const area = roundHa(lot.ha);
       let trabajado = 0;
       if (multiLotMode && multiLotKeys.has(posKey)) {
@@ -5252,7 +6326,8 @@
       } else if (rec?.avance != null && rec.avance !== "") {
         trabajado = roundHa(rec.avance);
       }
-      if (trabajado > area) trabajado = area;
+      const capSel = laborUsableHa(area, (rec && rec.laborReal) || mapQuery.laborReal, lot);
+      if (trabajado > capSel) trabajado = capSel;
       const falta = roundHa(Math.max(0, area - trabajado));
       const laborTxt = rec?.laborReal ? String(rec.laborReal) : "Sin labor registrada";
 
@@ -5320,6 +6395,7 @@
           (`m${mod}`).includes(q);
         cell.classList.toggle("dim", !(matchMod && matchQ));
       });
+      syncCercosMapLayout();
       updateMobileChrome();
     }
 
@@ -5478,7 +6554,7 @@
     }
 
     viewport.addEventListener("mousedown", e => {
-      if (e.button !== 0 || e.target.closest(".detail") || e.target.closest(".map-mobile-ui")) return;
+      if (e.button !== 0 || e.target.closest(".detail") || e.target.closest(".map-mobile-ui") || e.target.closest(".mob-zoom") || e.target.closest(".mob-detail")) return;
       e.preventDefault();
       startDrag(e.clientX, e.clientY);
     });
@@ -5490,7 +6566,7 @@
     });
 
     viewport.addEventListener("touchstart", e => {
-      if (e.target.closest(".detail") || e.target.closest(".map-mobile-ui")) return;
+      if (e.target.closest(".detail") || e.target.closest(".map-mobile-ui") || e.target.closest(".mob-zoom") || e.target.closest(".mob-detail")) return;
       if (e.touches.length === 2) {
         dragging = false;
         pinchStartDist = touchDist(e.touches);
@@ -5556,8 +6632,21 @@
     window.addEventListener("resize", onMapResize);
     window.addEventListener("orientationchange", onMapResize);
     window.matchMedia(MOBILE_MAP_MQ).addEventListener("change", () => {
-      if (isMobileMap()) scheduleMapFit();
-      else fitToScreen();
+      document.getElementById("laborDrawer")?.classList.remove("open");
+      document.getElementById("laborDrawer")?.setAttribute("aria-hidden", "true");
+      document.getElementById("cellDelModal")?.classList.remove("open");
+      document.getElementById("filterModal")?.classList.remove("open");
+      document.getElementById("filterModal")?.setAttribute("aria-hidden", "true");
+      document.getElementById("progressModal")?.classList.remove("open");
+      document.getElementById("refreshModal")?.classList.remove("open");
+      syncMobChromeVisibility();
+      if (isMobileMap()) {
+        scheduleMapFit();
+        setTimeout(scheduleMapFit, 120);
+        setTimeout(scheduleMapFit, 320);
+      } else {
+        fitToScreen();
+      }
       updateMobileChrome();
     });
     window.addEventListener("pageshow", () => {
@@ -5587,23 +6676,49 @@
     const fTotalJr = document.getElementById("fTotalJr");
     const fAvanceBar = document.getElementById("fAvanceBar");
 
-    function createCustomSelect(root, { items, placeholder, onChange }) {
+    function hasLaborDesk() {
+      return !!(fLaborReal && String(fLaborReal.value || "").trim());
+    }
+    function syncLaborGate() {
+      const grid = document.getElementById("laborFieldGrid");
+      grid?.classList.toggle("is-gated", !hasLaborDesk());
+      if (fTotalJr) fTotalJr.disabled = !hasLaborDesk();
+    }
+
+    function createCustomSelect(root, opts) {
       const hidden = root.querySelector('input[type="hidden"]');
       const trigger = root.querySelector(".cselect-trigger");
       const list = root.querySelector(".cselect-list");
-      const normalized = items.map(it => typeof it === "string"
-        ? { value: it, label: it }
-        : { value: String(it.value), label: String(it.label), search: it.search });
+      let placeholder = opts.placeholder || "";
+      const onChange = opts.onChange;
+      const closeOnSelect = opts.closeOnSelect !== false;
+      const optionMeta = opts.optionMeta;
+      const mapItem = (it) => typeof it === "string"
+        ? { value: it, label: it, sub: "" }
+        : { value: String(it.value), label: String(it.label), search: it.search, sub: it.sub || "" };
+      const normalized = (opts.items || []).map(mapItem);
+
+      function optionMarkup(it) {
+        const meta = optionMeta ? optionMeta(it) : null;
+        const captured = !!(meta && meta.captured);
+        const isCurrent = hidden.value === it.value;
+        const sel = (captured || isCurrent) ? " selected" : "";
+        const cap = captured ? " is-captured" : "";
+        const sub = it.sub ? `<small>${it.sub}</small>` : "";
+        const tag = captured && meta.tag ? `<span class="opt-tag">${meta.tag}</span>` : "";
+        const rich = !!(optionMeta || it.sub);
+        const body = rich
+          ? `<span class="opt-copy"><b>${it.label}</b>${sub}${tag}</span><span class="opt-check" aria-hidden="true"></span>`
+          : it.label;
+        return `<button type="button" class="cselect-option${sel}${cap}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option">${body}</button>`;
+      }
 
       function render() {
         if (!normalized.length) {
           list.innerHTML = `<div class="cselect-empty">Sin opciones</div>`;
           return;
         }
-        list.innerHTML = normalized.map(it => {
-          const sel = hidden.value === it.value ? " selected" : "";
-          return `<button type="button" class="cselect-option${sel}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option">${it.label}</button>`;
-        }).join("");
+        list.innerHTML = normalized.map(optionMarkup).join("");
       }
 
       function setValue(val, silent) {
@@ -5623,6 +6738,7 @@
       }
 
       function open() {
+        if (trigger.disabled) return;
         document.querySelectorAll(".cselect.open").forEach(el => {
           if (el !== root) {
             el.classList.remove("open");
@@ -5642,6 +6758,7 @@
 
       trigger.addEventListener("click", e => {
         e.stopPropagation();
+        if (trigger.disabled) return;
         if (root.classList.contains("open")) close();
         else open();
       });
@@ -5649,7 +6766,8 @@
         const btn = e.target.closest(".cselect-option");
         if (!btn) return;
         setValue(btn.dataset.value);
-        close();
+        if (closeOnSelect) close();
+        else render();
       });
 
       render();
@@ -5660,24 +6778,43 @@
       }
 
       function updateItems(newItems) {
-        const mapped = (newItems || []).map(it => typeof it === "string"
-          ? { value: it, label: it }
-          : { value: String(it.value), label: String(it.label), search: it.search });
+        const mapped = (newItems || []).map(mapItem);
         normalized.length = 0;
         normalized.push(...mapped);
-        render();
         if (hidden.value && normalized.some(it => it.value === hidden.value)) {
           setValue(hidden.value, true);
-        } else if (hidden.value && normalized.length) {
-          setValue(normalized[0].value, true);
         } else {
+          hidden.value = "";
           trigger.textContent = placeholder;
           trigger.classList.add("is-empty");
-          hidden.value = "";
+          render();
         }
       }
 
-      return { setValue, open, close, updateItems, get value() { return hidden.value; } };
+      function setEnabled(on) {
+        trigger.disabled = !on;
+        trigger.classList.toggle("is-disabled", !on);
+        if (!on) close();
+      }
+
+      function setPlaceholder(p) {
+        placeholder = p || "";
+        if (!hidden.value) {
+          trigger.textContent = placeholder;
+          trigger.classList.add("is-empty");
+        }
+      }
+
+      return {
+        setValue,
+        open,
+        close,
+        updateItems,
+        setEnabled,
+        setPlaceholder,
+        refresh: render,
+        get value() { return hidden.value; }
+      };
     }
 
     document.addEventListener("click", e => {
@@ -5708,7 +6845,7 @@
     initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores reales", () => {
       syncMapQueryFromSelects("desk");
       refreshFilterPanelUI();
-      syncFilterBtnState();
+      applyMapFilters(true);
     });
     initFilterCSelect("mobFilterSemC", "mobFilterSem", "—", () => {
       syncMapQueryFromSelects("mob");
@@ -5731,44 +6868,183 @@
       applyMapFilters(true);
     });
 
-    const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
-    const loteItems = sortedLots.map(lot => ({
-      value: `${lot.r},${lot.c}`,
-      label: `LOTE ${lot.lote}`,
-      search: `lote ${lot.lote} lt.${lot.lote}`
-    }));
+    function lotsForModulo(modId) {
+      const id = String(modId || "");
+      return lots.filter(l => String(l.modulo) === id);
+    }
+    function turnoItemsFor(modId) {
+      const seen = new Set();
+      const out = [];
+      lotsForModulo(modId).forEach(lot => {
+        const t = String(lot.tunel || "").toUpperCase();
+        if (!t || seen.has(t)) return;
+        seen.add(t);
+        out.push({ value: t, label: t });
+      });
+      out.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+      return out;
+    }
+    function loteItemsFor(modId, turno) {
+      const t = String(turno || "").toUpperCase();
+      return lotsForModulo(modId)
+        .filter(l => !t || String(l.tunel || "").toUpperCase() === t)
+        .sort((a, b) => Number(a.lote) - Number(b.lote))
+        .map(lot => ({
+          value: `${lot.r},${lot.c}`,
+          label: `LOTE ${lot.lote}`,
+          sub: String(lot.tunel || "").toUpperCase() + " · " + formatHa(lot.ha) + " ha"
+        }));
+    }
+    function loteOptionMeta(it) {
+      if (multiLotKeys.has(it.value)) return { captured: true, tag: "En el día" };
+      const rec = recForMapLot(it.value);
+      if (rec && rec.laborReal) return { captured: true, tag: "Terminado" };
+      return null;
+    }
+    function resetTurnoLoteSelects() {
+      if (turnoCSelect) {
+        turnoCSelect.setPlaceholder("Seleccionar");
+        turnoCSelect.updateItems([]);
+        turnoCSelect.setEnabled(false);
+        turnoCSelect.setValue("", true);
+      }
+      if (loteCSelect) {
+        loteCSelect.setPlaceholder("Seleccionar");
+        loteCSelect.updateItems([]);
+        loteCSelect.setEnabled(false);
+        loteCSelect.setValue("", true);
+      }
+    }
+    function applyDeskCascadeFromLot(posKey) {
+      const lot = byPos.get(posKey);
+      if (!lot) return false;
+      const modId = lot.modulo != null ? String(lot.modulo) : "";
+      const turno = String(lot.tunel || "").toUpperCase();
+      if (moduloCSelect) moduloCSelect.setValue(modId, true);
+      if (turnoCSelect) {
+        turnoCSelect.setPlaceholder("Seleccionar");
+        turnoCSelect.updateItems(turnoItemsFor(modId));
+        turnoCSelect.setEnabled(!!modId);
+        turnoCSelect.setValue(turno, true);
+      }
+      if (loteCSelect) {
+        loteCSelect.setPlaceholder("Seleccionar");
+        loteCSelect.updateItems(loteItemsFor(modId, turno));
+        loteCSelect.setEnabled(!!turno);
+        loteCSelect.setValue(posKey, true);
+        loteCSelect.refresh();
+      }
+      if (fArea) fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
+      return true;
+    }
+    function captureDeskLot(posKey) {
+      const lot = byPos.get(posKey);
+      if (!lot) return;
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const rec = recForMapLot(posKey);
+      const prevAv = rec && rec.avance != null && rec.avance !== "" ? roundHa(rec.avance) : 0;
+      const av = prevAv > 0
+        ? clampLaborAvance(prevAv, lot.ha, labor, lot)
+        : defaultLaborAvance(lot.ha, labor, lot);
+      multiLotKeys.set(posKey, { avance: av });
+      if (fAvance && (!roundHa(fAvance.value) || fAvance.value === "0.")) {
+        fAvance.value = av ? formatHa(av) : "";
+      }
+      syncMultiLotSummary();
+      paintOneMultiCell(posKey);
+      renderDeskLotBoard();
+    }
 
-    const loteCSelect = createCustomSelect(document.getElementById("loteSelect"), {
-      items: loteItems,
-      placeholder: "Seleccionar lote...",
+    const moduloCSelect = createCustomSelect(document.getElementById("moduloSelect"), {
+      items: modules.map(m => ({ value: String(m.id), label: m.label })),
+      placeholder: "Seleccionar",
       onChange: (val) => {
-        if (val) {
-          fillLaborForm(val);
-          previewFromForm();
+        if (turnoCSelect) {
+          turnoCSelect.setPlaceholder("Seleccionar");
+          turnoCSelect.updateItems(turnoItemsFor(val));
+          turnoCSelect.setEnabled(!!val);
+          turnoCSelect.setValue("", true);
+        }
+        if (loteCSelect) {
+          loteCSelect.setPlaceholder("Seleccionar");
+          loteCSelect.updateItems([]);
+          loteCSelect.setEnabled(false);
+          loteCSelect.setValue("", true);
         }
       }
     });
 
-    const variedadCSelect = createCustomSelect(document.getElementById("variedadSelect"), {
-      items: ["SEKOYA POP", "MAGICA"],
-      placeholder: "Seleccionar variedad...",
+    const turnoCSelect = createCustomSelect(document.getElementById("turnoSelect"), {
+      items: [],
+      placeholder: "Seleccionar",
       onChange: (val) => {
-        previewFromForm();
-        fetchByVariedad(val || fVariedad.value, true);
+        const modId = fModulo && fModulo.value;
+        if (loteCSelect) {
+          loteCSelect.setPlaceholder("Seleccionar");
+          loteCSelect.updateItems(val ? loteItemsFor(modId, val) : []);
+          loteCSelect.setEnabled(!!val);
+          loteCSelect.setValue("", true);
+        }
       }
     });
-    variedadCSelect.setValue("SEKOYA POP", true);
+    turnoCSelect.setEnabled(false);
+
+    const loteCSelect = createCustomSelect(document.getElementById("loteSelect"), {
+      items: [],
+      placeholder: "Seleccionar",
+      closeOnSelect: false,
+      optionMeta: loteOptionMeta,
+      onChange: (val) => {
+        if (!val) return;
+        if (!hasLaborDesk()) {
+          loteCSelect.setValue("", true);
+          showToast("Selecciona la labor primero", true);
+          laborRealCSelect.open();
+          return;
+        }
+        if (multiLotKeys.has(val)) {
+          removeMultiLot(val);
+          const next = [...multiLotKeys.keys()][0] || "";
+          loteCSelect.setValue(next, true);
+          if (next) applyDeskCascadeFromLot(next);
+          else loteCSelect.refresh();
+          renderDeskLotBoard();
+          return;
+        }
+        applyDeskCascadeFromLot(val);
+        captureDeskLot(val);
+        loteCSelect.refresh();
+      }
+    });
+    loteCSelect.setEnabled(false);
+
+    const variedadCSelect = {
+      setValue(v) {
+        if (fVariedad) fVariedad.value = v === "MAGICA" ? "MAGICA" : "SEKOYA POP";
+      }
+    };
+    variedadCSelect.setValue("SEKOYA POP");
 
     const laborPptoCSelect = { setValue() {} };
 
     const laborRealCSelect = createCustomSelect(document.getElementById("laborRealSelect"), {
       items: LABOR_OPTS.labor_real,
-      placeholder: "Seleccionar labor real...",
-      onChange: () => previewFromForm()
+      placeholder: "Seleccionar",
+      onChange: () => {
+        const labor = String(fLaborReal.value || "");
+        multiLotKeys.forEach((meta, key) => {
+          const lot = byPos.get(key);
+          if (!lot || !meta) return;
+          meta.avance = defaultLaborAvance(lot.ha, labor, lot);
+        });
+        syncLaborGate();
+        previewFromForm();
+      }
     });
 
     function setLoteValue(posKey, silent) {
-      loteCSelect.setValue(posKey || "", true);
+      if (posKey) applyDeskCascadeFromLot(posKey);
+      else if (loteCSelect) loteCSelect.setValue("", true);
       if (!silent && posKey) {
         fillLaborForm(posKey);
         previewFromForm();
@@ -5798,82 +7074,92 @@
 
     function getMultiLotAvance(posKey, lot) {
       const meta = multiLotKeys.get(posKey);
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const area = roundHa(lot?.ha);
       let av = meta && meta.avance != null && meta.avance !== ""
         ? roundHa(meta.avance)
-        : area;
-      if (av > area) av = area;
+        : defaultLaborAvance(area, labor, lot);
+      av = clampLaborAvance(av, area, labor, lot);
+      if (av <= 0) av = defaultLaborAvance(area, labor, lot);
       return av;
     }
 
     function setMultiPaintColor(color) {
-      const next = clampToPalette(color);
-      multiPaintColor = next;
-      try { localStorage.setItem("qb-brush-color", multiPaintColor); } catch (_) { /* ok */ }
+      const today = todayColorEntry();
+      const want = (normalizeHexColor(color) || "").toUpperCase();
+      if (want && want !== today.hex.toUpperCase()) {
+        const hit = DAY_COLORS.find(d => d.hex.toUpperCase() === want);
+        showToast(hit ? ("Ese color es de " + hit.name.toLowerCase() + " · hoy pinta " + today.name.toLowerCase()) : "Color bloqueado", true);
+        return;
+      }
+      multiPaintColor = today.hex;
       document.documentElement.style.setProperty("--multi-color", multiPaintColor);
-      document.querySelectorAll(".swatch").forEach(btn => {
+      document.querySelectorAll(".color-swatch").forEach(btn => {
         btn.classList.toggle("is-on", (btn.dataset.color || "").toUpperCase() === multiPaintColor.toUpperCase());
-      });
-      document.querySelectorAll(".brush-current").forEach(el => {
-        el.innerHTML = `<i style="background:${multiPaintColor}" aria-hidden="true"></i>${multiPaintColor}`;
-        el.title = colorDetailText(multiPaintColor);
       });
       syncMultiLotMapPaint();
       if (!multiLotMode && fLote?.value) previewFromForm();
     }
 
     function renderColorPalettes() {
-      const active = clampToPalette(multiPaintColor).toUpperCase();
-      multiPaintColor = clampToPalette(multiPaintColor);
-      const swatches = MULTI_COLORS.map(c =>
-        `<button type="button" class="swatch${c.toUpperCase() === active ? " is-on" : ""}" data-color="${c}" style="background:${c}" title="${colorDetailText(c)}" aria-label="Color ${colorDetailText(c)}"></button>`
-      ).join("");
-      const row = `<div class="multi-palette-row">${swatches}</div>`;
-      const brush = `<span class="brush-current" title="${colorDetailText(multiPaintColor)}"><i style="background:${multiPaintColor}" aria-hidden="true"></i>${multiPaintColor}</span>`;
-
-      document.querySelectorAll(".multi-palette").forEach(el => {
-        let label = el.querySelector(".multi-palette-label");
-        if (!label) {
-          label = document.createElement("div");
-          label.className = "multi-palette-label";
-          el.prepend(label);
-        }
-        const base = el.id === "multiPaletteModal"
-          ? "10 colores"
-          : "10 colores · elige y pinta en el mapa";
-        label.innerHTML = `<span>${base}</span>${brush}`;
-        el.querySelectorAll(".multi-palette-row, .swatch-custom").forEach(s => s.remove());
-        el.insertAdjacentHTML("beforeend", row);
+      const today = todayColorEntry();
+      multiPaintColor = today.hex;
+      const html = DAY_COLORS.map(c => {
+        const future = limaDow() <= 5 && c.dow > limaDow();
+        const past = isDayUnlocked(c.dow) && !future && c.dow !== today.dow;
+        const cls = "color-swatch"
+          + (c.dow === today.dow ? " is-on" : "")
+          + (past ? " is-locked" : "")
+          + (future ? " is-future is-locked" : "");
+        return `<button type="button" class="${cls}" data-color="${c.hex}" data-dow="${c.dow}" ${future ? "disabled" : ""} aria-label="${c.name}">
+          <span class="sw-dot" style="background:${c.hex}"></span>
+          <small>${c.short}</small>
+        </button>`;
+      }).join("");
+      ["deskColorGrid", "multiColorGrid"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = html;
+        el.querySelectorAll(".color-swatch").forEach(btn => {
+          btn.addEventListener("click", () => setMultiPaintColor(btn.getAttribute("data-color")));
+        });
       });
+      const hint = document.getElementById("deskColorHint");
+      if (hint) hint.textContent = "Hoy " + today.name.toLowerCase() + " · se desbloquea un color por día";
       document.documentElement.style.setProperty("--multi-color", multiPaintColor);
     }
 
+    function loteCountLabel(n) {
+      return n === 1 ? "1 lote" : n + " lotes";
+    }
+    function updateLoteCountLabel() {
+      const n = multiLotKeys.size;
+      const trigger = document.getElementById("fLoteTrigger");
+      if (trigger && !trigger.disabled) {
+        if (n) {
+          trigger.textContent = loteCountLabel(n);
+          trigger.classList.remove("is-empty");
+        } else {
+          trigger.textContent = "Seleccionar";
+          trigger.classList.add("is-empty");
+        }
+      }
+    }
     function syncMultiLotSummary() {
-      const btn = document.getElementById("multiLotSummary");
       const n = multiLotKeys.size;
       const totalArea = multiLotsTotalHa();
       const totalAv = multiLotsTotalAvance();
-      if (!btn) return;
-      if (!n) {
-        btn.textContent = "Selecciona lotes en el mapa...";
-        btn.classList.add("is-empty");
-        btn.classList.remove("has-lots");
-      } else {
-        btn.textContent = `${n} lote${n === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha · ver lista`;
-        btn.classList.remove("is-empty");
-        btn.classList.add("has-lots");
-      }
       fArea.value = n ? formatHa(totalArea) : "";
-      fModulo.value = n ? "VARIOS" : "";
-      fTurno.value = n ? "VARIOS" : "";
       fAvance.value = n ? formatHa(totalAv) : "";
       updateAvanceBar();
+      updateLoteCountLabel();
       const status = document.getElementById("lotPreviewStatus");
       if (status) {
         status.textContent = n
-          ? `${n} lotes · avance ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`
-          : "Clic en el mapa para seleccionar lotes";
+          ? n + " lote(s) · área " + formatHa(totalArea) + " ha"
+          : "Selecciona un lote";
       }
+      if (loteCSelect) loteCSelect.refresh();
     }
 
     let multiListBusy = false;
@@ -5887,7 +7173,7 @@
         c.style.removeProperty("--multi-color");
         const lot = byPos.get(key);
         if (!lot) return;
-        const rec = laborRecords[key];
+        const rec = recForMapLot(key);
         paintCellProgress(c, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, key, rec?.color));
       });
       selected.forEach(key => paintOneMultiCell(key));
@@ -5899,7 +7185,7 @@
       if (!lot || !cell || !multiLotKeys.has(posKey)) return;
       const area = roundHa(lot.ha) || 1;
       let av = getMultiLotAvance(posKey, lot);
-      if (av > area) av = area;
+      av = clampLaborAvance(av, area, fLaborReal.value || mapQuery.laborReal, lot);
       const laborReal = fLaborReal.value || "MULTI";
       cell.style.setProperty("--multi-color", multiPaintColor);
       cell.classList.remove("dim", "active");
@@ -5914,22 +7200,9 @@
       const n = multiLotKeys.size;
       const totalArea = multiLotsTotalHa();
       const totalAv = multiLotsTotalAvance();
-      const btn = document.getElementById("multiLotSummary");
-      if (btn) {
-        if (!n) {
-          btn.textContent = "Selecciona lotes en el mapa...";
-          btn.classList.add("is-empty");
-          btn.classList.remove("has-lots");
-        } else {
-          btn.textContent = `${n} lote${n === 1 ? "" : "s"} · av. ${formatHa(totalAv)} / ${formatHa(totalArea)} ha · ver lista`;
-          btn.classList.remove("is-empty");
-          btn.classList.add("has-lots");
-        }
-      }
       fArea.value = n ? formatHa(totalArea) : "";
-      fModulo.value = n ? "VARIOS" : "";
-      fTurno.value = n ? "VARIOS" : "";
       fAvance.value = n ? formatHa(totalAv) : "";
+      updateLoteCountLabel();
       updateAvanceBar();
       const totalEl = document.getElementById("multiLotTotal");
       if (totalEl) {
@@ -5944,9 +7217,10 @@
       const status = document.getElementById("lotPreviewStatus");
       if (status) {
         status.textContent = n
-          ? `${n} lotes · avance ${formatHa(totalAv)} / ${formatHa(totalArea)} ha`
-          : "Clic en el mapa para seleccionar lotes";
+          ? n + " lote(s) · área " + formatHa(totalArea) + " ha"
+          : "Selecciona un lote";
       }
+      if (loteCSelect) loteCSelect.refresh();
     }
 
     function commitMultiLotAvanceInput(inp, { paint, format }) {
@@ -5984,20 +7258,7 @@
     function previewMultiLots() {
       syncMultiLotSummary();
       syncMultiLotMapPaint();
-      const items = getMultiLots();
-      if (!items.length) {
-        updateDrawerPreview(null);
-        return;
-      }
-      const first = items[0].lot;
-      const av = getMultiLotAvance(items[0].key, first);
-      updateDrawerPreview(first, av, fLaborReal.value, multiPaintColor);
-      const lotPreviewFill = document.getElementById("lotPreviewFill");
-      if (lotPreviewFill) lotPreviewFill.style.background = multiPaintColor;
-      const status = document.getElementById("lotPreviewStatus");
-      if (status) {
-        status.textContent = `${items.length} lotes · avance ${formatHa(multiLotsTotalAvance())} / ${formatHa(multiLotsTotalHa())} ha · ${colorDetailText(multiPaintColor)}`;
-      }
+      updateDrawerPreview();
     }
 
     function renderMultiLotModalList() {
@@ -6078,11 +7339,14 @@
       }
 
       const lot = byPos.get(posKey);
-      const existing = laborRecords[posKey];
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const existing = recForMapLot(posKey);
       const prevAv = existing?.avance != null && existing.avance !== ""
         ? roundHa(existing.avance)
         : 0;
-      const av = prevAv > 0 ? prevAv : roundHa(lot.ha);
+      const av = prevAv > 0
+        ? clampLaborAvance(prevAv, lot.ha, labor, lot)
+        : defaultLaborAvance(lot.ha, labor, lot);
       multiLotKeys.set(posKey, { avance: av });
 
       syncMultiLotSummary();
@@ -6111,7 +7375,7 @@
         cell.style.removeProperty("--multi-color");
         const lot = byPos.get(posKey);
         if (lot) {
-          const rec = laborRecords[posKey];
+          const rec = recForMapLot(posKey);
           paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, posKey, rec?.color));
         }
       }
@@ -6148,114 +7412,118 @@
       if (next === multiLotMode) return;
       multiLotMode = next;
       const toggle = document.getElementById("multiLotToggle");
-      const single = document.getElementById("loteSingleWrap");
-      const multi = document.getElementById("loteMultiWrap");
       if (toggle) {
         toggle.classList.toggle("is-on", multiLotMode);
         toggle.setAttribute("aria-pressed", multiLotMode ? "true" : "false");
       }
-      if (single) single.hidden = multiLotMode;
-      if (multi) multi.hidden = !multiLotMode;
-      const areaLabel = document.querySelector('label[for="fArea"]');
-      if (areaLabel) areaLabel.textContent = multiLotMode ? "Área total (ha)" : "Área lote (ha)";
       if (multiLotMode) {
         document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
-        setLoteValue("", true);
         renderColorPalettes();
         setMultiPaintColor(multiPaintColor);
         syncMultiLotSummary();
         syncMultiLotMapPaint();
-        showToast("Modo múltiple", false, "Marca lotes en el mapa y pulsa Guardar avance");
+        showToast("Modo múltiple", false, "Marca más lotes en el mapa o en la lista");
       } else {
         closeMultiLotModal();
-        // Conserva la selección en memoria; solo quita el resaltado visual
         document.querySelectorAll(".cell.multi-selected").forEach(c => {
           c.classList.remove("multi-selected");
           c.style.removeProperty("--multi-color");
           const key = c.dataset.key;
           const lot = byPos.get(key);
           if (!lot) return;
-          const rec = laborRecords[key];
+          const rec = recForMapLot(key);
           paintCellProgress(c, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, key, rec?.color));
         });
         syncMultiLotSummary();
+        renderDeskLotBoard();
       }
     }
 
-    fSem.value = currentWeek;
-    fFecha.value = new Date().toISOString().slice(0, 10);
+    function lockDeskDay() {
+      const hoy = hoyIso();
+      const sem = getCurrentWeek(new Date(hoy + "T12:00:00"));
+      if (fSem) fSem.value = sem;
+      if (fFecha) fFecha.value = hoy;
+      const semText = document.getElementById("fSemText");
+      const fechaText = document.getElementById("fFechaText");
+      if (semText) semText.textContent = "SEM " + sem;
+      if (fechaText) fechaText.textContent = formatFechaDisplay(hoy);
+    }
+    lockDeskDay();
 
     function updateAvanceBar() {
-      const area = Number(fArea.value) || 0;
-      const av = Number(fAvance.value) || 0;
-      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
-      fAvanceBar.style.width = pct + "%";
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const items = deskCapturedLots();
+      const cap = items.length
+        ? roundHa(items.reduce((s, x) => s + laborUsableHa(x.lot.ha, labor, x.lot), 0))
+        : laborUsableHa(Number(fArea && fArea.value) || 0, labor);
+      const av = Number(fAvance && fAvance.value) || 0;
+      const pct = cap > 0 ? Math.min(100, (av / cap) * 100) : 0;
+      if (fAvanceBar) fAvanceBar.style.width = pct + "%";
+      updateDeskRatio();
     }
 
     function fillLaborForm(posKey) {
       if (!posKey) return;
-      // No romper selección múltiple ni colores/avances ya armados
-      if (multiLotMode) return;
-      setLoteValue(posKey, true);
       const lot = byPos.get(posKey);
       if (!lot) return;
-      const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      fModulo.value = mod ? mod.label : "";
-      fTurno.value = lot.tunel || "";
-      fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
-      fAvance.removeAttribute("max");
-      const rec = laborRecords[posKey];
+      applyDeskCascadeFromLot(posKey);
+      if (fAvance && fAvance.removeAttribute) fAvance.removeAttribute("max");
+      if (mapQuery.laborReal) laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
+      const rec = recForMapLot(posKey);
+      const areaHa = roundHa(lot.ha);
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       if (rec) {
         const up = (v) => String(v || "").toUpperCase();
         laborPptoCSelect.setValue(up(rec.laborPpto), true);
-        laborRealCSelect.setValue(up(rec.laborReal), true);
-        fAvance.value = rec.avance != null && rec.avance !== "" ? formatHa(rec.avance) : "0.";
-        fTotalJr.value = rec.totalJr ?? "";
-        variedadCSelect.setValue(rec.variedad === "MAGICA" ? "MAGICA" : "SEKOYA POP", true);
-        fFecha.value = rec.fecha || fFecha.value;
-        fSem.value = rec.sem ?? currentWeek;
-      } else {
-        fAvance.value = "0.";
-        fTotalJr.value = "";
-        variedadCSelect.setValue("SEKOYA POP", true);
-        laborPptoCSelect.setValue("", true);
-        laborRealCSelect.setValue("", true);
+        if (rec.laborReal) laborRealCSelect.setValue(up(rec.laborReal), true);
+        const av = clampLaborAvance(rec.avance, areaHa, rec.laborReal, lot) || defaultLaborAvance(areaHa, rec.laborReal, lot);
+        fAvance.value = av ? formatHa(av) : "";
+        if (rec.totalJr != null && rec.totalJr !== "") fTotalJr.value = rec.totalJr;
+        variedadCSelect.setValue(rec.variedad === "MAGICA" ? "MAGICA" : "SEKOYA POP");
+      } else if (!roundHa(fAvance && fAvance.value)) {
+        const av = defaultLaborAvance(areaHa, labor, lot);
+        fAvance.value = av ? formatHa(av) : "";
+        variedadCSelect.setValue("SEKOYA POP");
       }
+      if (!multiLotKeys.has(posKey)) captureDeskLot(posKey);
+      syncLaborGate();
       updateAvanceBar();
       previewFromForm();
+      if (loteCSelect) loteCSelect.refresh();
     }
 
     async function saveOneLaborRecord(posKey, lot, avance, showFeedback, fillColor) {
       const area = roundHa(lot.ha);
+      const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
       let av = roundHa(avance);
-      if (av > area) av = area;
+      if (av <= 0) av = defaultLaborAvance(area, laborReal, lot);
+      av = clampLaborAvance(av, area, laborReal, lot) || defaultLaborAvance(area, laborReal, lot);
       if (av < 0 || area < 0 || area > 500) {
         if (showFeedback) showToast("Datos inválidos", true, "Área/avance fuera de rango");
         return { queued: false, area, avance: 0, error: true };
       }
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
       const allow = (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase());
       if (!laborReal || (allow.length && !allow.includes(laborReal))) {
         if (showFeedback) showToast("Labor no permitida", true);
         return { queued: false, area, avance: av, error: true };
       }
-      const paint = multiLotMode
-        ? (normalizeHexColor(fillColor) || multiPaintColor)
-        : (modulePaintColor(lot) || normalizeHexColor(fillColor) || multiPaintColor);
+      const paint = currentPaintColor() || normalizeHexColor(fillColor) || multiPaintColor;
       laborRecords[posKey] = {
         sem: Number(fSem.value) || currentWeek,
         fecha: fFecha.value,
         laborPpto: String(fLaborPpto.value || "").toUpperCase(),
         laborReal,
-        modulo: String(mod?.label || fModulo.value || "").toUpperCase(),
+        modulo: String(mod?.label || "").toUpperCase(),
         turno: String(lot.tunel || fTurno.value || "").toUpperCase(),
         lote: lot.lote,
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
         area,
         avance: av,
         totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0)),
-        color: paint
+        color: paint,
+        editar: true
       };
       saveLaborRecords();
 
@@ -6364,9 +7632,13 @@
         color: brush.label
       };
 
+      const jrTotal = roundHa(fTotalJr && fTotalJr.value);
+      const totArea = roundHa(items.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
       const records = items.map(({ key, lot }) => {
         const area = roundHa(lot.ha);
-        const av = getMultiLotAvance(key, lot);
+        let av = getMultiLotAvance(key, lot);
+        if (av <= 0) av = defaultLaborAvance(area, laborReal, lot);
+        av = clampLaborAvance(av, area, laborReal, lot) || defaultLaborAvance(area, laborReal, lot);
         const mod = lot.modulo != null ? modById[lot.modulo] : null;
         const rec = {
           posKey: key,
@@ -6380,8 +7652,9 @@
           variedad: shared.variedad,
           area,
           avance: av,
-          totalJr: shared.totalJr,
-          color: brush.hex
+          totalJr: totArea > 0 ? roundHa(jrTotal * (area / totArea)) : 0,
+          color: currentPaintColor(),
+          editar: true
         };
         laborRecords[key] = Object.assign({}, rec);
         return rec;
@@ -6434,7 +7707,7 @@
         records.forEach(rec => flashSavedCell(rec.posKey));
         const first = records[0];
         const firstLot = first && byPos.get(first.posKey);
-        if (firstLot) updateDrawerPreview(firstLot, first.avance, first.laborReal, multiPaintColor);
+        if (firstLot) updateDrawerPreview();
         if (API_URL) scheduleSoftSync(500);
       }
 
@@ -6475,7 +7748,19 @@
 
     async function commitLaborFromForm(showFeedback) {
       if (savingLabor) return false;
-      if (multiLotMode) return commitMultiLabors(showFeedback);
+      if (!fLaborReal.value) {
+        if (showFeedback) {
+          showToast("Selecciona la labor real", true);
+          showDrawerSavedMsg("Falta la labor real", "error");
+          laborRealCSelect.open();
+        }
+        return false;
+      }
+      if (multiLotMode || multiLotKeys.size > 1) return commitMultiLabors(showFeedback);
+      if (multiLotKeys.size === 1) {
+        const only = [...multiLotKeys.keys()][0];
+        if (only && fLote) fLote.value = only;
+      }
       const posKey = fLote.value;
       if (!posKey) {
         if (showFeedback) {
@@ -6485,24 +7770,17 @@
         }
         return false;
       }
-      if (!fLaborReal.value) {
-        if (showFeedback) {
-          showToast("Selecciona la labor real", true);
-          showDrawerSavedMsg("Falta la labor real", "error");
-          laborRealCSelect.open();
-        }
-        return false;
-      }
       const lot = byPos.get(posKey);
       if (!lot) return false;
       const area = roundHa(lot.ha);
+      const laborNow = String(fLaborReal.value || "").toUpperCase().trim();
       let avance = roundHa(fAvance.value);
-      if (avance > area) avance = area;
+      if (avance <= 0) avance = defaultLaborAvance(area, laborNow, lot);
+      avance = clampLaborAvance(avance, area, laborNow, lot) || defaultLaborAvance(area, laborNow, lot);
       if (avance <= 0) {
         if (showFeedback) {
-          showToast("Pon el avance", true, "Avance debe ser mayor a 0");
-          showDrawerSavedMsg("Escribe el avance (ha) antes de guardar", "error");
-          fAvance.focus();
+          showToast("El lote no tiene área", true);
+          showDrawerSavedMsg("No hay hectáreas para guardar", "error");
         }
         return false;
       }
@@ -6521,7 +7799,7 @@
 
       let queued = false;
       let failed = false;
-      let savedColor = modulePaintColor(lot);
+      let savedColor = currentPaintColor();
       try {
         const res = await saveOneLaborRecord(posKey, lot, avance, showFeedback, savedColor);
         if (res && res.error) failed = true;
@@ -6565,9 +7843,13 @@
         savingLabor = false;
       }
       requestAnimationFrame(() => {
+        if (!failed) {
+          multiLotKeys.delete(posKey);
+          if (loteCSelect) loteCSelect.refresh();
+        }
         normalizeStoredLaborColors();
         refreshAllLaborVisuals();
-        updateDrawerPreview(lot, avance, fLaborReal.value, savedColor);
+        updateDrawerPreview();
         updateAvanceBar();
       });
       return !failed;
@@ -6577,10 +7859,15 @@
       laborDrawer.removeAttribute("inert");
       laborDrawer.classList.add("open");
       laborDrawer.setAttribute("aria-hidden", "false");
-      if (posKey && !multiLotMode) fillLaborForm(posKey);
-      else previewFromForm();
+      syncLaborGate();
+      if (posKey) {
+        if (multiLotMode) addMultiLot(posKey, false);
+        else fillLaborForm(posKey);
+      } else {
+        previewFromForm();
+      }
       if (!posKey) {
-        showToast("Reporte de labores", false, "Elige lote, completa datos y pulsa Guardar avance");
+        showToast("Reporte de labores", false, "Primero la labor, luego módulo, turno y lote");
       }
     }
     function closeLaborDrawer() {
@@ -6638,12 +7925,8 @@
       fAvance.value = formatHa(av);
       previewFromForm();
     });
+    fTotalJr.addEventListener("input", () => { updateDeskRatio(); previewFromForm(); });
     fTotalJr.addEventListener("change", previewFromForm);
-    fFecha.addEventListener("change", previewFromForm);
-
-    document.getElementById("multiLotToggle")?.addEventListener("click", () => {
-      setMultiLotMode(!multiLotMode);
-    });
     document.getElementById("multiLotSummary")?.addEventListener("click", openMultiLotModal);
     document.getElementById("multiLotCloseBtn")?.addEventListener("click", closeMultiLotModal);
     document.getElementById("multiLotClearBtn")?.addEventListener("click", () => {
@@ -6696,9 +7979,10 @@
       if (!inp) return;
       commitMultiLotAvanceInput(inp, { paint: true, format: true });
     }, true);
-    document.getElementById("loteMultiWrap")?.addEventListener("click", e => {
-      const sw = e.target.closest(".swatch");
-      if (sw?.dataset.color) setMultiPaintColor(sw.dataset.color);
+    document.getElementById("deskLotBoard")?.addEventListener("click", e => {
+      const btn = e.target.closest("[data-open]");
+      if (!btn) return;
+      fillLaborForm(btn.getAttribute("data-open"));
     });
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape") return;
@@ -6711,6 +7995,9 @@
       if (modal?.classList.contains("open")) closeMultiLotModal();
     });
     renderColorPalettes();
+    syncLaborGate();
+    refreshWeekResumen();
+    renderDeskLotBoard();
 
     document.getElementById("laborForm").addEventListener("submit", e => {
       e.preventDefault();
@@ -6724,8 +8011,97 @@
     document.getElementById("openLaborBtn").onclick = () => openLaborDrawer();
     document.getElementById("closeLaborDrawer").onclick = closeLaborDrawer;
     document.getElementById("resetLaborForm").onclick = () => {
-      openConfirmClear();
+      resetUnsavedLaborForm();
     };
+
+    function resetUnsavedLaborForm() {
+      if (multiLotMode) setMultiLotMode(false);
+      clearMultiLots(true);
+      if (moduloCSelect) moduloCSelect.setValue("", true);
+      resetTurnoLoteSelects();
+      if (fArea) fArea.value = "";
+      if (fAvance) fAvance.value = "";
+      if (fTotalJr) fTotalJr.value = "";
+      updateAvanceBar();
+      previewFromForm();
+      renderDeskLotBoard();
+      const msg = document.getElementById("drawerSaveMsg");
+      if (msg) msg.classList.remove("show");
+      showToast("Formulario limpio", false, "Solo se quitaron lotes que aún no se guardaban");
+    }
+
+    let pendingCellDel = null;
+    const cellDelModal = document.getElementById("cellDelModal");
+    function openCellDeleteModal(posKey) {
+      if (isMobileMap()) return;
+      const lot = byPos.get(posKey);
+      const rec = laborRecords[posKey];
+      if (!lot) return;
+      if (!rec || !rec.laborReal) {
+        showToast("Ese lote no tiene registro guardado", true);
+        return;
+      }
+      pendingCellDel = posKey;
+      const body = document.getElementById("cellDelBody");
+      if (body) {
+        body.innerHTML = `<strong>LOTE ${lot.lote}</strong> · ${String(lot.tunel || "").toUpperCase()}<br>${rec.modulo || ""} · ${rec.laborReal}<br>${formatHa(rec.avance)} ha · ${rec.fecha || ""}`;
+      }
+      cellDelModal?.classList.add("open");
+      cellDelModal?.setAttribute("aria-hidden", "false");
+    }
+    function closeCellDeleteModal() {
+      pendingCellDel = null;
+      cellDelModal?.classList.remove("open");
+      cellDelModal?.setAttribute("aria-hidden", "true");
+    }
+    async function confirmCellDelete() {
+      const posKey = pendingCellDel;
+      const rec = posKey ? laborRecords[posKey] : null;
+      const lot = posKey ? byPos.get(posKey) : null;
+      if (!posKey || !rec || !lot) {
+        closeCellDeleteModal();
+        return;
+      }
+      const okBtn = document.getElementById("cellDelOk");
+      if (okBtn) { okBtn.disabled = true; okBtn.textContent = "Eliminando..."; }
+      let ok = true;
+      let msg = "";
+      if (API_URL && QBApi.deleteLabor) {
+        try {
+          const res = await QBApi.deleteLabor({
+            lote: lot.lote,
+            turno: lot.tunel || rec.turno,
+            modulo: rec.modulo || (lot.modulo != null ? "M" + lot.modulo : ""),
+            sem: rec.sem || currentWeek,
+            laborReal: rec.laborReal,
+            fecha: rec.fecha
+          });
+          ok = !!(res && res.ok);
+          msg = res && res.message ? res.message : "";
+        } catch (err) {
+          ok = false;
+          msg = String(err.message || err);
+        }
+      }
+      if (ok) {
+        delete laborRecords[posKey];
+        saveLaborRecords();
+        const cell = getCellByKey(posKey);
+        if (cell) applyLaborVisual(cell, lot);
+        refreshWeekResumen();
+        if (API_URL) scheduleSoftSync(400);
+        showToast("Registro eliminado", false, "LOTE " + lot.lote);
+      } else {
+        showToast("No se pudo eliminar", true, msg || "Revisa la conexión");
+      }
+      if (okBtn) { okBtn.disabled = false; okBtn.textContent = "Eliminar"; }
+      closeCellDeleteModal();
+    }
+    document.getElementById("cellDelCancel")?.addEventListener("click", closeCellDeleteModal);
+    document.getElementById("cellDelOk")?.addEventListener("click", confirmCellDelete);
+    cellDelModal?.addEventListener("click", e => {
+      if (e.target.id === "cellDelModal") closeCellDeleteModal();
+    });
 
     const confirmClearModal = document.getElementById("confirmClearModal");
     function openConfirmClear() {
@@ -6742,18 +8118,19 @@
       if (multiLotMode) setMultiLotMode(false);
       clearMultiLots(true);
       refreshAllLaborVisuals();
-      setLoteValue("", true);
-      fModulo.value = "";
-      fTurno.value = "";
+      if (moduloCSelect) moduloCSelect.setValue("", true);
+      resetTurnoLoteSelects();
       fArea.value = "";
       laborPptoCSelect.setValue("", true);
       laborRealCSelect.setValue("", true);
       fAvance.value = "0.";
       fTotalJr.value = "";
-      variedadCSelect.setValue("SEKOYA POP", true);
-      fSem.value = currentWeek;
+      variedadCSelect.setValue("SEKOYA POP");
+      lockDeskDay();
+      syncLaborGate();
       updateAvanceBar();
       previewFromForm();
+      renderWeekResumen();
       const msg = document.getElementById("drawerSaveMsg");
       if (msg) msg.classList.remove("show");
       showToast("Áreas sombreadas eliminadas", false, "El mapa y el formulario quedaron limpios");
@@ -6838,6 +8215,7 @@
     }
     document.getElementById("viewProgressBtn").onclick = openProgressModal;
     document.getElementById("openFilterBtn")?.addEventListener("click", openFilterModal);
+    document.getElementById("mobFiltersOpen")?.addEventListener("click", openFilterModal);
     document.getElementById("closeFilterModal")?.addEventListener("click", closeFilterModal);
     document.getElementById("filterBackdrop")?.addEventListener("click", closeFilterModal);
     document.getElementById("filterApplyBtn")?.addEventListener("click", () => {
@@ -6846,7 +8224,7 @@
       applyMapFilters(true);
     });
     document.getElementById("filterClearBtn")?.addEventListener("click", () => {
-      mapQuery = { sem: currentWeek, fecha: "", modulo: "", laborReal: "", laborPpto: "" };
+      mapQuery = { sem: currentWeek, fecha: "", modulo: "", laborReal: defaultMapLaborReal(), laborPpto: "" };
       activeMod = null;
       document.querySelectorAll("#modList .leg-item").forEach(el => el.classList.remove("active"));
       if (mobModScroll) {
@@ -6936,9 +8314,10 @@
 
       const fontTitle = Math.max(28, Math.round(36 * scale));
       const fontSub = Math.max(16, Math.round(20 * scale));
-      const fontCellTop = Math.max(14, Math.round(15 * scale));
-      const fontCellMid = Math.max(13, Math.round(14 * scale));
-      const fontCellBot = Math.max(12, Math.round(13 * scale));
+      const cercosFont = grid.classList.contains("is-cercos") ? 0.84 : 1;
+      const fontCellTop = Math.max(12, Math.round(15 * scale * cercosFont));
+      const fontCellMid = Math.max(11, Math.round(14 * scale * cercosFont));
+      const fontCellBot = Math.max(10, Math.round(13 * scale * cercosFont));
       const fontFoot = Math.max(14, Math.round(16 * scale));
       const strokeCell = Math.max(1.5, 2 * scale);
       const fontStack = 'system-ui, "Segoe UI", Roboto, Arial, sans-serif';
@@ -6974,37 +8353,68 @@
           const x = ox + (c - minC) * cw;
           const y = oy + ri * ch;
           const border = MOD_BORDER[lot.modulo] || "#94a3b8";
-          const rec = laborRecords[`${lot.r},${lot.c}`];
+          const rec = recForMapLot(`${lot.r},${lot.c}`);
           const area = Number(lot.ha) || 1;
-          const av = Math.min(area, Math.max(0, Number(rec?.avance) || 0));
-          const pct = area > 0 ? Math.min(1, av / area) : 0;
+          const cercos = isCercosLabor(mapQuery.laborReal);
+          const foot = cercos && lotHasCercosFoot(lot);
+          const capHa = cercos ? Math.max(0.01, cercosCapHa(area, lot)) : area;
+          const av = Math.min(capHa, Math.max(0, Number(rec?.avance) || 0));
+          const pct = capHa > 0 ? Math.min(1, av / capHa) : 0;
           const mod = lot.modulo != null ? modById[lot.modulo] : null;
           const fillColor = resolvePaintColor(lot, `${lot.r},${lot.c}`, rec?.color) ||
             mod?.badge || mod?.fill || "#94a3b8";
 
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(x, y, cw, ch);
+          const capH = cercos ? ch * 0.2 : 0;
+          const footH = foot ? ch * 0.2 : 0;
+          const usableH = ch - capH - footH;
+          const stroke = cercos ? "#111111" : border;
           if (pct > 0) {
-            const fh = ch * pct;
-            ctx.fillStyle = fillColor;
-            ctx.globalAlpha = 0.78;
-            ctx.fillRect(x, y + ch - fh, cw, fh);
-            ctx.globalAlpha = 1;
+            if (cercos) {
+              const topCap = Math.max(0.01, area * 0.2);
+              const topAv = Math.min(av, topCap);
+              const botAv = foot ? Math.max(0, av - topCap) : 0;
+              ctx.fillStyle = fillColor;
+              ctx.globalAlpha = 0.78;
+              ctx.fillRect(x, y, cw, capH * (topAv / topCap));
+              if (botAv > 0) ctx.fillRect(x, y + ch - footH, cw, footH * (botAv / topCap));
+              ctx.globalAlpha = 1;
+            } else {
+              const fh = usableH * pct;
+              ctx.fillStyle = fillColor;
+              ctx.globalAlpha = 0.78;
+              ctx.fillRect(x, y + ch - fh, cw, fh);
+              ctx.globalAlpha = 1;
+            }
           }
-          ctx.strokeStyle = border;
+          ctx.strokeStyle = stroke;
           ctx.lineWidth = strokeCell;
           const inset = strokeCell / 2;
           ctx.strokeRect(x + inset, y + inset, cw - strokeCell, ch - strokeCell);
+          if (cercos) {
+            ctx.beginPath();
+            ctx.moveTo(x, y + capH);
+            ctx.lineTo(x + cw, y + capH);
+            ctx.stroke();
+            if (foot) {
+              ctx.beginPath();
+              ctx.moveTo(x, y + ch - footH);
+              ctx.lineTo(x + cw, y + ch - footH);
+              ctx.stroke();
+            }
+          }
 
           ctx.fillStyle = "#0b0f0d";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
+          const ty = y + capH;
           ctx.font = "800 " + fontCellTop + "px " + fontStack;
-          ctx.fillText(String(lot.tunel || "").toUpperCase(), x + cw / 2, y + ch * 0.26);
+          ctx.fillText(String(lot.tunel || "").toUpperCase(), x + cw / 2, ty + usableH * 0.26);
           ctx.font = "800 " + fontCellMid + "px " + fontStack;
-          ctx.fillText("LT." + lot.lote, x + cw / 2, y + ch * 0.5);
+          ctx.fillText("LT." + lot.lote, x + cw / 2, ty + usableH * 0.5);
           ctx.font = "700 " + fontCellBot + "px " + fontStack;
-          ctx.fillText(lot.ha != null ? Number(lot.ha).toFixed(2) : "", x + cw / 2, y + ch * 0.74);
+          ctx.fillText(lot.ha != null ? Number(lot.ha).toFixed(2) : "", x + cw / 2, ty + usableH * 0.74);
         }
       });
 

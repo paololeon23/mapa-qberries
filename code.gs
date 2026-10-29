@@ -2,7 +2,7 @@
  * Q Berries — Reporte de Labores · Etapa I
  *
  * Columnas (fila 1 = encabezados, datos desde fila 2):
- *  SEM | FECHA | LABOR PPTO | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
+ *  SEM | FECHA | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
  *  AREA LOTE | AVANCE | TOTAL (JR) | COLOR | HORA GUARDADO
  *
  * Hoja "RESUMEN DIA":
@@ -18,30 +18,29 @@
  */
 
 var TZ = 'America/Lima';
-var HOJA = ''; // vacío = hoja activa
+var HOJA = 'LABORES';
 var HOJA_RESUMEN = 'RESUMEN DIA';
 var FILA_ENC = 1;
 var FILA_INI = 2;
 
 var COLUMNAS = [
-  'SEM', 'FECHA', 'LABOR PPTO', 'LABOR REAL', 'MD', 'TURNO', 'LOTE',
+  'SEM', 'FECHA', 'LABOR REAL', 'MD', 'TURNO', 'LOTE',
   'VARIEDAD', 'AREA LOTE', 'AVANCE', 'TOTAL (JR)', 'COLOR', 'HORA GUARDADO'
 ];
 
 var COL = {
   SEM: 0,
   FECHA: 1,
-  LABOR_PPTO: 2,
-  LABOR_REAL: 3,
-  MD: 4,
-  TURNO: 5,
-  LOTE: 6,
-  VARIEDAD: 7,
-  AREA: 8,
-  AVANCE: 9,
-  TOTAL_JR: 10,
-  COLOR: 11,
-  HORA_GUARDADO: 12
+  LABOR_REAL: 2,
+  MD: 3,
+  TURNO: 4,
+  LOTE: 5,
+  VARIEDAD: 6,
+  AREA: 7,
+  AVANCE: 8,
+  TOTAL_JR: 9,
+  COLOR: 10,
+  HORA_GUARDADO: 11
 };
 
 function doGet(e) {
@@ -111,6 +110,10 @@ function procesar_(e, metodo) {
       return consultar_(body.data || body);
     }
 
+    if (action === 'eliminar' || action === 'delete' || action === 'borrar') {
+      return eliminar_(body.data || body);
+    }
+
     if (action === 'get' || action === 'list' || action === '') {
       return getMapa_(body.data || body, e);
     }
@@ -122,6 +125,15 @@ function procesar_(e, metodo) {
     if (action === 'dashboard') {
       var semDash = body.sem || param_(e, 'sem') || semIso_();
       return dashboard_(semDash);
+    }
+
+    if (action === 'resumen') {
+      var semRes = body.sem || param_(e, 'sem') || semIso_();
+      return {
+        ok: true,
+        sem: num_(semRes) || semIso_(),
+        resumen: leerResumenSemana_(semRes)
+      };
     }
 
     return { ok: false, code: 'BAD_ACTION', message: 'Acción no válida' };
@@ -138,15 +150,7 @@ function guardar_(d) {
   if (!check.ok) return check;
 
   var localId = safeId_(d.localId);
-  var editar = d.editar === true || d.editar === 'true' || d.editar === 1;
-
-  if (!editar && localId && yaGuardado_(localId)) {
-    return {
-      ok: true,
-      duplicate: true,
-      message: 'Labor ya registrada (sin duplicar)'
-    };
-  }
+  var editar = check.editar === true;
 
   var laborReal = check.laborReal;
   var loteNum = check.lote;
@@ -158,14 +162,6 @@ function guardar_(d) {
   }
 
   try {
-    if (!editar && localId && yaGuardado_(localId)) {
-      return {
-        ok: true,
-        duplicate: true,
-        message: 'Labor ya registrada (sin duplicar)'
-      };
-    }
-
     var hoja = obtenerHoja_();
     asegurarEncabezados_(hoja);
 
@@ -174,13 +170,22 @@ function guardar_(d) {
     var fechaIso = check.fecha;
     var areaHa = check.area;
     var avanceHa = check.avance;
-    var laborPpto = check.laborPpto;
     var variedad = check.variedad;
     var totalJr = check.totalJr;
 
     var rows = leerFilas_(hoja);
     var actualizado = false;
-    var previas = buscarEnFilas_(rows, turno, loteNum, sem, laborReal);
+    var previas = buscarEnFilas_(rows, turno, loteNum, sem, laborReal, modulo);
+    if (!editar && localId && yaGuardado_(localId) && previas.length) {
+      return {
+        ok: true,
+        duplicate: true,
+        lote: loteNum,
+        turno: turno,
+        avance: avanceHa,
+        message: 'Labor ya registrada (sin duplicar)'
+      };
+    }
     if (previas.length) {
       borrarFilas_(hoja, previas);
       actualizado = true;
@@ -189,7 +194,6 @@ function guardar_(d) {
     var fila = [
       sem,
       formatFechaSheet_(fechaIso),
-      laborPpto,
       laborReal,
       modulo,
       turno,
@@ -198,7 +202,7 @@ function guardar_(d) {
       areaHa,
       avanceHa,
       totalJr,
-      check.color || '',
+      colorCanon_(check.color),
       horaGuardado_()
     ];
 
@@ -243,7 +247,6 @@ function guardarGrupo_(payload) {
   }
 
   var laborRealComun = texto_(payload.laborReal || '');
-  var laborPptoComun = texto_(payload.laborPpto || '');
   var fechaComun = payload.fecha || '';
   var semComun = payload.sem;
   var variedadComun = payload.variedad;
@@ -257,7 +260,6 @@ function guardarGrupo_(payload) {
       localId: raw.localId,
       sem: raw.sem != null ? raw.sem : semComun,
       fecha: raw.fecha || fechaComun,
-      laborPpto: raw.laborPpto || laborPptoComun,
       laborReal: raw.laborReal || laborRealComun,
       modulo: raw.modulo,
       turno: raw.turno || raw.tunel,
@@ -266,7 +268,8 @@ function guardarGrupo_(payload) {
       area: raw.area != null ? raw.area : raw.areaLote,
       avance: raw.avance,
       totalJr: raw.totalJr != null ? raw.totalJr : totalJrComun,
-      color: raw.color || colorComun
+      color: raw.color || colorComun,
+      editar: raw.editar === true || raw.editar === 1 || raw.editar === '1' || payload.editar === true
     };
     var check = validarPayloadLabor_(merged);
     if (!check.ok) {
@@ -300,16 +303,25 @@ function guardarGrupo_(payload) {
     var deleteMap = {};
     var appendRows = [];
     var hora = horaGuardado_();
+    var uniq = [];
+    var seenKey = {};
+    for (var j0 = validados.length - 1; j0 >= 0; j0--) {
+      var kk = [validados[j0].sem, validados[j0].turno, validados[j0].lote, validados[j0].laborReal, validados[j0].modulo].join('|');
+      if (seenKey[kk]) continue;
+      seenKey[kk] = true;
+      uniq.unshift(validados[j0]);
+    }
+    validados = uniq;
 
     for (var j = 0; j < validados.length; j++) {
       var v = validados[j];
-      if (v.localId && yaGuardado_(v.localId)) {
+      var previas = buscarEnFilas_(rows, v.turno, v.lote, v.sem, v.laborReal, v.modulo);
+      if (!v.editar && v.localId && yaGuardado_(v.localId) && previas.length) {
         skipped++;
         saved.push({ ok: true, duplicate: true, lote: v.lote, turno: v.turno });
         continue;
       }
 
-      var previas = buscarEnFilas_(rows, v.turno, v.lote, v.sem, v.laborReal);
       if (previas.length) {
         for (var p = 0; p < previas.length; p++) deleteMap[previas[p]] = true;
         updated++;
@@ -318,7 +330,6 @@ function guardarGrupo_(payload) {
       appendRows.push([
         v.sem,
         formatFechaSheet_(v.fecha),
-        v.laborPpto,
         v.laborReal,
         v.modulo,
         v.turno,
@@ -327,7 +338,7 @@ function guardarGrupo_(payload) {
         v.area,
         v.avance,
         v.totalJr,
-        v.color || '',
+        colorCanon_(v.color),
         hora
       ]);
       if (v.localId) marcarGuardado_(v.localId);
@@ -454,6 +465,39 @@ function actualizarResumenDia_(fechaIso) {
   }
 }
 
+/** Filas de RESUMEN DIA para una semana (FECHA · MD · AREA · JR · RATIO). */
+function leerResumenSemana_(sem) {
+  sem = num_(sem);
+  if (!sem) sem = semIso_();
+  var h = obtenerHojaResumen_();
+  var last = h.getLastRow();
+  var out = [];
+  if (last < FILA_INI) return out;
+  var data = h.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_RESUMEN.length).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (num_(data[i][1]) !== sem) continue;
+    var fechaIso = normalizarFecha_(data[i][0]);
+    var area = numDec_(data[i][3]);
+    var jr = numDec_(data[i][4]);
+    var ratio = numDec_(data[i][5]);
+    out.push({
+      fecha: formatFechaSheet_(fechaIso),
+      fechaIso: fechaIso,
+      sem: sem,
+      modulo: String(data[i][2] || ''),
+      area: area,
+      jr: jr,
+      ratio: ratio
+    });
+  }
+  out.sort(function (a, b) {
+    var df = String(a.fechaIso || '').localeCompare(String(b.fechaIso || ''));
+    if (df) return df;
+    return String(a.modulo || '').localeCompare(String(b.modulo || ''), 'es', { numeric: true });
+  });
+  return out;
+}
+
 // ─── CONSULTAR (un lote) ────────────────────────────────────────────────────
 
 function consultar_(d) {
@@ -491,13 +535,67 @@ function consultar_(d) {
   };
 }
 
+/** Borra el registro de un lote (solo escritorio). */
+function eliminar_(d) {
+  d = d || {};
+  var lote = numLote_(d.lote);
+  var turno = texto_(d.turno || d.tunel || '');
+  var modulo = normMod_(d.modulo || d.md || '');
+  var sem = d.sem != null && d.sem !== '' ? num_(d.sem) : semIso_();
+  var laborReal = norm_(d.laborReal || '');
+  var fechaIso = normalizarFecha_(d.fecha || '');
+  if (!lote || !turno) {
+    return { ok: false, code: 'BAD_LOTE', message: 'Indique lote y turno' };
+  }
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) {
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
+  }
+  try {
+    var hoja = obtenerHoja_();
+    asegurarEncabezados_(hoja);
+    var rows = leerFilas_(hoja);
+    var idx = [];
+    var turnoNorm = norm_(turno);
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (num_(r.sem) !== sem) continue;
+      if (numLote_(r.loteNum) !== lote) continue;
+      if (norm_(r.turno) !== turnoNorm) continue;
+      if (modulo && normMod_(r.modulo) !== modulo) continue;
+      if (laborReal && norm_(r.laborReal) !== laborReal) continue;
+      if (fechaIso) {
+        var rIso = r.fechaIso || normalizarFecha_(r.fecha);
+        if (rIso !== fechaIso) continue;
+      }
+      idx.push(r.rowIndex);
+    }
+    if (!idx.length) {
+      return { ok: true, deleted: 0, message: 'No había registro' };
+    }
+    borrarFilas_(hoja, idx);
+    invalidarCacheMapa_(sem);
+    try { actualizarResumenDia_(fechaIso || hoy_()); } catch (eRes) { /* ok */ }
+    return {
+      ok: true,
+      deleted: idx.length,
+      lote: lote,
+      turno: turno,
+      modulo: modulo || null,
+      message: 'Eliminado — LOTE ' + lote
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // ─── GET MAPA (pintar avances) ──────────────────────────────────────────────
 
 function getMapa_(d, e) {
   d = d || {};
   var sem = d.sem != null && d.sem !== '' ? num_(d.sem) : (param_(e, 'sem') ? num_(param_(e, 'sem')) : null);
   var laborReal = norm_(d.laborReal || d.labor_real || param_(e, 'laborReal') || '');
-  var laborPpto = norm_(d.laborPpto || d.labor_ppto || param_(e, 'laborPpto') || '');
   var modulo = normMod_(d.modulo || d.md || param_(e, 'modulo') || '');
   var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
   if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
@@ -507,8 +605,8 @@ function getMapa_(d, e) {
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  var cacheKey = 'map_v7_' + cacheVer + '_' + [
-    sem || 'all', laborReal || '-', laborPpto || '-', modulo || '-',
+  var cacheKey = 'map_v9_' + cacheVer + '_' + [
+    sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
   if (!skipCache) {
@@ -534,7 +632,6 @@ function getMapa_(d, e) {
     var r = rows[i];
     if (sem != null && num_(r.sem) !== sem) continue;
     if (laborReal && norm_(r.laborReal) !== laborReal) continue;
-    if (laborPpto && norm_(r.laborPpto) !== laborPpto) continue;
     if (modulo && normMod_(r.modulo) !== modulo) continue;
     if (variedad && formatVariedad_(r.variedad) !== variedad) continue;
     if (fechaFiltro) {
@@ -563,12 +660,13 @@ function getMapa_(d, e) {
     filters: {
       sem: sem,
       laborReal: laborReal || null,
-      laborPpto: laborPpto || null,
+      laborPpto: null,
       modulo: modulo || null,
       variedad: variedad || null,
       fecha: fechaFiltro || null
     },
     list: list,
+    resumen: leerResumenSemana_(sem != null ? sem : semIso_()),
     fromCache: false
   };
 
@@ -588,7 +686,6 @@ function filtrosOpciones_() {
   var fechaMap = {};
   var mdMap = {};
   var laborMap = {};
-  var laborPptoMap = {};
 
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
@@ -605,9 +702,6 @@ function filtrosOpciones_() {
 
     var lab = norm_(r.laborReal);
     if (lab) laborMap[lab] = true;
-
-    var labP = norm_(r.laborPpto);
-    if (labP) laborPptoMap[labP] = true;
   }
 
   var sem = Object.keys(semMap).map(function (x) { return parseInt(x, 10); });
@@ -623,11 +717,11 @@ function filtrosOpciones_() {
     return num_(String(a).replace(/\D/g, '')) - num_(String(b).replace(/\D/g, ''));
   });
 
+  var canonLab = ['DESHIERBO', 'ARENADO DE MACETAS', 'CERCOS VIVOS'];
+  for (var c = 0; c < canonLab.length; c++) laborMap[canonLab[c]] = true;
+
   var laborReal = Object.keys(laborMap);
   laborReal.sort();
-
-  var laborPpto = Object.keys(laborPptoMap);
-  laborPpto.sort();
 
   return {
     ok: true,
@@ -635,7 +729,7 @@ function filtrosOpciones_() {
     fecha: fecha,
     md: md,
     laborReal: laborReal,
-    laborPpto: laborPpto,
+    laborPpto: [],
     count: rows.length
   };
 }
@@ -721,6 +815,7 @@ function dashboard_(semFiltro) {
     totales: totales,
     labores: labores,
     modulos: modulos,
+    resumen: leerResumenSemana_(sem),
     generatedAt: new Date().toISOString(),
     fromCache: false
   };
@@ -735,6 +830,7 @@ function dashboard_(semFiltro) {
 // ─── Lectura hoja ───────────────────────────────────────────────────────────
 
 function leerFilas_(hoja) {
+  asegurarEncabezados_(hoja);
   var last = hoja.getLastRow();
   if (last < FILA_INI) return [];
 
@@ -752,7 +848,6 @@ function leerFilas_(hoja) {
       sem: row[COL.SEM],
       fecha: row[COL.FECHA],
       fechaIso: normalizarFecha_(row[COL.FECHA]),
-      laborPpto: String(row[COL.LABOR_PPTO] || '').trim(),
       laborReal: laborReal,
       modulo: String(row[COL.MD] || '').trim(),
       turno: String(row[COL.TURNO] || '').trim(),
@@ -763,7 +858,7 @@ function leerFilas_(hoja) {
       avance: numDec_(row[COL.AVANCE]),
       totalJr: numDec_(row[COL.TOTAL_JR]),
       color: normalizarColorNombre_(row[COL.COLOR]),
-      horaGuardado: String(row[COL.HORA_GUARDADO] || '').trim()
+      horaGuardado: textoHora_(row[COL.HORA_GUARDADO])
     });
   }
   return out;
@@ -774,7 +869,6 @@ function filaToCliente_(r) {
     sem: num_(r.sem),
     fecha: r.fechaIso || r.fecha,
     fechaIso: r.fechaIso || '',
-    laborPpto: r.laborPpto,
     laborReal: r.laborReal,
     modulo: r.modulo,
     turno: r.turno,
@@ -789,16 +883,18 @@ function filaToCliente_(r) {
   };
 }
 
-function buscarEnFilas_(rows, turno, loteNum, sem, laborReal) {
+function buscarEnFilas_(rows, turno, loteNum, sem, laborReal, modulo) {
   var idx = [];
   var turnoNorm = norm_(turno);
   var laborNorm = laborReal != null && laborReal !== '' ? norm_(laborReal) : '';
+  var modNorm = modulo ? normMod_(modulo) : '';
   var semN = num_(sem);
   var loteN = numLote_(loteNum);
   for (var i = 0; i < rows.length; i++) {
     if (num_(rows[i].sem) !== semN) continue;
     if (numLote_(rows[i].loteNum) !== loteN) continue;
     if (norm_(rows[i].turno) !== turnoNorm) continue;
+    if (modNorm && normMod_(rows[i].modulo) !== modNorm) continue;
     if (laborNorm && norm_(rows[i].laborReal) !== laborNorm) continue;
     idx.push(rows[i].rowIndex);
   }
@@ -838,9 +934,15 @@ function asegurarEncabezados_(hoja) {
   }
 
   var headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, lastCol).getValues()[0]);
+  if (migrarQuitarLaborPpto_(hoja, headers)) {
+    headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, Math.max(hoja.getLastColumn(), COLUMNAS.length)).getValues()[0]);
+  }
   migrarColumnaColor_(hoja, headers);
   headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, Math.max(hoja.getLastColumn(), COLUMNAS.length)).getValues()[0]);
-  if (headers[0] === 'SEM' && headers.indexOf('HORA GUARDADO') >= 0 && headers.indexOf('COLOR') >= 0) return;
+  if (headers[0] === 'SEM' &&
+      headers.indexOf('HORA GUARDADO') >= 0 &&
+      headers.indexOf('COLOR') >= 0 &&
+      !tieneHeaderLaborPpto_(headers)) return;
 
   var cur = hoja.getRange(FILA_ENC, 1, 1, COLUMNAS.length).getValues()[0];
   var vacio = true;
@@ -853,12 +955,48 @@ function asegurarEncabezados_(hoja) {
   estilizarEncabezados_(hoja);
 }
 
+function headerNorm_(h) {
+  return String(h || '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function tieneHeaderLaborPpto_(headers) {
+  if (!headers) return false;
+  for (var i = 0; i < headers.length; i++) {
+    var h = headerNorm_(headers[i]).replace(/ /g, '');
+    if (h === 'LABORPPTO') return true;
+  }
+  return false;
+}
+
+function migrarQuitarLaborPpto_(hoja, headers) {
+  if (!headers) return false;
+  var idx = -1;
+  for (var i = 0; i < headers.length; i++) {
+    var h = headerNorm_(headers[i]).replace(/ /g, '');
+    if (h === 'LABORPPTO') {
+      idx = i;
+      break;
+    }
+  }
+  if (idx < 0) return false;
+  hoja.deleteColumn(idx + 1);
+  bumpMapaCache_();
+  return true;
+}
+
 function migrarColumnaColor_(hoja, headers) {
   if (!headers || headers[0] !== 'SEM') return;
   if (headers.indexOf('COLOR') >= 0) return;
-  if (headers.indexOf('HORA GUARDADO') < 0) return;
-  hoja.insertColumnAfter(COL.TOTAL_JR + 1);
-  hoja.getRange(FILA_ENC, COL.COLOR + 1).setValue('COLOR');
+  var horaIdx = -1;
+  for (var i = 0; i < headers.length; i++) {
+    if (headerNorm_(headers[i]) === 'HORA GUARDADO') {
+      horaIdx = i;
+      break;
+    }
+  }
+  if (horaIdx < 0) return;
+  hoja.insertColumnBefore(horaIdx + 1);
+  hoja.getRange(FILA_ENC, horaIdx + 1).setValue('COLOR');
 }
 
 var COLOR_PALETTE_ = {
@@ -896,24 +1034,27 @@ function colorKey_(s) {
     .replace(/Ó/g, 'O').replace(/Ú/g, 'U');
 }
 
+function colorCanon_(name) {
+  var n = String(name || '').trim();
+  return n ? n.toUpperCase() : '';
+}
+
 function normalizarColorNombre_(v) {
   var s = String(v || '').trim();
   if (!s) return '';
 
   var up = s.toUpperCase();
-  if (/^#[0-9A-F]{6}$/.test(up) && COLOR_PALETTE_[up]) {
-    return safeSheetText_(COLOR_PALETTE_[up], 24);
+  if (/^#[0-9A-F]{6}$/.test(up)) {
+    return colorCanon_(COLOR_PALETTE_[up] || '');
   }
 
   var alias = COLOR_NAME_ALIASES_[colorKey_(s)];
-  if (alias) return safeSheetText_(alias, 24);
+  if (alias) return colorCanon_(alias);
 
-  var norm = norm_(s);
+  var key = colorKey_(s);
   for (var hex in COLOR_PALETTE_) {
     if (!COLOR_PALETTE_.hasOwnProperty(hex)) continue;
-    if (norm_(COLOR_PALETTE_[hex]) === norm || colorKey_(COLOR_PALETTE_[hex]) === colorKey_(s)) {
-      return safeSheetText_(COLOR_PALETTE_[hex], 24);
-    }
+    if (colorKey_(COLOR_PALETTE_[hex]) === key) return colorCanon_(COLOR_PALETTE_[hex]);
   }
 
   return '';
@@ -929,10 +1070,11 @@ function estilizarEncabezados_(hoja) {
 
 function obtenerHoja_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (HOJA) {
-    var h = ss.getSheetByName(HOJA);
-    if (!h) throw new Error('No existe la hoja: ' + HOJA);
-    return h;
+  var names = [HOJA, 'LABORES', 'Hoja 1'];
+  for (var i = 0; i < names.length; i++) {
+    if (!names[i]) continue;
+    var h = ss.getSheetByName(names[i]);
+    if (h) return h;
   }
   return ss.getActiveSheet();
 }
@@ -1054,11 +1196,15 @@ function safeSheetText_(s, maxLen) {
   return s;
 }
 
+function esCercos_(labor) {
+  var s = norm_(labor);
+  return s === 'CERCOS VIVOS' || s === 'CERCO VIVOS';
+}
+
 function validarPayloadLabor_(d) {
   d = d || {};
   var laborReal = safeSheetText_(d.laborReal || d.labor_real || '', 80);
-  var laborPpto = safeSheetText_(d.laborPpto || d.labor_ppto || '', 80);
-  var turno = safeSheetText_(d.turno || d.tunel || '', 20);
+  var turno = normalizarTurno_(d.turno || d.tunel || '');
   var modulo = safeSheetText_(textoMod_(d.modulo || d.md || ''), 12);
   var loteNum = numLote_(d.lote);
   var sem = num_(d.sem) || semIso_();
@@ -1072,19 +1218,19 @@ function validarPayloadLabor_(d) {
   if (!loteNum || loteNum < 1 || loteNum > 99999) {
     return { ok: false, code: 'BAD_LOTE', message: 'Lote inválido' };
   }
-  if (!turno || !/^T?\d{1,3}$/i.test(turno.replace(/\s/g, ''))) {
-    // aceptar T1, T10, 1 → normalizar a T#
-    var tNum = String(turno).replace(/\D/g, '');
-    if (!tNum) return { ok: false, code: 'BAD_TURNO', message: 'Túnel / turno inválido' };
-    turno = 'T' + tNum;
-  } else {
-    turno = norm_(turno);
-    if (turno.charAt(0) !== 'T') turno = 'T' + turno.replace(/\D/g, '');
-  }
+  if (!turno) return { ok: false, code: 'BAD_TURNO', message: 'Túnel / turno inválido' };
   if (sem < 1 || sem > 53) return { ok: false, code: 'BAD_SEM', message: 'Semana inválida' };
   if (areaHa < 0 || areaHa > 500) return { ok: false, code: 'BAD_AREA', message: 'Área inválida' };
   if (avanceHa < 0 || avanceHa > 500) return { ok: false, code: 'BAD_AVANCE', message: 'Avance inválido' };
   if (areaHa > 0 && avanceHa > areaHa) avanceHa = areaHa;
+  if (esCercos_(laborReal) && areaHa > 0) {
+    var capCercos = numDec_(areaHa * 0.4);
+    var defCercos = numDec_(areaHa * 0.2);
+    if (capCercos < 0.01) capCercos = areaHa;
+    if (defCercos < 0.01) defCercos = capCercos;
+    if (avanceHa <= 0) avanceHa = defCercos;
+    if (avanceHa > capCercos) avanceHa = capCercos;
+  }
   if (totalJr < 0 || totalJr > 100000) totalJr = 0;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
     return { ok: false, code: 'BAD_FECHA', message: 'Fecha inválida' };
@@ -1096,7 +1242,7 @@ function validarPayloadLabor_(d) {
   var allow = PropertiesService.getScriptProperties().getProperty('LABOR_ALLOWLIST');
   if (allow) {
     var okLabor = false;
-    var parts = String(allow).split('|');
+    var parts = String(allow).split('|').concat(['CERCOS VIVOS', 'CERCO VIVOS']);
     for (var i = 0; i < parts.length; i++) {
       if (norm_(parts[i]) === laborReal) { okLabor = true; break; }
     }
@@ -1106,7 +1252,6 @@ function validarPayloadLabor_(d) {
   return {
     ok: true,
     laborReal: laborReal,
-    laborPpto: laborPpto,
     turno: turno,
     modulo: modulo,
     lote: loteNum,
@@ -1116,7 +1261,8 @@ function validarPayloadLabor_(d) {
     totalJr: totalJr,
     variedad: variedad,
     fecha: fechaIso,
-    color: normalizarColorNombre_(d.color)
+    color: colorCanon_(normalizarColorNombre_(d.color)),
+    editar: d.editar === true || d.editar === 1 || d.editar === '1' || d.editar === 'true'
   };
 }
 
@@ -1135,6 +1281,15 @@ function responder_(obj) {
 
 function horaGuardado_() {
   return Utilities.formatDate(new Date(), TZ, 'HH:mm:ss');
+}
+
+function textoHora_(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
+    return Utilities.formatDate(v, TZ, 'HH:mm:ss');
+  }
+  var s = String(v || '').trim();
+  var m = s.match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+  return m ? m[1] : s;
 }
 
 function parseLoteNum_(label) {
@@ -1214,6 +1369,16 @@ function norm_(s) {
   return String(s || '').trim().toUpperCase();
 }
 
+/** T1, T10, T8M, T10M, 10 → T# / T#M (no recortar la letra del túnel) */
+function normalizarTurno_(raw) {
+  var s = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!s) return '';
+  var m = s.match(/^T?(\d{1,3})([A-Z])?$/);
+  if (m) return 'T' + m[1] + (m[2] || '');
+  var tNum = s.replace(/\D/g, '');
+  return tNum ? 'T' + tNum : '';
+}
+
 function normMod_(s) {
   s = norm_(s);
   if (!s) return '';
@@ -1267,7 +1432,6 @@ function testGuardar() {
     localId: 'test_' + Date.now(),
     sem: semIso_(),
     fecha: hoy_(),
-    laborPpto: 'ARENADO DE MACETAS',
     laborReal: 'ARENADO DE MACETAS',
     modulo: 'M4',
     turno: 'T10',
@@ -1276,6 +1440,46 @@ function testGuardar() {
     area: 0.49,
     avance: 0.49,
     totalJr: 10
+  })));
+}
+
+/** Tres labores reales en el mismo lote: no deben pisarse entre sí. */
+function testTresLabores() {
+  Logger.log(JSON.stringify(guardarGrupo_({
+    fecha: hoy_(),
+    sem: semIso_(),
+    variedad: 'SEKOYA POP',
+    color: 'JUEVES',
+    totalJr: 1,
+    items: [
+      {
+        localId: 'test_deshierbo_' + hoy_(),
+        laborReal: 'DESHIERBO',
+        modulo: 'M4',
+        turno: 'T10',
+        lote: 179,
+        area: 0.49,
+        avance: 0.49
+      },
+      {
+        localId: 'test_arenado_' + hoy_(),
+        laborReal: 'ARENADO DE MACETAS',
+        modulo: 'M4',
+        turno: 'T10',
+        lote: 179,
+        area: 0.49,
+        avance: 0.49
+      },
+      {
+        localId: 'test_cercos_' + hoy_(),
+        laborReal: 'CERCOS VIVOS',
+        modulo: 'M4',
+        turno: 'T10',
+        lote: 179,
+        area: 0.49,
+        avance: 0.1
+      }
+    ]
   })));
 }
 

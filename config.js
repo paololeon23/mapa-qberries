@@ -17,7 +17,7 @@ window.QB_CONFIG = {
 
   BRAND: "Q Berries",
   APP_NAME: "Q Berries · Labores",
-  APP_VERSION: "1.3.2",
+  APP_VERSION: "1.3.36",
 
   LABOR_OPTS: {
     labor_ppto: [
@@ -26,9 +26,25 @@ window.QB_CONFIG = {
     ],
     labor_real: [
       "DESHIERBO",
-      "ARENADO DE MACETAS"
+      "ARENADO DE MACETAS",
+      "CERCOS VIVOS"
     ]
   },
+
+  /** Cercos vivos: lotes con 20% extra abajo (además del 20% de arriba) */
+  CERCOS_FOOT_LOTS: [
+    "T6|24", "T3|13", "T3|12", "T3|11", "T3|10", "T7|29",
+    "T16|245", "T16|244", "T15|243", "T15|242",
+    "T10|221", "T10|222", "T10M|223", "T10M|224",
+    "T8M|214", "T8M|213",
+    "T1|212", "T7|212", "T1|211", "T7|211",
+    "T7|210", "T7|208|0.46",
+    "T8|86", "T8|85", "T8|276",
+    "T9|90",
+    "T8|84", "T8|83", "T8|82", "T8|81",
+    "T4|68", "T4|67", "T4|66", "T4|64",
+    "T3|63", "T3|62", "T3|59", "T3|58"
+  ],
 
   /** Paleta de avance semanal: un color por día hábil (se guarda el nombre en la hoja) */
   COLOR_PALETTE: {

@@ -1,4 +1,4 @@
-const CACHE = "qb-v81";
+const CACHE = "qb-v115";
 const SHELL = [
   "./",
   "./index.html",
@@ -10,7 +10,8 @@ const SHELL = [
   "./manifest.webmanifest",
   "./assets/logo-qberries.png",
   "./assets/icon-192.png",
-  "./assets/apple-touch-icon.png"
+  "./assets/apple-touch-icon.png",
+  "./assets/arandano.png"
 ];
 
 function isShellPath(pathname) {
