@@ -910,7 +910,7 @@
       opacity: 0.88;
       pointer-events: none;
       z-index: 0;
-      transition: height .35s cubic-bezier(.2,.8,.2,1);
+      transition: height .35s cubic-bezier(.2,.8,.2,1), width .35s cubic-bezier(.2,.8,.2,1);
     }
     .cell .t, .cell .l, .cell .h { position: relative; z-index: 1; }
     .grid.is-cercos .cell:not(.empty) {
@@ -957,7 +957,12 @@
     .grid.is-cercos .cell-fill {
       top: 0;
       bottom: auto;
+      left: 0;
+      right: auto;
+      height: 20%;
+      width: 0%;
       opacity: 0.88;
+      border-radius: 0 3px 3px 0;
     }
     .grid.is-cercos .cell.labor-done,
     .grid.is-cercos .cell.labor-progress {
@@ -977,6 +982,9 @@
     .grid.is-cercos .cell.multi-selected .cell-fill {
       top: 0;
       bottom: auto;
+      left: 0;
+      right: auto;
+      height: 20%;
       opacity: 0.88;
     }
     .grid.is-cercos .cell.has-cercos-foot .cercos-foot {
@@ -1000,12 +1008,15 @@
     .grid.is-cercos .cell-fill-foot {
       position: absolute;
       left: 0;
-      right: 0;
+      right: auto;
       bottom: 0;
-      height: 0%;
+      height: 20%;
+      width: 0%;
       pointer-events: none;
       z-index: 0;
       opacity: 0.88;
+      border-radius: 0 3px 3px 0;
+      transition: width .35s cubic-bezier(.2,.8,.2,1);
     }
     .grid:not(.is-cercos) .cercos-foot,
     .grid:not(.is-cercos) .cercos-close,
@@ -1143,6 +1154,17 @@
       left: 0; right: 0; bottom: 0;
       height: 0%;
       opacity: 0.72;
+    }
+    body.labor-cercos .desk-lot-board .mini-fill,
+    .labor-drawer.is-cercos .mini-fill {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      right: auto;
+      height: 20%;
+      width: 0%;
+      border-radius: 0 2px 2px 0;
+      opacity: 0.88;
     }
     .desk-lot-board .mini-cell .t,
     .desk-lot-board .mini-cell .l,
@@ -2037,6 +2059,39 @@
     }
     .field { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
     .field.full { grid-column: 1 / -1; }
+    .labor-drawer .cercos-only { display: none; }
+    .labor-drawer.is-cercos .cercos-only.field { display: flex; }
+    .labor-drawer.is-cercos .cercos-kpis { display: grid; }
+    .labor-drawer .jr-field { grid-column: 1 / -1; }
+    .labor-drawer.is-cercos .jr-field,
+    .labor-drawer.is-cercos .cercos-only.field { grid-column: auto; }
+    .labor-drawer .cercos-kpis {
+      grid-column: 1 / -1;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .labor-drawer .cercos-kpi {
+      background: #f3faf6;
+      border: 1px solid #e4ece7;
+      border-radius: 12px;
+      padding: 0.65rem 0.75rem;
+    }
+    .labor-drawer .cercos-kpi span {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .labor-drawer .cercos-kpi strong {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #166534;
+      font-variant-numeric: tabular-nums;
+    }
     .desk-day-meta {
       grid-column: 1 / -1;
       display: grid;
@@ -3778,9 +3833,24 @@
         <input type="hidden" id="fVariedad" value="SEKOYA POP" />
         <input type="hidden" id="fArea" value="" />
         <input type="hidden" id="fAvance" value="" />
-        <div class="field full">
+        <div class="field cercos-only" id="cercosBox">
+          <label for="fCercosLotes">Lotes trabajados</label>
+          <input id="fCercosLotes" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 2" disabled />
+          <p class="field-hint" style="margin:0.25rem 0 0;font-size:0.68rem;color:#64748b;font-weight:600;">Cada lote = 80 ml</p>
+        </div>
+        <div class="field jr-field">
           <label for="fTotalJr">Jornales (JR)</label>
-          <input id="fTotalJr" type="number" step="0.1" min="0" value="" placeholder="0.00" />
+          <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" value="" placeholder="0" />
+        </div>
+        <div class="cercos-only cercos-kpis" aria-live="polite">
+          <div class="cercos-kpi">
+            <span>Metros lineales</span>
+            <strong id="fCercosMl">0 ml</strong>
+          </div>
+          <div class="cercos-kpi">
+            <span>ml / jornales</span>
+            <strong id="fCercosRend">—</strong>
+          </div>
         </div>
         <div class="field full">
           <label>Ratio general</label>
@@ -3974,7 +4044,7 @@
           <h3>Labor real</h3>
           <div class="cselect filter-cselect" id="filterLaborC">
             <input type="hidden" id="filterLaborSelect" value="" />
-            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">Todas las labores reales</button>
+            <button type="button" class="cselect-trigger is-empty" aria-haspopup="listbox" aria-expanded="false">DESHIERBO</button>
             <div class="cselect-panel" role="listbox">
               <div class="cselect-list"></div>
             </div>
@@ -4236,6 +4306,88 @@
 
     function formatHa(v) {
       return roundHa(v).toFixed(2);
+    }
+
+    function parseJr(v) {
+      const n = parseInt(String(v ?? "").replace(/\D/g, ""), 10);
+      return isFinite(n) && n > 0 ? n : 0;
+    }
+
+    function formatJr(v) {
+      const n = Math.round(Number(v) || 0);
+      return n > 0 ? String(n) : "0";
+    }
+
+    function splitIntByWeight(total, weights) {
+      const n = Math.max(0, Math.round(Number(total) || 0));
+      const w = (weights || []).map(x => Math.max(0, Number(x) || 0));
+      const sum = w.reduce((a, b) => a + b, 0);
+      if (!n || !w.length) return w.map(() => 0);
+      if (!sum) {
+        const out = w.map(() => 0);
+        out[0] = n;
+        return out;
+      }
+      const raw = w.map(x => (n * x) / sum);
+      const out = raw.map(x => Math.floor(x));
+      let rem = n - out.reduce((a, b) => a + b, 0);
+      const order = raw.map((x, i) => ({ i, frac: x - Math.floor(x) })).sort((a, b) => b.frac - a.frac);
+      for (let k = 0; k < rem; k++) out[order[k % order.length].i] += 1;
+      return out;
+    }
+
+    function bindIntegerInput(el) {
+      if (!el || el.dataset.numBound === "int") return;
+      el.dataset.numBound = "int";
+      el.setAttribute("inputmode", "numeric");
+      el.setAttribute("autocomplete", "off");
+      const scrub = () => {
+        const next = String(el.value || "").replace(/\D/g, "");
+        if (el.value !== next) el.value = next;
+      };
+      el.addEventListener("beforeinput", e => {
+        if (e.data && /\D/.test(e.data)) e.preventDefault();
+      });
+      el.addEventListener("keypress", e => {
+        if (e.ctrlKey || e.metaKey || e.key.length > 1) return;
+        if (!/[0-9]/.test(e.key)) e.preventDefault();
+      });
+      el.addEventListener("paste", e => {
+        e.preventDefault();
+        const t = ((e.clipboardData || window.clipboardData).getData("text") || "").replace(/\D/g, "");
+        document.execCommand("insertText", false, t);
+      });
+      el.addEventListener("input", scrub);
+    }
+
+    function bindDecimalInput(el) {
+      if (!el || el.dataset.numBound === "dec") return;
+      el.dataset.numBound = "dec";
+      el.setAttribute("inputmode", "decimal");
+      el.setAttribute("autocomplete", "off");
+      const scrub = () => {
+        let v = String(el.value || "").replace(/,/g, ".");
+        v = v.replace(/[^0-9.]/g, "");
+        const i = v.indexOf(".");
+        if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, "");
+        const parts = v.split(".");
+        if (parts[1] && parts[1].length > 2) v = parts[0] + "." + parts[1].slice(0, 2);
+        if (el.value !== v) el.value = v;
+      };
+      el.addEventListener("beforeinput", e => {
+        if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+      });
+      el.addEventListener("keypress", e => {
+        if (e.ctrlKey || e.metaKey || e.key.length > 1) return;
+        if (!/[0-9.,]/.test(e.key)) e.preventDefault();
+      });
+      el.addEventListener("paste", e => {
+        e.preventDefault();
+        let t = ((e.clipboardData || window.clipboardData).getData("text") || "").replace(/,/g, ".");
+        t = t.replace(/[^0-9.]/g, "");
+        document.execCommand("insertText", false, t);
+      });
+      el.addEventListener("input", scrub);
     }
 
     /** Prefijo listo para escribir decimales: "0." */
@@ -4528,7 +4680,7 @@
       try {
         if (API_URL) {
           const filters = currentMapFilters();
-          if (forceReplace || showFeedback || opts.nocache) filters.nocache = true;
+          if (showFeedback || opts.nocache) filters.nocache = true;
           if (showCloud) setMapSyncProgress(22, "Conectando con la hoja…");
           // Rápido: GET primero (sin esperar cola). Flush en segundo plano.
           if (!soft && !fast && !forceReplace && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
@@ -4538,10 +4690,11 @@
             }
           }
           if (showCloud) setMapSyncProgress(42, "Leyendo labores…");
-          const doReplace = forceReplace || (!soft && !fast && !!showFeedback);
+          const doReplace = forceReplace || (!soft && !fast);
           const syncRes = await syncLaborsFromSheet(filters, {
             replace: doReplace,
-            fullPaint: doReplace || !!opts.fullPaint
+            fullPaint: doReplace || !!opts.fullPaint,
+            laborReal: filters.laborReal || ""
           });
           n = syncRes?.n || 0;
           syncOk = !!syncRes?.ok;
@@ -4566,16 +4719,23 @@
         const sig = laborSnapshot();
         const changed = sig !== lastLaborSig;
         if (showFeedback) {
+          const f = currentMapFilters();
+          const filtroTxt = [
+            "SEM " + (f.sem || currentWeek),
+            f.fecha ? String(mapQuery.fecha || f.fecha) : "todas las fechas",
+            f.modulo || "todos los MD",
+            f.laborReal || "DESHIERBO"
+          ].join(" · ");
           if (n > 0) {
             showToast(
               forceReplace || !fast ? "Datos actualizados" : "Cambios traídos",
               false,
-              `${n} lotes desde la hoja`
+              `${n} lotes · ${filtroTxt}`
             );
           } else if (forceReplace || (!soft && !fast)) {
-            showToast("Sin labores", false, "Mapa limpio · nada en este filtro");
+            showToast("Sin labores", false, filtroTxt);
           } else {
-            showToast("Mapa al día", false, "Sin labores en este filtro");
+            showToast("Mapa al día", false, filtroTxt);
           }
         } else if (changed && lastLaborSig !== null && n > 0) {
           showToast("Mapa actualizado", false, `${n} lote(s) detectados`);
@@ -5058,13 +5218,55 @@
       return `${candidates[0].r},${candidates[0].c}`;
     }
 
+    function sameLaborName(a, b) {
+      return String(a || "").toUpperCase().replace(/\s+/g, " ").trim() ===
+        String(b || "").toUpperCase().replace(/\s+/g, " ").trim();
+    }
+
+    function activeLaborReal() {
+      const q = String((mapQuery && mapQuery.laborReal) || "").toUpperCase().replace(/\s+/g, " ").trim();
+      if (q) return q;
+      try {
+        if (typeof fLaborReal !== "undefined" && fLaborReal && fLaborReal.value) {
+          const d = String(fLaborReal.value || "").toUpperCase().replace(/\s+/g, " ").trim();
+          if (d) return d;
+        }
+      } catch (e) { /* ok */ }
+      return "DESHIERBO";
+    }
+
+    function pendingLaborByPos() {
+      if (typeof QBApi.getPendingLaborByPos === "function") return QBApi.getPendingLaborByPos() || {};
+      const keys = (typeof QBApi.getPendingPosKeys === "function") ? QBApi.getPendingPosKeys() : new Set();
+      const map = {};
+      keys.forEach(k => { map[k] = ""; });
+      return map;
+    }
+
+    function pruneRecordsToLabor(wantLabor) {
+      const labor = String(wantLabor || "").toUpperCase().replace(/\s+/g, " ").trim();
+      if (!labor) return;
+      const pending = pendingLaborByPos();
+      let dropped = false;
+      Object.keys(laborRecords).forEach(k => {
+        const rec = laborRecords[k];
+        if (Object.prototype.hasOwnProperty.call(pending, k)) {
+          if (!pending[k] || sameLaborName(pending[k], labor)) return;
+        }
+        if (!rec || !sameLaborName(rec.laborReal, labor)) {
+          delete laborRecords[k];
+          dropped = true;
+        }
+      });
+      if (dropped) saveLaborRecords();
+    }
+
     function applyApiRecords(records, opts = {}) {
       if (!records) return 0;
       let n = 0;
       const changed = [];
-      const pendingKeys = (typeof QBApi.getPendingPosKeys === "function")
-        ? QBApi.getPendingPosKeys()
-        : new Set();
+      const pendingByPos = pendingLaborByPos();
+      const wantLabor = String((opts.laborReal || mapQuery.laborReal || "")).toUpperCase().replace(/\s+/g, " ").trim();
       const entries = Array.isArray(records)
         ? records.map(r => [null, r])
         : Object.entries(records);
@@ -5072,9 +5274,12 @@
         if (!rec || !rec.laborReal) return;
         const posKey = posKeyFromRecord(rec);
         if (!posKey) return;
-        const wantLabor = String((opts.laborReal || mapQuery.laborReal || "")).toUpperCase().trim();
-        if (wantLabor && String(rec.laborReal || "").toUpperCase() !== wantLabor) return;
-        if (!opts.replace && (savingLabor || pendingKeys.has(posKey))) return;
+        if (wantLabor && !sameLaborName(rec.laborReal, wantLabor)) return;
+        if (savingLabor) return;
+        if (Object.prototype.hasOwnProperty.call(pendingByPos, posKey)) {
+          const pendingLab = pendingByPos[posKey];
+          if (!wantLabor || !pendingLab || sameLaborName(pendingLab, wantLabor)) return;
+        }
         const lot = byPos.get(posKey);
         const fromApi = (typeof QBApi.colorNameToHex === "function" ? QBApi.colorNameToHex(rec.color) : "") ||
           normalizeHexColor(rec.color) || "";
@@ -5089,7 +5294,8 @@
           variedad: String(rec.variedad || "SEKOYA POP").toUpperCase(),
           area: roundHa(rec.area),
           avance: roundHa(rec.avance),
-          totalJr: Number(rec.totalJr) || 0,
+          ml: Math.round(Number(rec.ml) || 0),
+          totalJr: Math.round(Number(rec.totalJr) || 0),
           color: fromApi || modulePaintColor(lot) || ""
         };
         const prev = laborRecords[posKey];
@@ -5124,6 +5330,8 @@
 
     async function syncLaborsFromSheet(filters = {}, opts = {}) {
       try {
+        const wantLabor = String(opts.laborReal || filters.laborReal || (mapQuery && mapQuery.laborReal) || "").toUpperCase().replace(/\s+/g, " ").trim();
+        if (wantLabor && !filters.laborReal) filters.laborReal = wantLabor;
         const json = await QBApi.getLabors(filters);
         if (!json?.ok) {
           if (isApiRateLimited(json)) {
@@ -5135,17 +5343,28 @@
         const payload = Array.isArray(json.list)
           ? json.list
           : (json.records || []);
-        if (json.resumen) renderWeekResumen(json.resumen);
-        else refreshWeekResumen();
+        renderWeekResumen(Array.isArray(json.resumen) ? json.resumen : null);
+        const pendingByPos = pendingLaborByPos();
         if (opts.replace) {
-          laborRecords = {};
+          const keep = {};
+          Object.keys(pendingByPos).forEach(k => {
+            const rec = laborRecords[k];
+            if (!rec) return;
+            const pendingLab = pendingByPos[k];
+            if (!wantLabor || !pendingLab || sameLaborName(pendingLab, wantLabor) || sameLaborName(rec.laborReal, wantLabor)) {
+              keep[k] = rec;
+            }
+          });
+          laborRecords = keep;
           saveLaborRecords();
-          const n = applyApiRecords(payload, { fullPaint: true, replace: true });
+          const n = applyApiRecords(payload, { fullPaint: true, replace: true, laborReal: wantLabor });
+          pruneRecordsToLabor(wantLabor);
           normalizeStoredLaborColors();
           refreshAllLaborVisuals();
           return { n, ok: true };
         }
-        const n = applyApiRecords(payload, { fullPaint: !!opts.fullPaint });
+        const n = applyApiRecords(payload, { fullPaint: !!opts.fullPaint, laborReal: wantLabor });
+        pruneRecordsToLabor(wantLabor);
         return { n, ok: true };
       } catch (err) {
         if (isApiRateLimited(err) || /demasiadas solicitudes/i.test(String(err?.message || err))) {
@@ -5156,14 +5375,60 @@
       }
     }
 
+    function fechaFiltroGet(v) {
+      const s = String(v || "").trim();
+      if (!s) return "";
+      const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (dmy) {
+        return dmy[3] + "-" + String(dmy[2]).padStart(2, "0") + "-" + String(dmy[1]).padStart(2, "0");
+      }
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return iso[1] + "-" + iso[2] + "-" + iso[3];
+      return s;
+    }
+
+    function isoWeekFromIsoDate(iso) {
+      const s = fechaFiltroGet(iso);
+      if (!s) return null;
+      const p = s.split("-");
+      const y = Number(p[0]);
+      const m = Number(p[1]);
+      const d = Number(p[2]);
+      if (!y || !m || !d) return null;
+      return getCurrentWeek(new Date(y, m - 1, d));
+    }
+
+    function fechasDeSemana(sem) {
+      const n = Number(sem != null && sem !== "" ? sem : mapQuery.sem || currentWeek);
+      const by = (filterOptions && filterOptions.fechaBySem) || {};
+      const fromSheet = by[n] || by[String(n)];
+      if (Array.isArray(fromSheet) && fromSheet.length) return fromSheet;
+      return (filterOptions.fecha || []).filter(f => Number(isoWeekFromIsoDate(f)) === n);
+    }
+
+    function constrainFechaToSem() {
+      const sem = Number(mapQuery.sem != null && mapQuery.sem !== "" ? mapQuery.sem : currentWeek);
+      const fechas = fechasDeSemana(sem);
+      if (mapQuery.fecha && fechas.length && fechas.indexOf(mapQuery.fecha) < 0) {
+        mapQuery.fecha = "";
+      }
+      const kpiSem = document.querySelector(".kpi-head-row h2");
+      if (kpiSem) kpiSem.textContent = "Semana " + sem;
+    }
+
     function currentMapFilters() {
+      constrainFechaToSem();
       const filters = {};
-      if (mapQuery.sem != null && mapQuery.sem !== "") filters.sem = mapQuery.sem;
-      else filters.sem = currentWeek;
-      if (mapQuery.fecha) filters.fecha = mapQuery.fecha;
-      if (mapQuery.modulo) filters.modulo = mapQuery.modulo;
-      else if (activeMod != null) filters.modulo = "M" + activeMod;
-      if (mapQuery.laborReal) filters.laborReal = mapQuery.laborReal;
+      filters.sem = (mapQuery.sem != null && mapQuery.sem !== "") ? mapQuery.sem : currentWeek;
+      const fechas = fechasDeSemana(filters.sem);
+      if (mapQuery.fecha && fechas.indexOf(mapQuery.fecha) >= 0) {
+        const fecha = fechaFiltroGet(mapQuery.fecha);
+        if (fecha) filters.fecha = fecha;
+      }
+      if (mapQuery.modulo) filters.modulo = String(mapQuery.modulo).toUpperCase().trim();
+      const labor = activeLaborReal();
+      mapQuery.laborReal = labor;
+      filters.laborReal = labor;
       if (mapQuery.laborPpto) filters.laborPpto = mapQuery.laborPpto;
       return filters;
     }
@@ -5182,25 +5447,29 @@
           ? r.fecha
           : (fechaIso ? fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—");
         const k = fechaIso || fecha;
-        if (!byFecha[k]) byFecha[k] = { fecha, fechaIso, mods: [], area: 0, jr: 0 };
+        if (!byFecha[k]) byFecha[k] = { fecha, fechaIso, mods: [], area: 0, jr: 0, ml: 0 };
         String(r.modulo || "").split(/[-,;/|]+/).forEach(part => {
           const md = String(part || "").trim();
           if (md && md !== "—" && byFecha[k].mods.indexOf(md) < 0) byFecha[k].mods.push(md);
         });
         byFecha[k].area += Number(r.area) || 0;
         byFecha[k].jr += Number(r.jr) || 0;
+        byFecha[k].ml += Number(r.ml) || 0;
       });
+      const cercos = isCercosLabor(mapQuery.laborReal);
       return Object.values(byFecha).map(g => {
         const mods = g.mods.slice().sort((a, b) => modSortKey(a) - modSortKey(b) || String(a).localeCompare(String(b)));
         const area = roundHa(g.area);
-        const jr = roundHa(g.jr);
+        const jr = Math.round(g.jr);
+        const ml = Math.round(g.ml);
         return {
           fecha: g.fecha,
           fechaIso: g.fechaIso,
           modulo: mods.join("-") || "—",
           area,
+          ml,
           jr,
-          ratio: area > 0 ? roundHa(jr / area) : 0
+          ratio: cercos ? (jr > 0 ? roundHa(ml / jr) : 0) : (area > 0 ? roundHa(jr / area) : 0)
         };
       }).sort((a, b) => String(a.fechaIso || a.fecha).localeCompare(String(b.fechaIso || b.fecha)));
     }
@@ -5208,71 +5477,96 @@
     function weekRowsFromRecords() {
       const sem = Number(mapQuery.sem != null ? mapQuery.sem : currentWeek);
       const groups = {};
+      const wantLabor = activeLaborReal();
       Object.values(laborRecords || {}).forEach(r => {
         if (!r) return;
         if (Number(r.sem) !== sem) return;
+        if (wantLabor && !sameLaborName(r.laborReal, wantLabor)) return;
         const fechaIso = String(r.fecha || r.fechaIso || "").slice(0, 10);
         const md = String(r.modulo || "").trim() || "—";
         const k = fechaIso + "|" + md;
-        if (!groups[k]) groups[k] = { fechaIso, modulo: md, lots: {}, jr: 0 };
+        if (!groups[k]) groups[k] = { fechaIso, modulo: md, lots: {}, jr: 0, ml: 0 };
         const lotKey = String(r.turno || "") + "|" + String(r.lote);
         if (!groups[k].lots[lotKey]) groups[k].lots[lotKey] = Number(r.area) || 0;
-        groups[k].jr += Number(r.totalJr) || 0;
+        groups[k].jr += Math.round(Number(r.totalJr) || 0);
+        groups[k].ml += Math.round(Number(r.ml) || 0);
       });
+      const cercos = isCercosLabor(wantLabor);
       const raw = Object.values(groups).map(g => {
         const area = roundHa(Object.values(g.lots).reduce((s, n) => s + (Number(n) || 0), 0));
-        const jr = roundHa(g.jr);
+        const jr = Math.round(g.jr);
+        const ml = Math.round(g.ml);
         return {
           fecha: g.fechaIso ? g.fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—",
           fechaIso: g.fechaIso,
           modulo: g.modulo,
           area,
+          ml,
           jr,
-          ratio: area > 0 ? roundHa(jr / area) : 0
+          ratio: cercos ? (jr > 0 ? roundHa(ml / jr) : 0) : (area > 0 ? roundHa(jr / area) : 0)
         };
       });
       return collapseWeekRows(raw);
     }
 
+    function syncWeekTableHeaders(cercos) {
+      const apply = (tableId) => {
+        const ths = document.querySelectorAll("#" + tableId + " thead th");
+        if (ths[2]) ths[2].textContent = cercos ? "ML" : "Área";
+        if (ths[4]) ths[4].textContent = cercos ? "ml/JR" : "Ratio";
+      };
+      apply("weekResumenTable");
+      apply("mobWeekResumenTable");
+    }
+
     function fillWeekTable(bodyId, totAreaId, totJrId, totRatioId, list) {
       const body = document.getElementById(bodyId);
       if (!body) return;
+      const cercos = isCercosLabor(mapQuery.laborReal);
+      const zeroMid = cercos ? "0" : "0.00";
       if (!list.length) {
         body.innerHTML = '<tr class="is-empty"><td colspan="5">Sin datos de la semana</td></tr>';
         const za = document.getElementById(totAreaId);
         const zj = document.getElementById(totJrId);
         const zr = document.getElementById(totRatioId);
-        if (za) za.textContent = "0.00";
-        if (zj) zj.textContent = "0.00";
+        if (za) za.textContent = zeroMid;
+        if (zj) zj.textContent = "0";
         if (zr) zr.textContent = "0.00";
         return;
       }
-      let area = 0, jr = 0;
+      let area = 0, jr = 0, ml = 0;
       body.innerHTML = list.map(r => {
         const a = roundHa(r.area);
-        const j = roundHa(r.jr);
-        const ratio = r.ratio != null ? roundHa(r.ratio) : (a > 0 ? roundHa(j / a) : 0);
+        const j = Math.round(Number(r.jr) || 0);
+        const m = Math.round(Number(r.ml) || 0);
+        const ratio = r.ratio != null
+          ? roundHa(r.ratio)
+          : (cercos ? (j > 0 ? roundHa(m / j) : 0) : (a > 0 ? roundHa(j / a) : 0));
         area += a;
         jr += j;
+        ml += m;
         return `<tr>
           <td>${r.fecha || "—"}</td>
           <td>${r.modulo || "—"}</td>
-          <td class="num">${formatHa(a)}</td>
-          <td class="num">${formatHa(j)}</td>
+          <td class="num">${cercos ? formatJr(m) : formatHa(a)}</td>
+          <td class="num">${formatJr(j)}</td>
           <td class="num">${formatHa(ratio)}</td>
         </tr>`;
       }).join("");
       area = roundHa(area);
-      jr = roundHa(jr);
+      jr = Math.round(jr);
+      ml = Math.round(ml);
       const totA = document.getElementById(totAreaId);
       const totJ = document.getElementById(totJrId);
       const totR = document.getElementById(totRatioId);
-      if (totA) totA.textContent = formatHa(area);
-      if (totJ) totJ.textContent = formatHa(jr);
-      if (totR) totR.textContent = formatHa(area > 0 ? roundHa(jr / area) : 0);
+      if (totA) totA.textContent = cercos ? formatJr(ml) : formatHa(area);
+      if (totJ) totJ.textContent = formatJr(jr);
+      if (totR) totR.textContent = formatHa(cercos ? (jr > 0 ? roundHa(ml / jr) : 0) : (area > 0 ? roundHa(jr / area) : 0));
     }
 
     function renderWeekResumen(rows) {
+      const cercos = isCercosLabor(mapQuery.laborReal);
+      syncWeekTableHeaders(cercos);
       const list = collapseWeekRows(Array.isArray(rows) && rows.length ? rows : weekRowsFromRecords());
       fillWeekTable("weekResumenBody", "weekTotArea", "weekTotJr", "weekTotRatio", list);
       fillWeekTable("mobWeekResumenBody", "mobWeekTotArea", "mobWeekTotJr", "mobWeekTotRatio", list);
@@ -5283,9 +5577,10 @@
 
     async function refreshWeekResumen() {
       const sem = mapQuery.sem != null ? mapQuery.sem : currentWeek;
-      if (QBApi.getResumen && API_URL) {
+      const labor = String(mapQuery.laborReal || "").toUpperCase().trim();
+      if (QBApi.getResumen && API_URL && labor) {
         try {
-          const json = await QBApi.getResumen(sem);
+          const json = await QBApi.getResumen(sem, labor);
           if (json?.ok && Array.isArray(json.resumen) && json.resumen.length) {
             renderWeekResumen(json.resumen);
             return;
@@ -5296,9 +5591,6 @@
     }
 
     function defaultMapLaborReal() {
-      try {
-        if (window.matchMedia("(max-width: 768px), ((max-height: 520px) and (max-width: 1024px))").matches) return "";
-      } catch (e) { /* ok */ }
       return "DESHIERBO";
     }
 
@@ -5324,6 +5616,11 @@
         .replace(/\s+/g, " ")
         .trim();
       return s === "CERCOS VIVOS" || s === "CERCO VIVOS";
+    }
+
+    function cercosMlPerLot() {
+      const n = Number(window.QB_CONFIG && QB_CONFIG.CERCOS_ML_PER_LOT);
+      return n > 0 ? n : 80;
     }
 
     const CERCOS_FOOT_SET = new Set(
@@ -5353,22 +5650,22 @@
     }
 
     function defaultLaborAvance(area, laborReal, lot) {
-      return laborUsableHa(area, laborReal, lot);
+      return roundHa(area);
     }
 
     function clampLaborAvance(av, area, laborReal, lot) {
-      const cap = laborUsableHa(area, laborReal, lot);
+      const tot = roundHa(area);
       let n = roundHa(av);
       if (n < 0) n = 0;
-      if (cap > 0 && n > cap) n = cap;
+      if (tot > 0 && n > tot) n = tot;
       return n;
     }
 
     function recForMapLot(posKey) {
       const rec = laborRecords[posKey];
       if (!rec || !rec.laborReal) return null;
-      const want = String(mapQuery.laborReal || "").toUpperCase().trim();
-      if (want && String(rec.laborReal || "").toUpperCase() !== want) return null;
+      const want = activeLaborReal();
+      if (want && !sameLaborName(rec.laborReal, want)) return null;
       return rec;
     }
 
@@ -5389,6 +5686,7 @@
     let filterOptions = {
       sem: [currentWeek],
       fecha: [],
+      fechaBySem: {},
       md: modules.map(m => m.label),
       laborReal: unionLabors([]),
       laborPpto: (LABOR_OPTS.labor_ppto || []).map(x => String(x).toUpperCase())
@@ -5467,16 +5765,17 @@
     }
 
     function refreshFilterPanelUI() {
+      const fechas = fechasDeSemana(mapQuery.sem);
       renderFilterCSelect("filterSemSelect", filterOptions.sem, mapQuery.sem, null);
-      renderFilterCSelect("filterFechaSelect", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
+      renderFilterCSelect("filterFechaSelect", fechas, mapQuery.fecha, "Todas las fechas");
       renderFilterCSelect("filterMdSelect", filterOptions.md, mapQuery.modulo, "Todos los módulos");
       renderFilterCSelect("filterLaborPptoSelect", filterOptions.laborPpto, mapQuery.laborPpto, "Todas las labores ppto");
-      renderFilterCSelect("filterLaborSelect", filterOptions.laborReal, mapQuery.laborReal, "Todas las labores reales");
+      renderFilterCSelect("filterLaborSelect", filterOptions.laborReal, mapQuery.laborReal || "DESHIERBO", null);
       renderFilterCSelect("mobFilterSem", filterOptions.sem, mapQuery.sem, null);
-      renderFilterCSelect("mobFilterFecha", filterOptions.fecha, mapQuery.fecha, "Todas las fechas");
+      renderFilterCSelect("mobFilterFecha", fechas, mapQuery.fecha, "Todas las fechas");
       renderFilterCSelect("mobFilterMd", filterOptions.md, mapQuery.modulo, "Todos");
       renderFilterCSelect("mobFilterLaborPpto", filterOptions.laborPpto, mapQuery.laborPpto, "Todas");
-      renderFilterCSelect("mobFilterLabor", filterOptions.laborReal, mapQuery.laborReal, "Todas");
+      renderFilterCSelect("mobFilterLabor", filterOptions.laborReal, mapQuery.laborReal || "DESHIERBO", null);
       syncFilterBtnState();
     }
 
@@ -5492,7 +5791,8 @@
       mapQuery.fecha = fechaEl?.value || "";
       mapQuery.modulo = mdEl?.value || "";
       mapQuery.laborPpto = laborPptoEl?.value || "";
-      mapQuery.laborReal = laborEl?.value || "";
+      mapQuery.laborReal = laborEl?.value || "DESHIERBO";
+      constrainFechaToSem();
     }
 
     async function loadFilterOptions(force) {
@@ -5506,6 +5806,7 @@
         if (cached) {
           filterOptions = cached;
           filterOptions.laborReal = unionLabors(cached.laborReal);
+          filterOptions.fechaBySem = cached.fechaBySem || {};
           refreshFilterPanelUI();
           if (isMobileMap()) requestAnimationFrame(scheduleMapFit);
           return;
@@ -5528,6 +5829,7 @@
         filterOptions = {
           sem: (json.sem && json.sem.length) ? json.sem : [currentWeek],
           fecha: json.fecha || [],
+          fechaBySem: json.fechaBySem || {},
           md: (json.md && json.md.length) ? json.md : modules.map(m => m.label),
           laborReal: unionLabors(json.laborReal),
           laborPpto: (json.laborPpto && json.laborPpto.length)
@@ -5564,7 +5866,9 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-    async function applyMapFilters(showFeedback) {
+    async function applyMapFilters(showFeedback, opts = {}) {
+      constrainFechaToSem();
+      if (!mapQuery.laborReal) mapQuery.laborReal = "DESHIERBO";
       syncCercosMapLayout();
       if (mapQuery.laborReal && typeof laborRealCSelect !== "undefined" && laborRealCSelect) {
         laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
@@ -5583,9 +5887,21 @@
             el.classList.toggle("active", chipMod === activeMod);
           });
         }
+      } else {
+        activeMod = null;
+        document.querySelectorAll("#modList .leg-item").forEach(el => el.classList.remove("active"));
+        if (mobModScroll) {
+          mobModScroll.querySelectorAll(".mob-mod-chip").forEach(el => {
+            el.classList.toggle("active", el.dataset.mod === "");
+          });
+        }
       }
-      const n = await refreshMapData(!!showFeedback, { replace: true, fullPaint: true });
-      closeFilterModal();
+      const n = await refreshMapData(!!showFeedback, {
+        replace: true,
+        fullPaint: true,
+        nocache: opts.close !== false
+      });
+      if (opts.close !== false) closeFilterModal();
       return n;
     }
 
@@ -5617,8 +5933,8 @@
     function laborStatus(rec, area, laborReal, lot) {
       const av = Number(rec?.avance) || 0;
       if (!rec?.laborReal) return { key: "none", label: "Sin labor registrada" };
-      const cap = laborUsableHa(area, laborReal || rec.laborReal, lot);
-      if (cap > 0 && av >= cap * 0.98) return { key: "done", label: "Completado" };
+      const tot = roundHa(area);
+      if (tot > 0 && av >= tot * 0.98) return { key: "done", label: "Completado" };
       if (av > 0) return { key: "progress", label: "En progreso" };
       return { key: "pending", label: "Pendiente" };
     }
@@ -5632,9 +5948,8 @@
       if (!cell || !lot) return;
       const area = roundHa(lot.ha) || 1;
       let av = roundHa(avance);
-      const cap = laborUsableHa(area, laborReal || mapQuery.laborReal, lot);
-      if (cap > 0 && av > cap) av = cap;
-      const pct = cap > 0 ? Math.min(100, (av / cap) * 100) : 0;
+      if (area > 0 && av > area) av = area;
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
       let fill = cell.querySelector(".cell-fill");
       if (!fill) {
         fill = document.createElement("div");
@@ -5647,39 +5962,53 @@
       if (!laborReal || av <= 0) {
         fill.style.background = "transparent";
         fill.style.height = "0%";
+        fill.style.width = "";
         fill.style.top = "";
         fill.style.bottom = "";
-        if (fillFoot) fillFoot.style.height = "0%";
+        fill.style.left = "";
+        fill.style.right = "";
+        if (fillFoot) {
+          fillFoot.style.height = "0%";
+          fillFoot.style.width = "0%";
+        }
         cell.classList.remove("labor-done", "labor-progress");
         cell.title = `LT.${lot.lote} · ${String(lot.tunel || "").toUpperCase()} · ${formatHa(area)} ha`;
         return { pct: 0, st: { key: "empty" }, area, av: 0 };
       }
       const cercos = isCercosLabor(laborReal || mapQuery.laborReal);
       if (cercos) {
-        const topCap = roundHa(area * 0.2);
-        const topAv = Math.min(av, topCap);
-        const botAv = lotHasCercosFoot(lot) ? Math.max(0, av - topCap) : 0;
+        const barW = area > 0 ? Math.min(100, (av / area) * 100) : 0;
         fill.style.top = "0";
         fill.style.bottom = "auto";
+        fill.style.left = "0";
+        fill.style.right = "auto";
+        fill.style.height = "20%";
+        fill.style.width = barW + "%";
         fill.style.background = paint || "#64B5F6";
-        fill.style.height = (topCap > 0 ? (topAv / topCap) * 20 : 0) + "%";
         if (fillFoot) {
           fillFoot.style.background = paint || "#64B5F6";
-          fillFoot.style.height = (topCap > 0 ? (botAv / topCap) * 20 : 0) + "%";
+          fillFoot.style.height = "20%";
+          fillFoot.style.width = barW + "%";
         }
       } else {
         fill.style.top = "auto";
         fill.style.bottom = "0";
+        fill.style.left = "0";
+        fill.style.right = "0";
+        fill.style.width = "";
         fill.style.background = paint || "#64B5F6";
         fill.style.height = pct + "%";
-        if (fillFoot) fillFoot.style.height = "0%";
+        if (fillFoot) {
+          fillFoot.style.height = "0%";
+          fillFoot.style.width = "0%";
+        }
       }
       const fakeRec = { avance: av, laborReal: laborReal || "" };
       const st = laborStatus(fakeRec, area, laborReal, lot);
       cell.classList.toggle("labor-done", st.key === "done");
       cell.classList.toggle("labor-progress", st.key === "progress");
       const colorLabel = colorDetailText(paint);
-      cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(cap || area)} ha` +
+      cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(area)} ha` +
         (colorLabel ? ` · ${colorLabel}` : "");
       return { pct, st, area, av };
     }
@@ -5712,10 +6041,18 @@
     function updateDeskRatio() {
       const items = deskCapturedLots();
       const area = roundHa(items.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
-      const jr = roundHa(fTotalJr && fTotalJr.value);
-      const ratio = area > 0 ? roundHa(jr / area) : 0;
+      const jr = parseJr(fTotalJr && fTotalJr.value);
       const el = document.getElementById("deskRatioFormula");
-      if (el) el.textContent = "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
+      if (isCercosLabor(fLaborReal && fLaborReal.value)) {
+        const calc = updateCercosDeskCalc();
+        if (el) {
+          el.textContent = calc.ml + " ml / " + (calc.jr || 0) + " JR = " +
+            (calc.jr > 0 ? formatHa(calc.rend) : "—");
+        }
+        return { area, jr: calc.jr, ratio: calc.rend, n: items.length, ml: calc.ml };
+      }
+      const ratio = area > 0 ? roundHa(jr / area) : 0;
+      if (el) el.textContent = "JR " + (jr || 0) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
       return { area, jr, ratio, n: items.length };
     }
 
@@ -5757,10 +6094,14 @@
               let av = roundHa(x.avance);
               if (av <= 0) av = area;
               if (area > 0 && av > area) av = area;
-              const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              const cercos = isCercosLabor((fLaborReal && fLaborReal.value) || mapQuery.laborReal);
+              const barPct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              const fillCss = cercos
+                ? `background:${paint};height:20%;width:${barPct}%;top:0;bottom:auto;left:0;right:auto`
+                : `background:${paint};height:${barPct}%`;
               const on = x.key === activeKey ? " is-on" : "";
               return `<button type="button" class="mini-cell${on}" data-open="${x.key}">
-                <div class="mini-fill" style="background:${paint};height:${pct}%"></div>
+                <div class="mini-fill" style="${fillCss}"></div>
                 <span class="t">${String(x.lot.tunel || "").toUpperCase()}</span>
                 <span class="l">LOTE ${x.lot.lote}</span>
                 <span class="h">${formatHa(area)}</span>
@@ -6326,8 +6667,7 @@
       } else if (rec?.avance != null && rec.avance !== "") {
         trabajado = roundHa(rec.avance);
       }
-      const capSel = laborUsableHa(area, (rec && rec.laborReal) || mapQuery.laborReal, lot);
-      if (trabajado > capSel) trabajado = capSel;
+      if (trabajado > area) trabajado = area;
       const falta = roundHa(Math.max(0, area - trabajado));
       const laborTxt = rec?.laborReal ? String(rec.laborReal) : "Sin labor registrada";
 
@@ -6674,15 +7014,45 @@
     const fLaborReal = document.getElementById("fLaborReal");
     const fAvance = document.getElementById("fAvance");
     const fTotalJr = document.getElementById("fTotalJr");
+    const fCercosLotes = document.getElementById("fCercosLotes");
+    const fCercosMl = document.getElementById("fCercosMl");
+    const fCercosRend = document.getElementById("fCercosRend");
     const fAvanceBar = document.getElementById("fAvanceBar");
 
     function hasLaborDesk() {
       return !!(fLaborReal && String(fLaborReal.value || "").trim());
     }
+    function cercosLotesN() {
+      const n = parseInt(String((fCercosLotes && fCercosLotes.value) || "").replace(/\D/g, ""), 10);
+      return isFinite(n) && n > 0 ? n : 0;
+    }
+    function syncCercosLotesFromSelection() {
+      if (!fCercosLotes) return;
+      if (!isCercosLabor(fLaborReal && fLaborReal.value)) return;
+      const n = multiLotKeys.size || (fLote && fLote.value ? 1 : 0);
+      const next = n > 0 ? String(n) : "";
+      if (fCercosLotes.value !== next) fCercosLotes.value = next;
+      updateCercosDeskCalc();
+    }
+    function updateCercosDeskCalc() {
+      const n = cercosLotesN();
+      const ml = n * cercosMlPerLot();
+      const jr = parseJr(fTotalJr && fTotalJr.value);
+      const rend = jr > 0 ? roundHa(ml / jr) : 0;
+      if (fCercosMl) fCercosMl.textContent = ml + " ml";
+      if (fCercosRend) fCercosRend.textContent = jr > 0 ? formatHa(rend) : "—";
+      return { n, ml, jr, rend };
+    }
     function syncLaborGate() {
       const grid = document.getElementById("laborFieldGrid");
-      grid?.classList.toggle("is-gated", !hasLaborDesk());
-      if (fTotalJr) fTotalJr.disabled = !hasLaborDesk();
+      const ok = hasLaborDesk();
+      const cercos = isCercosLabor(fLaborReal && fLaborReal.value);
+      grid?.classList.toggle("is-gated", !ok);
+      document.getElementById("laborDrawer")?.classList.toggle("is-cercos", cercos);
+      if (fTotalJr) fTotalJr.disabled = !ok;
+      if (fCercosLotes) fCercosLotes.disabled = !ok || !cercos;
+      if (cercos) syncCercosLotesFromSelection();
+      updateDeskRatio();
     }
 
     function createCustomSelect(root, opts) {
@@ -6830,42 +7200,42 @@
     initFilterCSelect("filterSemC", "filterSemSelect", "—", () => {
       syncMapQueryFromSelects("desk");
       refreshFilterPanelUI();
-      syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
     initFilterCSelect("filterFechaC", "filterFechaSelect", "Todas las fechas", () => {
       syncMapQueryFromSelects("desk");
-      refreshFilterPanelUI();
       syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
     initFilterCSelect("filterMdC", "filterMdSelect", "Todos los módulos", () => {
       syncMapQueryFromSelects("desk");
-      refreshFilterPanelUI();
       syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
-    initFilterCSelect("filterLaborC", "filterLaborSelect", "Todas las labores reales", () => {
+    initFilterCSelect("filterLaborC", "filterLaborSelect", "DESHIERBO", () => {
       syncMapQueryFromSelects("desk");
-      refreshFilterPanelUI();
-      applyMapFilters(true);
+      syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
     initFilterCSelect("mobFilterSemC", "mobFilterSem", "—", () => {
       syncMapQueryFromSelects("mob");
       refreshFilterPanelUI();
-      applyMapFilters(true);
+      applyMapFilters(true, { close: false });
     });
     initFilterCSelect("mobFilterFechaC", "mobFilterFecha", "Todas las fechas", () => {
       syncMapQueryFromSelects("mob");
-      refreshFilterPanelUI();
-      applyMapFilters(true);
+      syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
     initFilterCSelect("mobFilterMdC", "mobFilterMd", "Todos", () => {
       syncMapQueryFromSelects("mob");
-      refreshFilterPanelUI();
-      applyMapFilters(true);
+      syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
-    initFilterCSelect("mobFilterLaborC", "mobFilterLabor", "Todas", () => {
+    initFilterCSelect("mobFilterLaborC", "mobFilterLabor", "DESHIERBO", () => {
       syncMapQueryFromSelects("mob");
-      refreshFilterPanelUI();
-      applyMapFilters(true);
+      syncFilterBtnState();
+      applyMapFilters(true, { close: false });
     });
 
     function lotsForModulo(modId) {
@@ -7031,7 +7401,7 @@
       items: LABOR_OPTS.labor_real,
       placeholder: "Seleccionar",
       onChange: () => {
-        const labor = String(fLaborReal.value || "");
+        const labor = String(fLaborReal.value || "").toUpperCase();
         multiLotKeys.forEach((meta, key) => {
           const lot = byPos.get(key);
           if (!lot || !meta) return;
@@ -7039,6 +7409,11 @@
         });
         syncLaborGate();
         previewFromForm();
+        if (labor && mapQuery.laborReal !== labor) {
+          mapQuery.laborReal = labor;
+          refreshFilterPanelUI();
+          applyMapFilters(false);
+        }
       }
     });
 
@@ -7146,6 +7521,7 @@
       }
     }
     function syncMultiLotSummary() {
+      syncCercosLotesFromSelection();
       const n = multiLotKeys.size;
       const totalArea = multiLotsTotalHa();
       const totalAv = multiLotsTotalAvance();
@@ -7197,6 +7573,7 @@
     }
 
     function updateMultiLotTotalsOnly() {
+      syncCercosLotesFromSelection();
       const n = multiLotKeys.size;
       const totalArea = multiLotsTotalHa();
       const totalAv = multiLotsTotalAvance();
@@ -7455,8 +7832,8 @@
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const items = deskCapturedLots();
       const cap = items.length
-        ? roundHa(items.reduce((s, x) => s + laborUsableHa(x.lot.ha, labor, x.lot), 0))
-        : laborUsableHa(Number(fArea && fArea.value) || 0, labor);
+        ? roundHa(items.reduce((s, x) => s + roundHa(x.lot.ha), 0))
+        : roundHa(Number(fArea && fArea.value) || 0);
       const av = Number(fAvance && fAvance.value) || 0;
       const pct = cap > 0 ? Math.min(100, (av / cap) * 100) : 0;
       if (fAvanceBar) fAvanceBar.style.width = pct + "%";
@@ -7479,7 +7856,7 @@
         if (rec.laborReal) laborRealCSelect.setValue(up(rec.laborReal), true);
         const av = clampLaborAvance(rec.avance, areaHa, rec.laborReal, lot) || defaultLaborAvance(areaHa, rec.laborReal, lot);
         fAvance.value = av ? formatHa(av) : "";
-        if (rec.totalJr != null && rec.totalJr !== "") fTotalJr.value = rec.totalJr;
+        if (rec.totalJr != null && rec.totalJr !== "") fTotalJr.value = formatJr(rec.totalJr);
         variedadCSelect.setValue(rec.variedad === "MAGICA" ? "MAGICA" : "SEKOYA POP");
       } else if (!roundHa(fAvance && fAvance.value)) {
         const av = defaultLaborAvance(areaHa, labor, lot);
@@ -7521,7 +7898,9 @@
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
         area,
         avance: av,
-        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0)),
+        totalJr: parseJr(fTotalJr && fTotalJr.value),
+        ml: isCercosLabor(laborReal) ? cercosLotesN() * cercosMlPerLot() : 0,
+        lotesTrabajados: isCercosLabor(laborReal) ? cercosLotesN() : 0,
         color: paint,
         editar: true
       };
@@ -7628,13 +8007,18 @@
         laborPpto: String(fLaborPpto.value || "").toUpperCase(),
         laborReal,
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
-        totalJr: Math.min(100000, Math.max(0, Number(fTotalJr.value) || 0)),
+        totalJr: parseJr(fTotalJr && fTotalJr.value),
+        ml: isCercosLabor(laborReal) ? cercosLotesN() * cercosMlPerLot() : 0,
+        lotesTrabajados: isCercosLabor(laborReal) ? cercosLotesN() : 0,
         color: brush.label
       };
 
-      const jrTotal = roundHa(fTotalJr && fTotalJr.value);
-      const totArea = roundHa(items.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
-      const records = items.map(({ key, lot }) => {
+      const jrTotal = parseJr(fTotalJr && fTotalJr.value);
+      const cercosSave = isCercosLabor(laborReal);
+      const mlTotal = cercosSave ? cercosLotesN() * cercosMlPerLot() : 0;
+      const jrParts = splitIntByWeight(jrTotal, items.map(x => Number(x.lot.ha) || 0));
+      const mlParts = splitIntByWeight(mlTotal, items.map(() => 1));
+      const records = items.map(({ key, lot }, idx) => {
         const area = roundHa(lot.ha);
         let av = getMultiLotAvance(key, lot);
         if (av <= 0) av = defaultLaborAvance(area, laborReal, lot);
@@ -7652,7 +8036,9 @@
           variedad: shared.variedad,
           area,
           avance: av,
-          totalJr: totArea > 0 ? roundHa(jrTotal * (area / totArea)) : 0,
+          totalJr: jrParts[idx] || 0,
+          ml: cercosSave ? (mlParts[idx] || 0) : 0,
+          lotesTrabajados: cercosSave ? cercosLotesN() : 0,
           color: currentPaintColor(),
           editar: true
         };
@@ -7925,8 +8311,18 @@
       fAvance.value = formatHa(av);
       previewFromForm();
     });
+    bindIntegerInput(fTotalJr);
+    bindIntegerInput(fCercosLotes);
     fTotalJr.addEventListener("input", () => { updateDeskRatio(); previewFromForm(); });
-    fTotalJr.addEventListener("change", previewFromForm);
+    fTotalJr.addEventListener("change", () => {
+      fTotalJr.value = formatJr(fTotalJr.value) === "0" ? "" : formatJr(fTotalJr.value);
+      previewFromForm();
+    });
+    fCercosLotes?.addEventListener("input", () => {
+      const n = String(fCercosLotes.value || "").replace(/\D/g, "");
+      if (fCercosLotes.value !== n) fCercosLotes.value = n;
+      updateDeskRatio();
+    });
     document.getElementById("multiLotSummary")?.addEventListener("click", openMultiLotModal);
     document.getElementById("multiLotCloseBtn")?.addEventListener("click", closeMultiLotModal);
     document.getElementById("multiLotClearBtn")?.addEventListener("click", () => {
@@ -7960,9 +8356,18 @@
       // Mantener la fila visible sin reordenar ni re-renderizar la lista
       row.scrollIntoView({ block: "nearest", behavior: "auto" });
     });
+    document.getElementById("multiLotModal")?.addEventListener("beforeinput", e => {
+      const inp = e.target.closest("input[data-avance]");
+      if (!inp) return;
+      if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+    });
     document.getElementById("multiLotModal")?.addEventListener("input", e => {
       const inp = e.target.closest("input[data-avance]");
       if (!inp) return;
+      let v = String(inp.value || "").replace(/,/g, ".").replace(/[^0-9.]/g, "");
+      const dot = v.indexOf(".");
+      if (dot >= 0) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+      if (inp.value !== v) inp.value = v;
       if (String(inp.value || "").trim() === "") {
         inp.value = "0.";
         try { inp.setSelectionRange(2, 2); } catch (_) { /* ok */ }
@@ -8022,6 +8427,7 @@
       if (fArea) fArea.value = "";
       if (fAvance) fAvance.value = "";
       if (fTotalJr) fTotalJr.value = "";
+      if (fCercosLotes) fCercosLotes.value = "";
       updateAvanceBar();
       previewFromForm();
       renderDeskLotBoard();
@@ -8125,6 +8531,7 @@
       laborRealCSelect.setValue("", true);
       fAvance.value = "0.";
       fTotalJr.value = "";
+      if (fCercosLotes) fCercosLotes.value = "";
       variedadCSelect.setValue("SEKOYA POP");
       lockDeskDay();
       syncLaborGate();
@@ -8357,9 +8764,8 @@
           const area = Number(lot.ha) || 1;
           const cercos = isCercosLabor(mapQuery.laborReal);
           const foot = cercos && lotHasCercosFoot(lot);
-          const capHa = cercos ? Math.max(0.01, cercosCapHa(area, lot)) : area;
-          const av = Math.min(capHa, Math.max(0, Number(rec?.avance) || 0));
-          const pct = capHa > 0 ? Math.min(1, av / capHa) : 0;
+          const av = Math.min(area, Math.max(0, Number(rec?.avance) || 0));
+          const pct = area > 0 ? Math.min(1, av / area) : 0;
           const mod = lot.modulo != null ? modById[lot.modulo] : null;
           const fillColor = resolvePaintColor(lot, `${lot.r},${lot.c}`, rec?.color) ||
             mod?.badge || mod?.fill || "#94a3b8";
@@ -8372,13 +8778,11 @@
           const stroke = cercos ? "#111111" : border;
           if (pct > 0) {
             if (cercos) {
-              const topCap = Math.max(0.01, area * 0.2);
-              const topAv = Math.min(av, topCap);
-              const botAv = foot ? Math.max(0, av - topCap) : 0;
+              const barW = area > 0 ? Math.min(1, av / area) : 0;
               ctx.fillStyle = fillColor;
               ctx.globalAlpha = 0.78;
-              ctx.fillRect(x, y, cw, capH * (topAv / topCap));
-              if (botAv > 0) ctx.fillRect(x, y + ch - footH, cw, footH * (botAv / topCap));
+              ctx.fillRect(x, y, cw * barW, capH);
+              if (foot) ctx.fillRect(x, y + ch - footH, cw * barW, footH);
               ctx.globalAlpha = 1;
             } else {
               const fh = usableH * pct;
@@ -8601,7 +9005,7 @@
     window.QB_onQueueFlushed = n => {
       updatePendingChips();
       if (n > 0) {
-        showToast("Cola enviada", false, n + " pendiente(s) subidos a la hoja");
+        showToast("Pendientes subidos", false, n + " registro(s) guardados en la hoja");
         refreshMapData(false);
       }
     };
@@ -8633,7 +9037,7 @@
           }
         });
       } else {
-        refreshMapData(false).then(n => {
+        refreshMapData(false, { replace: true, fullPaint: true }).then(n => {
           if (n > 0) showToast("Mapa listo", false, `${n} lotes cargados`, "info");
           setTimeout(() => loadFilterOptions(), 2000);
         });

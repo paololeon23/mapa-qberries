@@ -1,4 +1,4 @@
-const CACHE = "qb-v115";
+const CACHE = "qb-v133";
 const SHELL = [
   "./",
   "./index.html",
@@ -33,6 +33,23 @@ async function putInCache(request, response) {
   } catch (e) { /* ignore */ }
 }
 
+function showUploadedNotice(n) {
+  n = Math.max(1, Number(n) || 1);
+  const title = n === 1 ? "Pendiente subido" : n + " pendientes subidos";
+  const body = n === 1
+    ? "El reporte ya está en la hoja."
+    : n + " reportes ya están en la hoja.";
+  return self.registration.showNotification(title, {
+    body,
+    icon: "./assets/icon-192.png",
+    badge: "./assets/icon-192.png",
+    tag: "qb-uploaded",
+    renotify: true,
+    vibrate: [140, 70, 140],
+    data: { url: "./form.html" }
+  });
+}
+
 self.addEventListener("message", e => {
   const data = e.data || {};
   if (data.type === "PURGE") {
@@ -43,6 +60,35 @@ self.addEventListener("message", e => {
   if (data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+  if (data.type === "NOTIFY_UPLOADED") {
+    e.waitUntil(showUploadedNotice(data.count));
+  }
+  if (data.type === "FLUSH_QUEUE") {
+    e.waitUntil(askClientsToFlush());
+  }
+});
+
+async function askClientsToFlush() {
+  const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  list.forEach(c => {
+    try { c.postMessage({ type: "FLUSH_QUEUE" }); } catch (err) { /* ok */ }
+  });
+}
+
+self.addEventListener("sync", e => {
+  if (e.tag === "qb-flush-queue") e.waitUntil(askClientsToFlush());
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const target = new URL((e.notification.data && e.notification.data.url) || "./form.html", self.location.origin).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      const hit = list.find(c => String(c.url || "").indexOf(self.location.origin) === 0);
+      if (hit) return hit.focus();
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })
+  );
 });
 
 self.addEventListener("install", e => {

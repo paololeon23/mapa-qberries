@@ -3,10 +3,11 @@
  *
  * Columnas (fila 1 = encabezados, datos desde fila 2):
  *  SEM | FECHA | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
- *  AREA LOTE | AVANCE | TOTAL (JR) | COLOR | HORA GUARDADO
+ *  AREA LOTE | AVANCE | ML | TOTAL (JR) | COLOR | HORA GUARDADO
  *
  * Hoja "RESUMEN DIA":
- *  FECHA | SEM | MD | AREA TOTAL | JR | RATIO
+ *  FECHA | SEM | LABOR REAL | MD | AREA TOTAL | ML | JR | RATIO
+ *  Un renglón por día + labor + módulo (DESHIERBO, ARENADO y CERCOS no se mezclan).
  *
  * Formatos:
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
@@ -25,7 +26,7 @@ var FILA_INI = 2;
 
 var COLUMNAS = [
   'SEM', 'FECHA', 'LABOR REAL', 'MD', 'TURNO', 'LOTE',
-  'VARIEDAD', 'AREA LOTE', 'AVANCE', 'TOTAL (JR)', 'COLOR', 'HORA GUARDADO'
+  'VARIEDAD', 'AREA LOTE', 'AVANCE', 'ML', 'TOTAL (JR)', 'COLOR', 'HORA GUARDADO'
 ];
 
 var COL = {
@@ -38,9 +39,10 @@ var COL = {
   VARIEDAD: 6,
   AREA: 7,
   AVANCE: 8,
-  TOTAL_JR: 9,
-  COLOR: 10,
-  HORA_GUARDADO: 11
+  ML: 9,
+  TOTAL_JR: 10,
+  COLOR: 11,
+  HORA_GUARDADO: 12
 };
 
 function doGet(e) {
@@ -129,10 +131,22 @@ function procesar_(e, metodo) {
 
     if (action === 'resumen') {
       var semRes = body.sem || param_(e, 'sem') || semIso_();
+      var laborRes = norm_(body.laborReal || body.labor_real || param_(e, 'laborReal') || '');
+      var listRes = [];
+      if (laborRes) {
+        var rowsRes = leerFilas_(obtenerHoja_());
+        var sN = num_(semRes) || semIso_();
+        for (var ri = 0; ri < rowsRes.length; ri++) {
+          if (num_(rowsRes[ri].sem) !== sN) continue;
+          if (norm_(rowsRes[ri].laborReal) !== laborRes) continue;
+          listRes.push(filaToCliente_(rowsRes[ri]));
+        }
+      }
       return {
         ok: true,
         sem: num_(semRes) || semIso_(),
-        resumen: leerResumenSemana_(semRes)
+        laborReal: laborRes || null,
+        resumen: laborRes ? armarResumenLista_(listRes, laborRes) : leerResumenSemana_(semRes)
       };
     }
 
@@ -170,6 +184,7 @@ function guardar_(d) {
     var fechaIso = check.fecha;
     var areaHa = check.area;
     var avanceHa = check.avance;
+    var ml = check.ml;
     var variedad = check.variedad;
     var totalJr = check.totalJr;
 
@@ -201,6 +216,7 @@ function guardar_(d) {
       variedad,
       areaHa,
       avanceHa,
+      ml,
       totalJr,
       colorCanon_(check.color),
       horaGuardado_()
@@ -268,6 +284,8 @@ function guardarGrupo_(payload) {
       area: raw.area != null ? raw.area : raw.areaLote,
       avance: raw.avance,
       totalJr: raw.totalJr != null ? raw.totalJr : totalJrComun,
+      ml: raw.ml != null ? raw.ml : raw.metrosLineales,
+      lotesTrabajados: raw.lotesTrabajados != null ? raw.lotesTrabajados : raw.cercosLotes,
       color: raw.color || colorComun,
       editar: raw.editar === true || raw.editar === 1 || raw.editar === '1' || payload.editar === true
     };
@@ -337,6 +355,7 @@ function guardarGrupo_(payload) {
         v.variedad,
         v.area,
         v.avance,
+        v.ml,
         v.totalJr,
         colorCanon_(v.color),
         hora
@@ -380,56 +399,143 @@ function guardarGrupo_(payload) {
   }
 }
 
-var COLUMNAS_RESUMEN = ['FECHA', 'SEM', 'MD', 'AREA TOTAL', 'JR', 'RATIO'];
+var COLUMNAS_RESUMEN = ['FECHA', 'SEM', 'LABOR REAL', 'MD', 'AREA TOTAL', 'ML', 'JR', 'RATIO'];
+var COL_RES = {
+  FECHA: 0,
+  SEM: 1,
+  LABOR_REAL: 2,
+  MD: 3,
+  AREA: 4,
+  ML: 5,
+  JR: 6,
+  RATIO: 7
+};
+var _resumenRebuildLock = false;
 
-function obtenerHojaResumen_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var h = ss.getSheetByName(HOJA_RESUMEN);
-  if (h) return h;
-  var prev = ss.getActiveSheet();
-  h = ss.insertSheet(HOJA_RESUMEN);
-  h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
+function laborOrden_(lab) {
+  var n = norm_(lab);
+  if (n === 'DESHIERBO') return 1;
+  if (n === 'ARENADO DE MACETAS') return 2;
+  if (n === 'CERCOS VIVOS' || n === 'CERCO VIVOS') return 3;
+  return 9;
+}
+
+function ratioResumen_(labor, area, ml, jr) {
+  if (esCercos_(labor)) return jr > 0 ? Math.round((ml / jr) * 100) / 100 : 0;
+  return area > 0 ? Math.round((jr / area) * 100) / 100 : 0;
+}
+
+function estilizarEncabezadosResumen_(h) {
   h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length)
     .setFontWeight('bold')
     .setBackground('#1a5c40')
     .setFontColor('#FFFFFF');
   h.setFrozenRows(FILA_ENC);
-  try { if (prev) ss.setActiveSheet(prev); } catch (e) { /* ok */ }
+}
+
+function resumenHeadersOk_(headers) {
+  if (!headers || headers.length < COLUMNAS_RESUMEN.length) return false;
+  for (var i = 0; i < COLUMNAS_RESUMEN.length; i++) {
+    if (headerNorm_(headers[i]) !== headerNorm_(COLUMNAS_RESUMEN[i])) return false;
+  }
+  return true;
+}
+
+function asegurarEncabezadosResumen_(h) {
+  var lastCol = Math.max(h.getLastColumn(), COLUMNAS_RESUMEN.length);
+  var headers = [];
+  if (h.getLastRow() >= FILA_ENC) {
+    headers = h.getRange(FILA_ENC, 1, 1, lastCol).getValues()[0];
+  }
+  if (resumenHeadersOk_(headers)) return false;
+  h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
+  estilizarEncabezadosResumen_(h);
+  return true;
+}
+
+function obtenerHojaResumen_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var h = ss.getSheetByName(HOJA_RESUMEN);
+  var created = false;
+  if (!h) {
+    var prev = ss.getActiveSheet();
+    h = ss.insertSheet(HOJA_RESUMEN);
+    h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
+    estilizarEncabezadosResumen_(h);
+    created = true;
+    try { if (prev) ss.setActiveSheet(prev); } catch (e) { /* ok */ }
+  }
+  if (!_resumenRebuildLock) {
+    var needRebuild = created ? false : asegurarEncabezadosResumen_(h);
+    if (needRebuild) {
+      _resumenRebuildLock = true;
+      try {
+        actualizarResumenDia_('', h);
+      } finally {
+        _resumenRebuildLock = false;
+      }
+    }
+  }
   return h;
 }
 
-/** Recalcula el resumen del día (un renglón por módulo) desde la hoja de labores. */
-function actualizarResumenDia_(fechaIso) {
-  fechaIso = normalizarFecha_(fechaIso || hoy_());
+/** Recalcula el resumen (un renglón por labor + módulo). Sin fecha = toda la hoja. */
+function actualizarResumenDia_(fechaIso, hojaResumen) {
+  fechaIso = fechaIso ? normalizarFecha_(fechaIso) : '';
   var hoja = obtenerHoja_();
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
-  var groups = {};
-  var sem = 0;
+  var latest = {};
+  var i;
 
-  for (var i = 0; i < rows.length; i++) {
+  for (i = 0; i < rows.length; i++) {
     var r = rows[i];
-    if (r.fechaIso !== fechaIso) continue;
-    var md = String(r.modulo || '').trim() || 'SIN MOD';
-    if (!groups[md]) groups[md] = { modulo: md, lots: {}, jr: 0 };
-    var lotKey = norm_(r.turno) + '|' + String(r.loteNum);
-    if (!groups[md].lots.hasOwnProperty(lotKey)) {
-      groups[md].lots[lotKey] = r.area;
-    }
-    groups[md].jr += Number(r.totalJr) || 0;
-    if (!sem) sem = num_(r.sem) || 0;
+    if (!r.fechaIso) continue;
+    if (fechaIso && r.fechaIso !== fechaIso) continue;
+    var lab = norm_(r.laborReal) || 'SIN LABOR';
+    var lotKey = claveLote_(r.turno, r.loteNum) || ('X|' + String(r.loteNum || i));
+    var uniq = r.fechaIso + '|' + lab + '|' + lotKey + '|' + (normMod_(r.modulo) || '');
+    if (!latest[uniq] || r.rowIndex >= latest[uniq].rowIndex) latest[uniq] = r;
   }
-  if (!sem) sem = semIso_();
 
-  var resumen = obtenerHojaResumen_();
+  var groups = {};
+  for (var uk in latest) {
+    if (!latest.hasOwnProperty(uk)) continue;
+    var row = latest[uk];
+    var labor = norm_(row.laborReal) || 'SIN LABOR';
+    var md = String(row.modulo || '').trim() || 'SIN MOD';
+    var gk = row.fechaIso + '|' + labor + '|' + md;
+    if (!groups[gk]) {
+      groups[gk] = {
+        fechaIso: row.fechaIso,
+        sem: num_(row.sem) || 0,
+        labor: labor,
+        modulo: md,
+        lots: {},
+        jr: 0,
+        ml: 0
+      };
+    }
+    var lk = claveLote_(row.turno, row.loteNum) || String(row.loteNum);
+    if (!groups[gk].lots.hasOwnProperty(lk)) groups[gk].lots[lk] = Number(row.area) || 0;
+    groups[gk].jr += numInt_(row.totalJr);
+    groups[gk].ml += numInt_(row.ml);
+    if (!groups[gk].sem) groups[gk].sem = num_(row.sem) || 0;
+  }
+
+  var resumen = hojaResumen || obtenerHojaResumen_();
   var last = resumen.getLastRow();
   if (last >= FILA_INI) {
-    var data = resumen.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_RESUMEN.length).getValues();
-    var toDel = [];
-    for (var d = 0; d < data.length; d++) {
-      if (normalizarFecha_(data[d][0]) === fechaIso) toDel.push(FILA_INI + d);
+    if (!fechaIso) {
+      resumen.deleteRows(FILA_INI, last - FILA_INI + 1);
+    } else {
+      var data = resumen.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_RESUMEN.length).getValues();
+      var toDel = [];
+      for (var d = 0; d < data.length; d++) {
+        if (normalizarFecha_(data[d][COL_RES.FECHA]) === fechaIso) toDel.push(FILA_INI + d);
+      }
+      if (toDel.length) borrarFilas_(resumen, toDel);
     }
-    if (toDel.length) borrarFilas_(resumen, toDel);
   }
 
   var keys = [];
@@ -437,24 +543,36 @@ function actualizarResumenDia_(fechaIso) {
     if (groups.hasOwnProperty(k)) keys.push(k);
   }
   keys.sort(function (a, b) {
-    return String(a).localeCompare(String(b), 'es', { numeric: true });
+    var ga = groups[a];
+    var gb = groups[b];
+    var df = String(ga.fechaIso || '').localeCompare(String(gb.fechaIso || ''));
+    if (df) return df;
+    var lf = laborOrden_(ga.labor) - laborOrden_(gb.labor);
+    if (lf) return lf;
+    var ln = String(ga.labor || '').localeCompare(String(gb.labor || ''), 'es');
+    if (ln) return ln;
+    return String(ga.modulo || '').localeCompare(String(gb.modulo || ''), 'es', { numeric: true });
   });
 
   var append = [];
   for (var g = 0; g < keys.length; g++) {
     var grp = groups[keys[g]];
     var area = 0;
-    for (var lk in grp.lots) {
-      if (grp.lots.hasOwnProperty(lk)) area += Number(grp.lots[lk]) || 0;
+    for (var pk in grp.lots) {
+      if (grp.lots.hasOwnProperty(pk)) area += Number(grp.lots[pk]) || 0;
     }
     area = Math.round(area * 100) / 100;
-    var jr = Math.round((Number(grp.jr) || 0) * 100) / 100;
-    var ratio = area > 0 ? Math.round((jr / area) * 100) / 100 : 0;
+    var jr = numInt_(grp.jr);
+    var ml = esCercos_(grp.labor) ? numInt_(grp.ml) : 0;
+    var ratio = ratioResumen_(grp.labor, area, ml, jr);
+    var semRow = grp.sem || semIso_();
     append.push([
-      formatFechaSheet_(fechaIso),
-      sem,
+      formatFechaSheet_(grp.fechaIso),
+      semRow,
+      grp.labor,
       grp.modulo,
       area,
+      ml,
       jr,
       ratio
     ]);
@@ -465,27 +583,80 @@ function actualizarResumenDia_(fechaIso) {
   }
 }
 
-/** Filas de RESUMEN DIA para una semana (FECHA · MD · AREA · JR · RATIO). */
-function leerResumenSemana_(sem) {
+/** Filas de resumen (FECHA · LABOR · MD · AREA/ML · JR · RATIO). */
+function armarResumenLista_(list, laborReal) {
+  var groups = {};
+  var i;
+  for (i = 0; i < (list || []).length; i++) {
+    var r = list[i];
+    if (!r) continue;
+    var fechaIso = r.fechaIso || normalizarFecha_(r.fecha) || '';
+    var lab = norm_(r.laborReal) || norm_(laborReal) || '';
+    var md = String(r.modulo || '').trim() || '—';
+    var k = fechaIso + '|' + lab + '|' + md;
+    if (!groups[k]) groups[k] = { fechaIso: fechaIso, labor: lab, modulo: md, lots: {}, jr: 0, ml: 0 };
+    var lotKey = norm_(r.turno) + '|' + String(r.lote != null ? r.lote : r.loteNum);
+    if (!groups[k].lots.hasOwnProperty(lotKey)) {
+      groups[k].lots[lotKey] = Number(r.area) || 0;
+    }
+    groups[k].jr += numInt_(r.totalJr);
+    groups[k].ml += numInt_(r.ml);
+  }
+  var keys = [];
+  for (var gk in groups) {
+    if (groups.hasOwnProperty(gk)) keys.push(gk);
+  }
+  keys.sort();
+  var out = [];
+  for (i = 0; i < keys.length; i++) {
+    var g = groups[keys[i]];
+    var area = 0;
+    for (var lk in g.lots) {
+      if (g.lots.hasOwnProperty(lk)) area += Number(g.lots[lk]) || 0;
+    }
+    area = Math.round(area * 100) / 100;
+    var jr = numInt_(g.jr);
+    var ml = esCercos_(g.labor) ? numInt_(g.ml) : 0;
+    out.push({
+      fecha: formatFechaSheet_(g.fechaIso),
+      fechaIso: g.fechaIso,
+      modulo: g.modulo,
+      laborReal: g.labor || laborReal || '',
+      area: area,
+      ml: ml,
+      jr: jr,
+      ratio: ratioResumen_(g.labor || laborReal, area, ml, jr)
+    });
+  }
+  return out;
+}
+
+function leerResumenSemana_(sem, laborReal) {
   sem = num_(sem);
   if (!sem) sem = semIso_();
+  var laborWant = norm_(laborReal);
   var h = obtenerHojaResumen_();
   var last = h.getLastRow();
   var out = [];
   if (last < FILA_INI) return out;
   var data = h.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_RESUMEN.length).getValues();
   for (var i = 0; i < data.length; i++) {
-    if (num_(data[i][1]) !== sem) continue;
-    var fechaIso = normalizarFecha_(data[i][0]);
-    var area = numDec_(data[i][3]);
-    var jr = numDec_(data[i][4]);
-    var ratio = numDec_(data[i][5]);
+    if (num_(data[i][COL_RES.SEM]) !== sem) continue;
+    var labor = texto_(data[i][COL_RES.LABOR_REAL]);
+    if (laborWant && norm_(labor) !== laborWant) continue;
+    var fechaIso = normalizarFecha_(data[i][COL_RES.FECHA]);
+    var area = numDec_(data[i][COL_RES.AREA]);
+    var ml = numInt_(data[i][COL_RES.ML]);
+    var jr = numInt_(data[i][COL_RES.JR]);
+    var ratio = numDec_(data[i][COL_RES.RATIO]);
     out.push({
       fecha: formatFechaSheet_(fechaIso),
       fechaIso: fechaIso,
       sem: sem,
-      modulo: String(data[i][2] || ''),
+      laborReal: labor,
+      modulo: String(data[i][COL_RES.MD] || ''),
       area: area,
+      ml: ml,
       jr: jr,
       ratio: ratio
     });
@@ -493,6 +664,8 @@ function leerResumenSemana_(sem) {
   out.sort(function (a, b) {
     var df = String(a.fechaIso || '').localeCompare(String(b.fechaIso || ''));
     if (df) return df;
+    var lf = laborOrden_(a.laborReal) - laborOrden_(b.laborReal);
+    if (lf) return lf;
     return String(a.modulo || '').localeCompare(String(b.modulo || ''), 'es', { numeric: true });
   });
   return out;
@@ -596,6 +769,7 @@ function getMapa_(d, e) {
   d = d || {};
   var sem = d.sem != null && d.sem !== '' ? num_(d.sem) : (param_(e, 'sem') ? num_(param_(e, 'sem')) : null);
   var laborReal = norm_(d.laborReal || d.labor_real || param_(e, 'laborReal') || '');
+  if (!laborReal) laborReal = 'DESHIERBO';
   var modulo = normMod_(d.modulo || d.md || param_(e, 'modulo') || '');
   var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
   if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
@@ -605,7 +779,7 @@ function getMapa_(d, e) {
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  var cacheKey = 'map_v9_' + cacheVer + '_' + [
+  var cacheKey = 'map_v13_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
@@ -643,6 +817,7 @@ function getMapa_(d, e) {
 
     var key = claveLote_(r.turno, r.loteNum);
     if (!key) continue;
+    key = key + '|' + (norm_(r.laborReal) || '-');
     if (!latest[key] || r.rowIndex >= latest[key].rowIndex) {
       latest[key] = r;
     }
@@ -666,7 +841,7 @@ function getMapa_(d, e) {
       fecha: fechaFiltro || null
     },
     list: list,
-    resumen: leerResumenSemana_(sem != null ? sem : semIso_()),
+    resumen: armarResumenLista_(list, laborReal),
     fromCache: false
   };
 
@@ -679,11 +854,13 @@ function getMapa_(d, e) {
 
 /** Valores únicos de la hoja para el panel de filtros */
 function filtrosOpciones_() {
+  try { obtenerHojaResumen_(); } catch (eRes) { /* ok */ }
   var hoja = obtenerHoja_();
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
   var semMap = {};
   var fechaMap = {};
+  var fechaBySemMap = {};
   var mdMap = {};
   var laborMap = {};
 
@@ -694,8 +871,13 @@ function filtrosOpciones_() {
 
     var fDisp = formatFechaSheet_(r.fechaIso || r.fecha);
     var fRaw = String(r.fecha || '').trim();
+    var fKey = fDisp || fRaw;
     if (fDisp) fechaMap[fDisp] = true;
     else if (fRaw) fechaMap[fRaw] = true;
+    if (s && fKey) {
+      if (!fechaBySemMap[s]) fechaBySemMap[s] = {};
+      fechaBySemMap[s][fKey] = true;
+    }
 
     var md = normMod_(r.modulo);
     if (md && md.indexOf('REF') < 0 && md !== 'M') mdMap[md] = true;
@@ -712,6 +894,16 @@ function filtrosOpciones_() {
     return String(normalizarFecha_(a)).localeCompare(String(normalizarFecha_(b)));
   });
 
+  var fechaBySem = {};
+  for (var sk in fechaBySemMap) {
+    if (!fechaBySemMap.hasOwnProperty(sk)) continue;
+    var arrF = Object.keys(fechaBySemMap[sk]);
+    arrF.sort(function (a, b) {
+      return String(normalizarFecha_(a)).localeCompare(String(normalizarFecha_(b)));
+    });
+    fechaBySem[sk] = arrF;
+  }
+
   var md = Object.keys(mdMap);
   md.sort(function (a, b) {
     return num_(String(a).replace(/\D/g, '')) - num_(String(b).replace(/\D/g, ''));
@@ -727,6 +919,7 @@ function filtrosOpciones_() {
     ok: true,
     sem: sem,
     fecha: fecha,
+    fechaBySem: fechaBySem,
     md: md,
     laborReal: laborReal,
     laborPpto: [],
@@ -856,7 +1049,8 @@ function leerFilas_(hoja) {
       variedad: String(row[COL.VARIEDAD] || '').trim(),
       area: numDec_(row[COL.AREA]),
       avance: numDec_(row[COL.AVANCE]),
-      totalJr: numDec_(row[COL.TOTAL_JR]),
+      ml: numInt_(row[COL.ML]),
+      totalJr: numInt_(row[COL.TOTAL_JR]),
       color: normalizarColorNombre_(row[COL.COLOR]),
       horaGuardado: textoHora_(row[COL.HORA_GUARDADO])
     });
@@ -877,7 +1071,8 @@ function filaToCliente_(r) {
     variedad: formatVariedad_(r.variedad),
     area: r.area,
     avance: r.avance,
-    totalJr: r.totalJr,
+    ml: numInt_(r.ml),
+    totalJr: numInt_(r.totalJr),
     color: r.color || '',
     horaGuardado: r.horaGuardado
   };
@@ -939,9 +1134,12 @@ function asegurarEncabezados_(hoja) {
   }
   migrarColumnaColor_(hoja, headers);
   headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, Math.max(hoja.getLastColumn(), COLUMNAS.length)).getValues()[0]);
+  migrarColumnaMl_(hoja, headers);
+  headers = limpiarHeaders_(hoja.getRange(FILA_ENC, 1, 1, Math.max(hoja.getLastColumn(), COLUMNAS.length)).getValues()[0]);
   if (headers[0] === 'SEM' &&
       headers.indexOf('HORA GUARDADO') >= 0 &&
       headers.indexOf('COLOR') >= 0 &&
+      (headers.indexOf('ML') >= 0 || headers.indexOf('METROS LINEALES') >= 0) &&
       !tieneHeaderLaborPpto_(headers)) return;
 
   var cur = hoja.getRange(FILA_ENC, 1, 1, COLUMNAS.length).getValues()[0];
@@ -982,6 +1180,27 @@ function migrarQuitarLaborPpto_(hoja, headers) {
   hoja.deleteColumn(idx + 1);
   bumpMapaCache_();
   return true;
+}
+
+function migrarColumnaMl_(hoja, headers) {
+  if (!headers || headers[0] !== 'SEM') return;
+  var i;
+  for (i = 0; i < headers.length; i++) {
+    var hn = headerNorm_(headers[i]);
+    if (hn === 'ML' || hn === 'METROS LINEALES') return;
+  }
+  var jrIdx = -1;
+  for (i = 0; i < headers.length; i++) {
+    var h = headerNorm_(headers[i]);
+    if (h === 'TOTAL (JR)' || h === 'TOTAL JR') {
+      jrIdx = i;
+      break;
+    }
+  }
+  if (jrIdx < 0) return;
+  hoja.insertColumnBefore(jrIdx + 1);
+  hoja.getRange(FILA_ENC, jrIdx + 1).setValue('ML');
+  bumpMapaCache_();
 }
 
 function migrarColumnaColor_(hoja, headers) {
@@ -1210,7 +1429,9 @@ function validarPayloadLabor_(d) {
   var sem = num_(d.sem) || semIso_();
   var areaHa = numDec_(d.area != null ? d.area : d.areaLote);
   var avanceHa = numDec_(d.avance);
-  var totalJr = numDec_(d.totalJr != null ? d.totalJr : d.total_jr);
+  var totalJr = numInt_(d.totalJr != null ? d.totalJr : d.total_jr);
+  var ml = numInt_(d.ml != null ? d.ml : d.metrosLineales);
+  var lotesTrab = numInt_(d.lotesTrabajados != null ? d.lotesTrabajados : d.cercosLotes);
   var variedad = formatVariedad_(d.variedad);
   var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || hoy_());
 
@@ -1224,14 +1445,14 @@ function validarPayloadLabor_(d) {
   if (avanceHa < 0 || avanceHa > 500) return { ok: false, code: 'BAD_AVANCE', message: 'Avance inválido' };
   if (areaHa > 0 && avanceHa > areaHa) avanceHa = areaHa;
   if (esCercos_(laborReal) && areaHa > 0) {
-    var capCercos = numDec_(areaHa * 0.4);
-    var defCercos = numDec_(areaHa * 0.2);
-    if (capCercos < 0.01) capCercos = areaHa;
-    if (defCercos < 0.01) defCercos = capCercos;
-    if (avanceHa <= 0) avanceHa = defCercos;
-    if (avanceHa > capCercos) avanceHa = capCercos;
+    if (avanceHa <= 0) avanceHa = areaHa;
+    if (avanceHa > areaHa) avanceHa = areaHa;
+    if (ml <= 0 && lotesTrab > 0) ml = lotesTrab * 80;
+  } else {
+    ml = 0;
   }
   if (totalJr < 0 || totalJr > 100000) totalJr = 0;
+  if (ml < 0 || ml > 1000000) ml = 0;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
     return { ok: false, code: 'BAD_FECHA', message: 'Fecha inválida' };
   }
@@ -1258,6 +1479,7 @@ function validarPayloadLabor_(d) {
     sem: sem,
     area: areaHa,
     avance: avanceHa,
+    ml: ml,
     totalJr: totalJr,
     variedad: variedad,
     fecha: fechaIso,
@@ -1404,6 +1626,12 @@ function numDec_(v) {
   return isNaN(n) ? 0 : Math.round(n * 100) / 100;
 }
 
+function numInt_(v) {
+  var n = parseInt(v, 10);
+  if (isNaN(n) || n < 0) return 0;
+  return Math.round(n);
+}
+
 function limpiarHeaders_(arr) {
   var out = [];
   for (var i = 0; i < arr.length; i++) {
@@ -1423,70 +1651,4 @@ function semIso_(date) {
   d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
   var week1 = new Date(d.getFullYear(), 0, 4);
   return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-}
-
-// ─── Pruebas ────────────────────────────────────────────────────────────────
-
-function testGuardar() {
-  Logger.log(JSON.stringify(guardar_({
-    localId: 'test_' + Date.now(),
-    sem: semIso_(),
-    fecha: hoy_(),
-    laborReal: 'ARENADO DE MACETAS',
-    modulo: 'M4',
-    turno: 'T10',
-    lote: 179,
-    variedad: 'SEKOYA POP',
-    area: 0.49,
-    avance: 0.49,
-    totalJr: 10
-  })));
-}
-
-/** Tres labores reales en el mismo lote: no deben pisarse entre sí. */
-function testTresLabores() {
-  Logger.log(JSON.stringify(guardarGrupo_({
-    fecha: hoy_(),
-    sem: semIso_(),
-    variedad: 'SEKOYA POP',
-    color: 'JUEVES',
-    totalJr: 1,
-    items: [
-      {
-        localId: 'test_deshierbo_' + hoy_(),
-        laborReal: 'DESHIERBO',
-        modulo: 'M4',
-        turno: 'T10',
-        lote: 179,
-        area: 0.49,
-        avance: 0.49
-      },
-      {
-        localId: 'test_arenado_' + hoy_(),
-        laborReal: 'ARENADO DE MACETAS',
-        modulo: 'M4',
-        turno: 'T10',
-        lote: 179,
-        area: 0.49,
-        avance: 0.49
-      },
-      {
-        localId: 'test_cercos_' + hoy_(),
-        laborReal: 'CERCOS VIVOS',
-        modulo: 'M4',
-        turno: 'T10',
-        lote: 179,
-        area: 0.49,
-        avance: 0.1
-      }
-    ]
-  })));
-}
-
-function testGetMapa() {
-  Logger.log(JSON.stringify(getMapa_({ sem: semIso_() }, {})));
-}
-
-function testDashboard() {
-  Logger.log(JSON.stringify(dashboard_(semIso_())));
 }

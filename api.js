@@ -36,6 +36,48 @@
 
   function saveQueue(q) {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(0, 200)));
+    armBackgroundSync();
+  }
+
+  function askNotifyPermission() {
+    try {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "default") return;
+      Notification.requestPermission().catch(() => {});
+    } catch (e) { /* ok */ }
+  }
+
+  function armBackgroundSync() {
+    try {
+      if (!("serviceWorker" in navigator)) return;
+      navigator.serviceWorker.ready.then(reg => {
+        if (reg.sync && typeof reg.sync.register === "function") {
+          return reg.sync.register("qb-flush-queue");
+        }
+      }).catch(() => {});
+    } catch (e) { /* ok */ }
+  }
+
+  function notifyAndroidUploaded(n) {
+    n = Number(n) || 0;
+    if (!(n > 0) || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready.then(reg => {
+      const msg = { type: "NOTIFY_UPLOADED", count: n };
+      if (reg.active) {
+        reg.active.postMessage(msg);
+        return;
+      }
+      if (typeof reg.showNotification === "function" && Notification.permission === "granted") {
+        const title = n === 1 ? "Pendiente subido" : n + " pendientes subidos";
+        return reg.showNotification(title, {
+          body: n === 1 ? "El reporte ya está en la hoja." : n + " reportes ya están en la hoja.",
+          icon: "./assets/icon-192.png",
+          badge: "./assets/icon-192.png",
+          tag: "qb-uploaded",
+          renotify: true
+        });
+      }
+    }).catch(() => {});
   }
 
   function getLocalRecords() {
@@ -169,12 +211,8 @@
     const laborReal = safeText(record.laborReal, 80);
     const isCercos = laborReal === "CERCOS VIVOS" || laborReal === "CERCO VIVOS";
     if (isCercos && area > 0) {
-      const maxAv = roundHa(area * 0.4);
-      const defAv = roundHa(area * 0.2);
-      const cap = maxAv >= 0.01 ? maxAv : area;
-      const fallback = defAv >= 0.01 ? defAv : cap;
-      if (avance <= 0) avance = fallback;
-      if (avance > cap) avance = cap;
+      if (avance <= 0) avance = area;
+      if (avance > area) avance = area;
     }
     const laborPpto = safeText(record.laborPpto, 80);
     let turno = safeText(record.turno || record.tunel, 20);
@@ -213,9 +251,19 @@
       variedad,
       area,
       avance,
-      totalJr: Math.min(100000, Math.max(0, Number(record.totalJr) || 0)),
+      totalJr: Math.min(100000, Math.max(0, Math.round(Number(record.totalJr) || 0))),
+      ml: isCercos
+        ? Math.min(1000000, Math.max(0, Math.round(Number(record.ml != null ? record.ml : record.metrosLineales) || 0)))
+        : 0,
+      lotesTrabajados: isCercos
+        ? Math.min(999, Math.max(0, Math.round(Number(record.lotesTrabajados != null ? record.lotesTrabajados : record.cercosLotes) || 0)))
+        : 0,
       color: normalizeColor(record.color)
     };
+    if (isCercos && base.ml <= 0 && base.lotesTrabajados > 0) {
+      const per = Number((window.QB_CONFIG && QB_CONFIG.CERCOS_ML_PER_LOT) || 80) || 80;
+      base.ml = base.lotesTrabajados * per;
+    }
     const idKey = lotKey(base);
     const fp = fingerprint(base);
     const rawId = record.localId ? String(record.localId) : stableLocalId(base);
@@ -247,10 +295,12 @@
     if (idx >= 0) {
       q[idx] = { ts: ts || Date.now(), payload };
       saveQueue(q);
+      askNotifyPermission();
       return q.length;
     }
     q.push({ ts: ts || Date.now(), payload });
     saveQueue(q);
+    askNotifyPermission();
     return q.length;
   }
 
@@ -320,6 +370,8 @@
   async function postJson(body) {
     const url = apiUrl();
     if (!url) return { ok: false, local: true, message: "Sin URL de API" };
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 45000) : null;
     let res;
     try {
       res = await fetch(url, {
@@ -327,10 +379,13 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(body),
         redirect: "follow",
-        cache: "no-store"
+        cache: "no-store",
+        signal: ctrl ? ctrl.signal : undefined
       });
     } catch (err) {
       return { ok: false, message: String(err.message || err) || "Sin conexión al servidor" };
+    } finally {
+      if (t) clearTimeout(t);
     }
     const text = await res.text();
     let data;
@@ -400,6 +455,8 @@
       sem: shared && shared.sem,
       variedad: shared && shared.variedad,
       totalJr: shared && shared.totalJr,
+      ml: shared && shared.ml,
+      lotesTrabajados: shared && (shared.lotesTrabajados != null ? shared.lotesTrabajados : shared.cercosLotes),
       color: shared && (sharedColor || normalizeColor(shared.color) || shared.color),
       items: cleaned
     }));
@@ -410,16 +467,16 @@
     if (!url) return null;
     const params = new URLSearchParams({ action: "get" });
     if (filters.sem != null && filters.sem !== "") params.set("sem", String(filters.sem).slice(0, 4));
-    if (filters.laborReal) params.set("laborReal", safeText(filters.laborReal, 80));
+    params.set("laborReal", safeText(filters.laborReal || "DESHIERBO", 80));
     if (filters.laborPpto) params.set("laborPpto", safeText(filters.laborPpto, 80));
     if (filters.modulo) params.set("modulo", safeText(filters.modulo, 12));
     if (filters.variedad) params.set("variedad", safeText(filters.variedad, 40));
-    if (filters.fecha) params.set("fecha", String(filters.fecha).slice(0, 10));
+    if (filters.fecha) params.set("fecha", String(filters.fecha).trim().slice(0, 10));
     if (filters.nocache || filters.force) params.set("nocache", "1");
     const token = apiToken();
     if (token) params.set("token", token);
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const t = ctrl ? setTimeout(() => ctrl.abort(), 25000) : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 40000) : null;
     try {
       const res = await fetch(url + "?" + params.toString(), {
         method: "GET",
@@ -434,11 +491,12 @@
     }
   }
 
-  async function getResumen(sem) {
+  async function getResumen(sem, laborReal) {
     const url = apiUrl();
     if (!url) return null;
     const params = new URLSearchParams({ action: "resumen" });
     if (sem != null && sem !== "") params.set("sem", String(sem).slice(0, 4));
+    if (laborReal) params.set("laborReal", safeText(laborReal, 80));
     const token = apiToken();
     if (token) params.set("token", token);
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -496,6 +554,7 @@
   }
 
   async function saveLabor(record) {
+    askNotifyPermission();
     const checked = validateRecord(record);
     if (!checked.ok) {
       return { ok: false, queued: false, synced: false, message: checked.errors.join(" · "), errors: checked.errors };
@@ -564,6 +623,7 @@
 
   /** Guardado grupal seguro (1 request + validación) */
   async function saveLaborsBatch(records, shared) {
+    askNotifyPermission();
     if (!Array.isArray(records) || !records.length) {
       return { ok: false, message: "Sin lotes" };
     }
@@ -661,15 +721,52 @@
     try {
       const q = getQueue();
       if (!q.length) return 0;
+      const unique = [];
+      const seen = new Set();
+      q.forEach(item => {
+        const p = item.payload;
+        if (!p) return;
+        const id = p._fp || p.localId || String(item.ts);
+        if (seen.has(id)) return;
+        seen.add(id);
+        unique.push(item);
+      });
+      if (!unique.length) {
+        saveQueue([]);
+        return 0;
+      }
+
+      const notify = n => {
+        if (n > 0) notifyAndroidUploaded(n);
+        if (n > 0 && window.QB_onQueueFlushed) {
+          try { window.QB_onQueueFlushed(n); } catch (e) { /* ok */ }
+        }
+        if (window.QB_onStatusChange) window.QB_onStatusChange();
+      };
+
+      try {
+        const payloads = unique.map(x => x.payload);
+        const res = await postLaborBatch(payloads, {});
+        if (isRateLimitedResponse(res)) {
+          if (window.QB_onRateLimit) window.QB_onRateLimit();
+          return 0;
+        }
+        if (serverConfirmed(res)) {
+          payloads.forEach(p => {
+            dequeueMatching(p);
+            markHistorySynced(p.posKey, Date.now(), p.localId);
+          });
+          saveQueue([]);
+          notify(payloads.length);
+          return payloads.length;
+        }
+      } catch (e) { /* 3G: caer a uno por uno */ }
+
       const pending = [];
       let sent = 0;
-      const seen = new Set();
-
       let hitRateLimit = false;
-      for (const item of q) {
+      for (const item of unique) {
         const id = item.payload?._fp || item.payload?.localId || String(item.ts);
-        if (seen.has(id)) continue;
-        seen.add(id);
         if (hitRateLimit) {
           pending.push(item);
           continue;
@@ -695,7 +792,7 @@
         }
       }
       saveQueue(pending);
-      if (window.QB_onStatusChange) window.QB_onStatusChange();
+      notify(sent);
       return sent;
     } finally {
       flushing = false;
@@ -709,13 +806,22 @@
   }
 
   function getPendingPosKeys() {
-    const keys = new Set();
+    return new Set(Object.keys(getPendingLaborByPos()));
+  }
+
+  function getPendingLaborByPos() {
+    const map = {};
     getQueue().forEach(item => {
       const p = item.payload;
       if (!p) return;
-      if (p.posKey) keys.add(String(p.posKey));
+      const labor = String(p.laborReal || "").toUpperCase().trim();
+      if (p.posKey) map[String(p.posKey)] = labor;
+      (p.items || []).forEach(it => {
+        if (!it || !it.posKey) return;
+        map[String(it.posKey)] = String(it.laborReal || p.laborReal || "").toUpperCase().trim();
+      });
     });
-    return keys;
+    return map;
   }
 
   function queueCount() {
@@ -739,6 +845,7 @@
     flushQueue,
     queueCount,
     getPendingPosKeys,
+    getPendingLaborByPos,
     getHistory,
     getLocalRecords,
     saveLocal,
@@ -752,9 +859,12 @@
   };
 
   window.addEventListener("online", () => {
-    flushQueue().then(n => {
-      if (n > 0 && window.QB_onQueueFlushed) window.QB_onQueueFlushed(n);
-      if (window.QB_onStatusChange) window.QB_onStatusChange();
-    });
+    flushQueue().catch(() => 0);
   });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", e => {
+      if (e.data && e.data.type === "FLUSH_QUEUE") flushQueue().catch(() => 0);
+    });
+  }
 })();

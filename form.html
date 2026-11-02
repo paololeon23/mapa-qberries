@@ -508,7 +508,9 @@
       background: #fff;
     }
     .mpick-trigger:active:not(:disabled) { opacity: 0.88; }
-    .mpick-trigger:focus-visible {
+    .mpick-trigger:focus-visible,
+    .mpick-trigger[aria-expanded="true"],
+    .mpick-trigger.is-picking {
       outline: none;
       background: #fff;
       border-color: #86efac;
@@ -652,16 +654,15 @@
     }
     .picker-sheet {
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       z-index: 100;
-      transform: translateY(105%);
-      transition: transform .32s cubic-bezier(.2,.8,.2,1);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: transparent;
       pointer-events: none;
     }
     .picker-sheet.open {
-      transform: translateY(0);
       pointer-events: auto;
     }
     .picker-multi-bar {
@@ -702,6 +703,7 @@
       cursor: default;
     }
     .picker-sheet-inner {
+      width: 100%;
       background: #fff;
       border-radius: 22px 22px 0 0;
       padding: 1rem 1rem calc(1rem + var(--safe-b));
@@ -711,6 +713,12 @@
       flex-direction: column;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      transform: translateY(110%);
+      transition: transform .32s cubic-bezier(.2,.8,.2,1);
+      pointer-events: auto;
+    }
+    .picker-sheet.open .picker-sheet-inner {
+      transform: translateY(0);
     }
     .picker-head {
       display: flex;
@@ -886,6 +894,13 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.7rem;
+    }
+    .cercos-jr-row {
+      grid-template-columns: 1fr;
+    }
+    body.is-cercos .cercos-jr-row {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
     }
     .area-chip {
       height: var(--input-h);
@@ -1119,17 +1134,17 @@
       color: var(--muted);
     }
     .mod-lots {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.32rem;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.28rem;
     }
     .mini-cell {
       position: relative;
       overflow: hidden;
-      flex: 1 1 calc(20% - 0.22rem);
-      min-width: 52px;
-      max-width: 72px;
-      min-height: 52px;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      min-height: 46px;
       border-radius: 8px;
       border: 1.5px solid #d1d5db;
       background: #fff;
@@ -1137,176 +1152,194 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0.16rem 0.08rem 0.18rem;
+      padding: 0.14rem 0.06rem 0.16rem;
       box-sizing: border-box;
     }
     .mini-cell.is-on {
       box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.18);
     }
-    .mod-lots[data-n="1"] .mini-cell,
-    .mod-lots[data-n="2"] .mini-cell {
-      flex: 0 0 58px;
-      min-width: 52px;
-      max-width: 64px;
-    }
     #sumModal .mini-cell-wrap {
-      flex: 0 1 calc(25% - 0.2rem);
-      min-width: 70px;
-      max-width: 88px;
+      min-width: 0;
+      max-width: none;
+      width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 0.24rem;
-    }
-    #sumModal .mod-lots[data-n="1"] .mini-cell-wrap,
-    #sumModal .mod-lots[data-n="2"] .mini-cell-wrap {
-      flex: 0 0 58px;
-      min-width: 52px;
-      max-width: 64px;
+      gap: 0.2rem;
     }
     #sumModal .mini-cell-wrap .mini-cell {
       width: 100%;
-      flex: none;
-      min-width: 0;
-      max-width: none;
-      min-height: 48px;
+      min-height: 44px;
     }
     #sumModal .mini-actions {
       display: flex;
       flex-direction: row;
-      align-items: stretch;
-      gap: 0.14rem;
+      align-items: center;
+      gap: 0.22rem;
     }
     #sumModal .mini-del,
     #sumModal .mini-edit {
       flex: 1 1 0;
       width: auto;
       min-width: 0;
-      height: 28px;
+      height: 26px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-    }
-    #sumModal .mini-del {
-      border: 1px solid #fecaca;
+      border: 0;
       border-radius: 8px;
-      background: #fff7f7;
-      color: #b42318;
+      background: #fff;
+      transition: background .12s ease, box-shadow .12s ease, transform .12s ease;
     }
     #sumModal .mini-edit {
-      border: 1px solid #c5ddd0;
-      border-radius: 8px;
-      background: #f4fbf6;
-      color: #0f3327;
+      color: #147a4a;
+      box-shadow: inset 0 0 0 1px #d7eadf;
+    }
+    #sumModal .mini-del {
+      color: #c2414a;
+      box-shadow: inset 0 0 0 1px #f0d5d7;
+    }
+    #sumModal .mini-edit:active {
+      background: #f3faf6;
+      transform: scale(0.96);
+    }
+    #sumModal .mini-del:active {
+      background: #fff6f6;
+      transform: scale(0.96);
     }
     #sumModal .mini-del svg,
     #sumModal .mini-edit svg {
-      width: 15px;
-      height: 15px;
+      width: 11px;
+      height: 11px;
       flex-shrink: 0;
       pointer-events: none;
+      stroke-width: 2.2;
     }
     #sumModal .mod-edit-box {
       flex-shrink: 0;
-      margin-top: 0.75rem;
-      padding: 0.8rem 0.85rem 0.85rem;
-      border: 1px solid #d7e6dc;
-      border-radius: 14px;
-      background: #f7faf8;
+      margin-top: 0.55rem;
+      padding: 0.55rem 0.6rem 0.6rem;
+      border: 1px solid #e4ece7;
+      border-radius: 12px;
+      background: #fff;
     }
     #sumModal .mod-edit-box[hidden] {
       display: none;
     }
     #sumModal .mod-edit-head {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 0.6rem;
-      margin-bottom: 0.7rem;
+      gap: 0.45rem;
+      margin-bottom: 0.45rem;
     }
     #sumModal .mod-edit-kicker {
       margin: 0;
-      font-size: 0.58rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+      font-size: 0.52rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #64748b;
+      color: #94a3b8;
     }
     #sumModal .mod-edit-head strong {
       display: block;
-      margin-top: 0.14rem;
-      font-size: 0.98rem;
+      margin-top: 0.06rem;
+      font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       color: var(--forest);
     }
     #sumModal .mod-edit-mod {
       flex-shrink: 0;
-      padding: 0.22rem 0.55rem;
-      border-radius: 999px;
-      background: #e8f2eb;
-      color: var(--forest);
-      font-size: 0.68rem;
+      padding: 0.12rem 0.42rem;
+      border-radius: 6px;
+      background: #f4f7f5;
+      color: #3f7a52;
+      font-size: 0.58rem;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
     }
     #sumModal .mod-edit-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 44px;
-      gap: 0.55rem;
+      grid-template-columns: 1fr 1fr 32px;
+      gap: 0.38rem;
       align-items: end;
     }
     #sumModal .mod-edit-field {
       display: flex;
       flex-direction: column;
-      gap: 0.22rem;
+      gap: 0.14rem;
       min-width: 0;
     }
     #sumModal .mod-edit-field span {
-      font-size: 0.58rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
+      font-size: 0.52rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #64748b;
+      color: #94a3b8;
     }
     #sumModal .mod-edit-field strong,
     #sumModal .mod-edit-field input {
-      height: 42px;
-      padding: 0 0.7rem;
-      border: 1px solid #d7e6dc;
-      border-radius: 11px;
-      background: #fff;
+      height: 32px;
+      padding: 0 0.5rem;
+      border: 1px solid #e4ece7;
+      border-radius: 8px;
+      background: #fbfcfc;
       font: inherit;
-      font-size: 0.92rem;
+      font-size: 0.78rem;
       font-weight: 800;
       color: #0f3327;
       display: flex;
       align-items: center;
       box-sizing: border-box;
     }
+    #sumModal .mod-edit-field input {
+      background: #fff;
+    }
+    #sumModal .mod-edit-field input:focus {
+      outline: none;
+      border-color: #86efac;
+      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.1);
+    }
     #sumModal .mod-edit-field input.is-over {
       border-color: #f87171;
       color: #b42318;
     }
     #sumModal .mod-edit-save {
-      width: 44px;
-      height: 42px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       border: 0;
-      border-radius: 11px;
+      border-radius: 8px;
       background: var(--forest);
       color: #fff;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(15, 51, 39, 0.18);
+    }
+    #sumModal .mod-edit-save:active {
+      opacity: 0.88;
     }
     #sumModal .mod-edit-save svg {
-      width: 18px;
-      height: 18px;
+      width: 13px;
+      height: 13px;
       pointer-events: none;
+    }
+    #sumModal .mod-edit-ok {
+      margin: 0.42rem 0 0;
+      padding: 0.32rem 0.45rem;
+      border-radius: 8px;
+      background: #eef8f1;
+      color: #147a4a;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1.25;
+    }
+    #sumModal .mod-edit-ok[hidden] {
+      display: none;
     }
     #sumModal .hist-sheet {
       width: min(440px, calc(100% - 1.1rem));
@@ -1322,7 +1355,7 @@
       left: 0; right: 0; bottom: 0;
       height: 0%;
       opacity: 0.72;
-      transition: height 0.12s ease;
+      transition: height 0.12s ease, width 0.12s ease;
     }
     .mini-cell .t,
     .mini-cell .l,
@@ -1368,9 +1401,43 @@
       z-index: 3;
       pointer-events: none;
     }
+    .cercos-only { display: none; }
+    body.is-cercos .cercos-only { display: block; }
+    body.is-cercos .cercos-kpis { display: grid; }
+    .cercos-kpis {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin: 0.15rem 0 0.2rem;
+    }
+    .cercos-kpi {
+      background: #f3faf6;
+      border-radius: 14px;
+      padding: 0.7rem 0.85rem;
+    }
+    .cercos-kpi span {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .cercos-kpi strong {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #166534;
+      font-variant-numeric: tabular-nums;
+    }
     body.is-cercos .mini-fill {
       top: 0;
       bottom: auto;
+      left: 0;
+      right: auto;
+      height: 20%;
+      width: 0%;
+      border-radius: 0 2px 2px 0;
       opacity: 0.88;
     }
     .board-empty {
@@ -2024,16 +2091,8 @@
       .toast { font-size: 0.95rem; padding: 0.9rem 1.25rem; bottom: calc(6.5rem + var(--safe-b)); }
 
       /* Picker centrado y más grande en tablet */
-      .picker-sheet {
-        left: 50%;
-        right: auto;
-        width: min(640px, calc(100% - 2.5rem));
-        transform: translateX(-50%) translateY(105%);
-      }
-      .picker-sheet.open {
-        transform: translateX(-50%) translateY(0);
-      }
       .picker-sheet-inner {
+        width: min(640px, calc(100% - 2.5rem));
         border-radius: 24px 24px 0 0;
         padding: 1.25rem 1.35rem calc(1.25rem + var(--safe-b));
         max-height: min(74vh, 760px);
@@ -2091,8 +2150,8 @@
         height: 128px;
       }
       .preview-cell span { font-size: 0.9rem; }
-      .picker-sheet { width: min(720px, calc(100% - 3rem)); }
       .picker-sheet-inner {
+        width: min(720px, calc(100% - 3rem));
         padding: 1.45rem 1.55rem calc(1.45rem + var(--safe-b));
         max-height: min(70vh, 820px);
       }
@@ -2228,17 +2287,34 @@
             <input type="hidden" id="fLote" value="" />
             <button type="button" class="mpick-trigger" id="fLoteTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
               <span class="mpick-text is-empty" id="fLoteLabel">Elige turno</span>
-            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-        </div>
-        </div>
+              <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          </div>
 
         <input type="hidden" id="fArea" value="" />
         <input type="hidden" id="fAvance" value="" />
         <input type="hidden" id="fVariedad" value="SEKOYA POP" />
-          <div class="field">
-          <label for="fTotalJr">Jornales (JR)</label>
-          <input id="fTotalJr" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" disabled />
+          <div class="row2 cercos-jr-row">
+            <div class="field cercos-only" id="cercosBox">
+              <label for="fCercosLotes">Lotes trabajados</label>
+              <input id="fCercosLotes" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 2" disabled />
+              <p class="field-hint">Cada lote = 80 ml</p>
+          </div>
+        <div class="field">
+              <label for="fTotalJr">Jornales (JR)</label>
+              <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" placeholder="0" disabled />
+        </div>
+        </div>
+          <div class="cercos-only cercos-kpis" aria-live="polite">
+            <div class="cercos-kpi">
+              <span>Metros lineales</span>
+              <strong id="fCercosMl">0 ml</strong>
+          </div>
+            <div class="cercos-kpi">
+              <span>ml / jornales</span>
+              <strong id="fCercosRend">—</strong>
+        </div>
           </div>
           </div>
         <div class="gate-overlay" aria-hidden="true">
@@ -2252,7 +2328,7 @@
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Progreso</h2>
-            <p class="card-head-sub">Ratio JR / área total del día</p>
+            <p class="card-head-sub" id="ratioCardSub">Ratio JR / área total del día</p>
           </div>
         </div>
 
@@ -2351,6 +2427,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           </button>
         </div>
+        <p class="mod-edit-ok" id="sumEditOk" hidden aria-live="polite">Se editó el lote correctamente</p>
       </div>
     </div>
   </div>
@@ -2565,6 +2642,10 @@
       fAvanceHint: document.getElementById("fAvanceHint"),
       finishLotBtn: document.getElementById("finishLotBtn"),
       fTotalJr: document.getElementById("fTotalJr"),
+      fCercosLotes: document.getElementById("fCercosLotes"),
+      fCercosMl: document.getElementById("fCercosMl"),
+      fCercosRend: document.getElementById("fCercosRend"),
+      ratioCardSub: document.getElementById("ratioCardSub"),
       fRatio: document.getElementById("fRatio"),
       ratioFormula: document.getElementById("ratioFormula"),
       fSem: document.getElementById("fSem"),
@@ -2586,6 +2667,7 @@
       sumEditArea: document.getElementById("sumEditArea"),
       sumEditAvance: document.getElementById("sumEditAvance"),
       sumEditSave: document.getElementById("sumEditSave"),
+      sumEditOk: document.getElementById("sumEditOk"),
       sumKpiLots: document.getElementById("sumKpiLots"),
       sumKpiArea: document.getElementById("sumKpiArea"),
       sumKpiAv: document.getElementById("sumKpiAv"),
@@ -2610,6 +2692,7 @@
     let toastTimer = null;
     let draftTimer = null;
     let activePicker = null;
+    let localLots = {};
 
     function showToast(msg, type) {
       els.toast.textContent = msg;
@@ -2634,6 +2717,42 @@
         .replace(/\s+/g, " ")
         .trim();
       return s === "CERCOS VIVOS" || s === "CERCO VIVOS";
+    }
+
+    function cercosMlPerLot() {
+      const n = Number(window.QB_CONFIG && QB_CONFIG.CERCOS_ML_PER_LOT);
+      return n > 0 ? n : 80;
+    }
+
+    function cercosLotesN() {
+      const n = parseInt(String((els.fCercosLotes && els.fCercosLotes.value) || "").replace(/\D/g, ""), 10);
+      return isFinite(n) && n > 0 ? n : 0;
+    }
+
+    function capturedLotCount() {
+      const keys = Object.keys(localLots || {});
+      const cur = els.fLote && els.fLote.value;
+      if (cur && keys.indexOf(cur) < 0) keys.push(cur);
+      return keys.length;
+    }
+
+    function syncCercosLotesFromSelection() {
+      if (!els.fCercosLotes) return;
+      if (!isCercosLabor(els.fLaborReal && els.fLaborReal.value)) return;
+      const n = capturedLotCount();
+      const next = n > 0 ? String(n) : "";
+      if (els.fCercosLotes.value !== next) els.fCercosLotes.value = next;
+      updateCercosCalc();
+    }
+
+    function updateCercosCalc() {
+      const n = cercosLotesN();
+      const ml = n * cercosMlPerLot();
+      const jr = parseJr(els.fTotalJr && els.fTotalJr.value);
+      const rend = jr > 0 ? roundHa(ml / jr) : 0;
+      if (els.fCercosMl) els.fCercosMl.textContent = ml + " ml";
+      if (els.fCercosRend) els.fCercosRend.textContent = jr > 0 ? formatHa(rend) : "—";
+      return { n, ml, jr, rend };
     }
 
     const CERCOS_FOOT_SET = new Set(
@@ -2666,12 +2785,15 @@
     }
 
     function fillHeightPct(av, area, lot) {
+      return area > 0 ? Math.min(100, Math.max(0, (roundHa(av) / area) * 100)) : 0;
+    }
+
+    function miniFillCss(av, area, color) {
+      const fill = color || currentPaintColor() || "#64B5F6";
       if (isCercosLabor(els.fLaborReal && els.fLaborReal.value)) {
-        const topCap = roundHa(area * 0.2);
-        const topAv = Math.min(roundHa(av), topCap);
-        return topCap > 0 ? (topAv / topCap) * 20 : 0;
+        return "background:" + fill + ";height:20%;width:" + fillHeightPct(av, area) + "%;top:0;bottom:auto;left:0;right:auto";
       }
-      return area > 0 ? Math.min(100, Math.max(0, (av / area) * 100)) : 0;
+      return "background:" + fill + ";height:" + fillHeightPct(av, area) + "%";
     }
 
     const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
@@ -2905,8 +3027,10 @@
       const trigger = activePicker ? activePicker.trigger : null;
       if (activePicker) {
         activePicker.trigger.setAttribute("aria-expanded", "false");
+        activePicker.trigger.classList.remove("is-picking");
         activePicker = null;
       }
+      els.fLaborRealTrigger?.classList.remove("is-picking");
       els.pickerSheet.classList.remove("is-multi");
       // Quitar foco antes de ocultar (evita warning aria-hidden + focus)
       const focused = document.activeElement;
@@ -2928,7 +3052,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.36";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.54";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -3114,6 +3238,7 @@
     });
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape") return;
+      if (els.pickerSheet && els.pickerSheet.classList.contains("open")) closePicker();
       setFabOpen(false);
       closeUpdModal();
       closeHistModal();
@@ -3142,7 +3267,10 @@
       }
     });
     window.addEventListener("pagehide", flushDraftNow);
-    window.addEventListener("online", updateStatus);
+    window.addEventListener("online", () => {
+      updateStatus();
+      tryFlushQueue();
+    });
     window.addEventListener("offline", updateStatus);
     fabMq.addEventListener("change", syncFabVisibility);
 
@@ -3219,7 +3347,7 @@
             const lot = byPos.get(k);
             if (!lot || !localLots[k]) return;
             localLots[k].laborReal = els.fLaborReal.value;
-            localLots[k].avance = laborUsableHa(lot.ha, els.fLaborReal.value, lot);
+            if (!localLots[k].edited) localLots[k].avance = roundHa(lot.ha);
           });
           updatePreview();
           persistCurrentLot();
@@ -3235,10 +3363,14 @@
 
     function syncLaborGate() {
       const ok = hasLabor();
-      document.body.classList.toggle("is-cercos", isCercosLabor(els.fLaborReal && els.fLaborReal.value));
+      const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
+      document.body.classList.toggle("is-cercos", cercos);
       document.getElementById("dayCard")?.classList.toggle("is-gated", !ok);
       document.getElementById("progressCard")?.classList.toggle("is-gated", !ok);
       if (els.fTotalJr) els.fTotalJr.disabled = !ok;
+      if (els.fCercosLotes) els.fCercosLotes.disabled = !ok || !cercos;
+      if (cercos) syncCercosLotesFromSelection();
+      updateRatioUI();
       setPickerEnabled(pickers.modulo, ok);
       if (!ok) {
         setPickerEnabled(pickers.turno, false);
@@ -3259,18 +3391,25 @@
       btn.addEventListener("click", e => {
         e.preventDefault();
         e.stopPropagation();
+        const trig = els.fLaborRealTrigger;
+        if (trig) {
+          trig.classList.add("is-picking");
+          try { trig.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (err) { /* ok */ }
+        }
         openPicker(pickers.laborReal);
       });
     });
 
     els.pickerClose.addEventListener("click", closePicker);
     els.pickerBackdrop.addEventListener("click", closePicker);
+    els.pickerSheet.addEventListener("click", e => {
+      if (e.target === els.pickerSheet) closePicker();
+    });
     els.pickerSearch.addEventListener("input", () => renderPickerList(els.pickerSearch.value));
     document.getElementById("pickerMultiDone")?.addEventListener("click", applyLoteMulti);
 
     let suppressPersist = false;
     let syncingCalc = false;
-    let localLots = {};
 
     function rollDayIfNeeded() {
       const today = hoyIso();
@@ -3290,6 +3429,18 @@
       return true;
     }
 
+    function liftCercosLeftoverDefault(item, lot) {
+      if (!item || !lot || item.edited) return;
+      const labor = item.laborReal || (els.fLaborReal && els.fLaborReal.value);
+      if (!isCercosLabor(labor)) return;
+      const area = roundHa(lot.ha);
+      const leftover = cercosCapHa(area, lot);
+      const av = roundHa(item.avance);
+      if (area > 0 && leftover > 0 && av > 0 && av <= leftover && av < area) {
+        item.avance = area;
+      }
+    }
+
     function loadLocalLotsMap() {
       if (rollDayIfNeeded()) return;
       try {
@@ -3297,6 +3448,9 @@
       } catch {
         localLots = {};
       }
+      Object.keys(localLots).forEach(k => {
+        liftCercosLeftoverDefault(localLots[k], byPos.get(k));
+      });
     }
 
     function saveLocalLotsMap() {
@@ -3327,6 +3481,7 @@
         laborReal: els.fLaborReal.value,
         avance: els.fAvance.value,
         totalJr: els.fTotalJr ? els.fTotalJr.value : "",
+        cercosLotes: els.fCercosLotes ? els.fCercosLotes.value : "",
         ratio: els.fRatio ? els.fRatio.value : "",
         color: els.fColor ? els.fColor.value : ""
       };
@@ -3353,7 +3508,8 @@
       setPickValue(pickers.variedad, s.variedad || "SEKOYA POP", true);
       setPickValue(pickers.laborReal, s.laborReal || "", true);
       els.fAvance.value = s.avance ? formatHa(s.avance) : "";
-      if (els.fTotalJr) els.fTotalJr.value = s.totalJr || "";
+      if (els.fTotalJr) els.fTotalJr.value = formatJr(s.totalJr);
+      if (els.fCercosLotes) els.fCercosLotes.value = s.cercosLotes || "";
       if (els.fRatio) els.fRatio.value = s.ratio || "";
       setPaintColor(currentPaintColor());
       const lot = s.lote ? byPos.get(s.lote) : null;
@@ -3434,6 +3590,88 @@
       return roundHa(v).toFixed(2);
     }
 
+    function parseJr(v) {
+      const n = parseInt(String(v ?? "").replace(/\D/g, ""), 10);
+      return isFinite(n) && n > 0 ? n : 0;
+    }
+
+    function formatJr(v) {
+      const n = Math.round(Number(v) || 0);
+      return n > 0 ? String(n) : "";
+    }
+
+    function splitIntByWeight(total, weights) {
+      const n = Math.max(0, Math.round(Number(total) || 0));
+      const w = (weights || []).map(x => Math.max(0, Number(x) || 0));
+      const sum = w.reduce((a, b) => a + b, 0);
+      if (!n || !w.length) return w.map(() => 0);
+      if (!sum) {
+        const out = w.map(() => 0);
+        out[0] = n;
+        return out;
+      }
+      const raw = w.map(x => (n * x) / sum);
+      const out = raw.map(x => Math.floor(x));
+      let rem = n - out.reduce((a, b) => a + b, 0);
+      const order = raw.map((x, i) => ({ i, frac: x - Math.floor(x) })).sort((a, b) => b.frac - a.frac);
+      for (let k = 0; k < rem; k++) out[order[k % order.length].i] += 1;
+      return out;
+    }
+
+    function bindIntegerInput(el) {
+      if (!el || el.dataset.numBound === "int") return;
+      el.dataset.numBound = "int";
+      el.setAttribute("inputmode", "numeric");
+      el.setAttribute("autocomplete", "off");
+      const scrub = () => {
+        const next = String(el.value || "").replace(/\D/g, "");
+        if (el.value !== next) el.value = next;
+      };
+      el.addEventListener("beforeinput", e => {
+        if (e.data && /\D/.test(e.data)) e.preventDefault();
+      });
+      el.addEventListener("keypress", e => {
+        if (e.ctrlKey || e.metaKey || e.key.length > 1) return;
+        if (!/[0-9]/.test(e.key)) e.preventDefault();
+      });
+      el.addEventListener("paste", e => {
+        e.preventDefault();
+        const t = ((e.clipboardData || window.clipboardData).getData("text") || "").replace(/\D/g, "");
+        document.execCommand("insertText", false, t);
+      });
+      el.addEventListener("input", scrub);
+    }
+
+    function bindDecimalInput(el) {
+      if (!el || el.dataset.numBound === "dec") return;
+      el.dataset.numBound = "dec";
+      el.setAttribute("inputmode", "decimal");
+      el.setAttribute("autocomplete", "off");
+      const scrub = () => {
+        let v = String(el.value || "").replace(/,/g, ".");
+        v = v.replace(/[^0-9.]/g, "");
+        const i = v.indexOf(".");
+        if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, "");
+        const parts = v.split(".");
+        if (parts[1] && parts[1].length > 2) v = parts[0] + "." + parts[1].slice(0, 2);
+        if (el.value !== v) el.value = v;
+      };
+      el.addEventListener("beforeinput", e => {
+        if (e.data && /[^0-9.,]/.test(e.data)) e.preventDefault();
+      });
+      el.addEventListener("keypress", e => {
+        if (e.ctrlKey || e.metaKey || e.key.length > 1) return;
+        if (!/[0-9.,]/.test(e.key)) e.preventDefault();
+      });
+      el.addEventListener("paste", e => {
+        e.preventDefault();
+        let t = ((e.clipboardData || window.clipboardData).getData("text") || "").replace(/,/g, ".");
+        t = t.replace(/[^0-9.]/g, "");
+        document.execCommand("insertText", false, t);
+      });
+      el.addEventListener("input", scrub);
+    }
+
     function getLotArea() {
       const lot = byPos.get(els.fLote.value);
       return lot ? roundHa(lot.ha) : 0;
@@ -3509,12 +3747,23 @@
     }
 
     function updateRatioUI() {
+      const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
+      const jr = parseJr(els.fTotalJr && els.fTotalJr.value);
+      if (cercos) {
+        const calc = updateCercosCalc();
+        if (els.ratioCardSub) els.ratioCardSub.textContent = "Metros lineales / jornales";
+        if (els.ratioFormula) {
+          els.ratioFormula.textContent = calc.ml + " ml / " + (calc.jr || 0) + " JR = " +
+            (calc.jr > 0 ? formatHa(calc.rend) : "—");
+        }
+        return;
+      }
+      if (els.ratioCardSub) els.ratioCardSub.textContent = "Ratio JR / área total del día";
       const tot = totalsFromLots();
       const area = tot.area;
-      const jr = roundHa(els.fTotalJr && els.fTotalJr.value);
       const ratio = area > 0 ? roundHa(jr / area) : 0;
       if (els.ratioFormula) {
-        els.ratioFormula.textContent = "JR " + formatHa(jr) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
+        els.ratioFormula.textContent = "JR " + (jr || 0) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
       }
     }
 
@@ -3523,8 +3772,8 @@
       syncingCalc = true;
       const area = totalsFromLots().area;
       const ratio = roundHa(els.fRatio && els.fRatio.value);
-      const jr = area > 0 ? roundHa(ratio * area) : 0;
-      if (els.fTotalJr) els.fTotalJr.value = jr ? formatHa(jr) : "";
+      const jr = area > 0 ? Math.round(ratio * area) : 0;
+      if (els.fTotalJr) els.fTotalJr.value = formatJr(jr);
       updateRatioUI();
       syncingCalc = false;
       saveDraft();
@@ -3534,7 +3783,7 @@
       if (syncingCalc) return;
       syncingCalc = true;
       const area = totalsFromLots().area;
-      const jr = roundHa(els.fTotalJr && els.fTotalJr.value);
+      const jr = parseJr(els.fTotalJr && els.fTotalJr.value);
       const ratio = area > 0 ? roundHa(jr / area) : 0;
       if (els.fRatio) els.fRatio.value = (jr && area) ? formatHa(ratio) : "";
       updateRatioUI();
@@ -3552,9 +3801,12 @@
       let avance = extra.avance != null
         ? roundHa(extra.avance)
         : (isCurrent ? roundHa(els.fAvance && els.fAvance.value) : roundHa(prev && prev.avance));
-      const cap = laborUsableHa(area, laborReal, lot);
-      if (avance <= 0) avance = cap;
-      if (cap > 0 && avance > cap) avance = cap;
+      if (avance <= 0) avance = area;
+      if (extra.avance == null && !(prev && prev.edited) && isCercosLabor(laborReal)) {
+        const leftover = cercosCapHa(area, lot);
+        if (leftover > 0 && avance > 0 && avance <= leftover && avance < area) avance = area;
+      }
+      if (area > 0 && avance > area) avance = area;
       if (!laborReal) return false;
       if (isCurrent && els.fAvance) els.fAvance.value = avance ? formatHa(avance) : "";
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
@@ -3621,7 +3873,7 @@
     }
 
     function previewItems() {
-      const map = Object.assign({}, localLots);
+      const map = Object.assign({}, localLots || {});
       const posKey = els.fLote.value;
       const lot = posKey ? byPos.get(posKey) : null;
       if (lot) {
@@ -3669,11 +3921,10 @@
             ${rows.map(item => {
               const area = roundHa(item.area);
               const av = roundHa(item.avance);
-              const pct = fillHeightPct(av, area);
               const on = item.posKey === activeKey ? " is-on" : "";
               const fill = normalizeHex(item.color) || currentPaintColor() || color;
               const cell = `<button type="button" class="mini-cell${on}" data-open="${item.posKey}">
-                  <div class="mini-fill" style="background:${fill};height:${pct}%"></div>
+                  <div class="mini-fill" style="${miniFillCss(av, area, fill)}"></div>
                   <span class="t">${item.turno || "—"}</span>
                   <span class="l">L${item.lote}</span>
                   <span class="h">${formatHa(area)}</span>
@@ -3699,6 +3950,7 @@
     let sumEditKey = null;
 
     function renderLocalLots() {
+      syncCercosLotesFromSelection();
       const items = previewItems();
       const tot = totalsFromLots();
       if (els.lotBoard) els.lotBoard.innerHTML = lotBoardHtml(items, els.fLote.value, false);
@@ -3795,15 +4047,15 @@
         return;
       }
       els.fAvanceHint.textContent = capped
-        ? "Máximo " + area.toFixed(2) + " ha" + (isCercosLabor(els.fLaborReal && els.fLaborReal.value) ? " (sobrante 20%)" : " (área del lote)")
+        ? "Máximo " + area.toFixed(2) + " ha (área del lote)"
         : "Máx. " + area.toFixed(2) + " ha";
       els.fAvanceHint.classList.toggle("warn", capped);
     }
 
-    /** Solo al salir del campo o al guardar: 2 decimales y tope del lote */
+    /** Solo al salir del campo o al guardar: 2 decimales y tope del lote (área total) */
     function finalizeAvance(opts) {
       opts = opts || {};
-      const area = currentUsableArea();
+      const area = getLotArea();
       els.fAvance.removeAttribute("max");
       let typed = readAvanceTyped();
       if (typed == null) {
@@ -3865,7 +4117,7 @@
 
     function updatePreview() {
       const lot = byPos.get(els.fLote.value);
-      const area = currentUsableArea();
+      const area = getLotArea();
       const typed = readAvanceTyped();
       let av = typed == null ? 0 : roundHa(typed);
       if (area > 0 && av > area) av = area;
@@ -3887,7 +4139,7 @@
     }
 
     function capAvanceInput() {
-      const area = currentUsableArea();
+      const area = getLotArea();
       const typed = readAvanceTyped();
       if (typed == null || area <= 0) {
         updateAvanceHint(area, false);
@@ -3922,7 +4174,7 @@
       keys.forEach(posKey => {
         const lot = byPos.get(posKey);
         if (!lot) return;
-        const area = laborUsableHa(lot.ha, els.fLaborReal && els.fLaborReal.value, lot);
+        const area = roundHa(lot.ha);
         if (area <= 0) return;
         if (els.fLote.value === posKey && els.fAvance) els.fAvance.value = formatHa(area);
         persistLotAt(posKey, { avance: area });
@@ -3961,9 +4213,14 @@
       saveDraft();
     });
     els.fTotalJr?.addEventListener("change", () => {
-      const n = roundHa(els.fTotalJr.value);
-      els.fTotalJr.value = n ? formatHa(n) : "";
+      els.fTotalJr.value = formatJr(els.fTotalJr.value);
       updateRatioFromJr();
+      saveDraft();
+    });
+    els.fCercosLotes?.addEventListener("input", () => {
+      const n = String(els.fCercosLotes.value || "").replace(/\D/g, "");
+      if (els.fCercosLotes.value !== n) els.fCercosLotes.value = n;
+      updateRatioUI();
       saveDraft();
     });
     els.fRatio?.addEventListener("input", updateJrFromRatio);
@@ -4006,9 +4263,20 @@
       if (e.target.id === "sumModal") closeSumModal();
     });
 
+    function setEditOkMsg(show) {
+      if (!els.sumEditOk) return;
+      if (show) {
+        els.sumEditOk.hidden = false;
+        els.sumEditOk.textContent = "Se editó el lote correctamente";
+      } else {
+        els.sumEditOk.hidden = true;
+      }
+    }
+
     function hideSumEditBox() {
       const box = els.sumEditBox;
       if (box) box.setAttribute("hidden", "");
+      setEditOkMsg(false);
       els.sumBoard?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
       sumEditKey = null;
     }
@@ -4029,6 +4297,7 @@
         els.sumEditAvance.classList.remove("is-over");
       }
       if (els.sumEditSave) els.sumEditSave.setAttribute("data-edit-ok", posKey);
+      setEditOkMsg(false);
       box.removeAttribute("hidden");
       els.sumBoard?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
       const cell = els.sumBoard?.querySelector('.mini-cell[data-open="' + posKey + '"]');
@@ -4045,23 +4314,38 @@
     }
 
     function clampEditAvance(raw, area) {
-      const lot = byPos.get(sumEditKey || (els.sumEditAvance && els.sumEditAvance.getAttribute("data-edit-input")));
-      const cap = laborUsableHa(area, els.fLaborReal && els.fLaborReal.value, lot);
+      const tot = roundHa(area);
       let av = roundHa(raw);
       if (av < 0) av = 0;
       let capped = false;
-      if (cap > 0 && av > cap) {
-        av = cap;
+      if (tot > 0 && av > tot) {
+        av = tot;
         capped = true;
       }
-      return { av, capped, area: cap };
+      return { av, capped, area: tot };
     }
 
     function paintEditAvance(posKey, av, area) {
       const pct = fillHeightPct(av, area);
+      const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
       const sel = '.mini-cell[data-open="' + posKey + '"] .mini-fill';
-      els.sumBoard?.querySelectorAll(sel).forEach(el => { el.style.height = pct + "%"; });
-      els.lotBoard?.querySelectorAll(sel).forEach(el => { el.style.height = pct + "%"; });
+      const apply = el => {
+        if (cercos) {
+          el.style.height = "20%";
+          el.style.width = pct + "%";
+          el.style.top = "0";
+          el.style.bottom = "auto";
+          el.style.left = "0";
+          el.style.right = "auto";
+        } else {
+          el.style.height = pct + "%";
+          el.style.width = "";
+          el.style.top = "";
+          el.style.right = "";
+        }
+      };
+      els.sumBoard?.querySelectorAll(sel).forEach(apply);
+      els.lotBoard?.querySelectorAll(sel).forEach(apply);
       const stored = roundHa(localLots[posKey] && localLots[posKey].avance);
       const tot = totalsFromLots();
       const live = roundHa(tot.av - stored + av);
@@ -4077,14 +4361,16 @@
       if (!typed || typed === "." || typed === ",") {
         paintEditAvance(posKey, 0, area);
         els.sumEditAvance.classList.remove("is-over");
+        setEditOkMsg(false);
         return false;
       }
       const { av, capped } = clampEditAvance(typed, area);
-      if (capped) {
+      if (capped && opts.reformat) {
         els.sumEditAvance.value = formatHa(av);
-        if (opts.toast) showToast("Máximo " + formatHa(area) + " ha", "error");
+        if (opts.toast) showToast("Máximo " + formatHa(area) + " ha (área del lote)", "error");
       }
       els.sumEditAvance.classList.toggle("is-over", capped);
+      if (!opts.reformat) setEditOkMsg(false);
       paintEditAvance(posKey, av, area);
       if (av > 0) {
         if (!persistLotAt(posKey, { avance: av })) {
@@ -4111,13 +4397,19 @@
       persistLotAt(posKey, { avance: av });
       saveLocalLotsMap();
       sumEditKey = posKey;
-      renderLocalLots();
+      const tot = totalsFromLots();
+      if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
+      if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
+      if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+      paintEditAvance(posKey, av, area);
       fillSumEditBox(posKey);
+      setEditOkMsg(true);
+      if (els.lotBoard) els.lotBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, false);
       saveDraft();
       showToast(
         capped
           ? "Avance limitado a " + formatHa(av) + " ha"
-          : "Avance " + formatHa(av) + " ha",
+          : "Se editó el lote correctamente",
         capped ? "error" : null
       );
       return true;
@@ -4152,7 +4444,13 @@
       const open = e.target.closest("[data-open]");
       if (open) openLocalLot(open.getAttribute("data-open"));
     }
-    els.sumEditSave?.addEventListener("click", () => {
+    els.sumEditSave?.addEventListener("mousedown", e => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    els.sumEditSave?.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
       const posKey = els.sumEditSave.getAttribute("data-edit-ok") || sumEditKey;
       applyAvanceEdit(posKey, els.sumEditAvance && els.sumEditAvance.value);
     });
@@ -4190,6 +4488,7 @@
       setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
       els.fAvance.value = "";
       if (els.fTotalJr) els.fTotalJr.value = "";
+      if (els.fCercosLotes) els.fCercosLotes.value = "";
       syncLaborGate();
       if (els.fRatio) els.fRatio.value = "";
       if (els.fColor) els.fColor.value = "";
@@ -4310,8 +4609,7 @@
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
       let avance = roundHa(item.avance);
       const area = roundHa(lot.ha);
-      const cap = laborUsableHa(area, laborReal, lot);
-      if (cap > 0 && avance > cap) avance = cap;
+      if (area > 0 && avance > area) avance = area;
       return {
         posKey: item.posKey,
         sem: Number(els.fSem.value) || currentWeek,
@@ -4325,6 +4623,7 @@
         area,
         avance,
         totalJr: 0,
+        ml: 0,
         color: currentPaintColor(),
         editar: true
       };
@@ -4368,14 +4667,23 @@
 
       try {
         const totArea = roundHa(records.reduce((s, r) => s + (Number(r.area) || 0), 0));
-        const jrTotal = roundHa(els.fTotalJr && els.fTotalJr.value);
-        records.forEach(r => {
-          r.totalJr = totArea > 0 ? roundHa(jrTotal * ((Number(r.area) || 0) / totArea)) : 0;
+        const jrTotal = parseJr(els.fTotalJr && els.fTotalJr.value);
+        const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
+        const mlTotal = cercos ? cercosLotesN() * cercosMlPerLot() : 0;
+        const jrParts = splitIntByWeight(jrTotal, records.map(r => Number(r.area) || 0));
+        const mlParts = splitIntByWeight(mlTotal, records.map(() => 1));
+        records.forEach((r, i) => {
+          r.totalJr = jrParts[i] || 0;
+          r.ml = cercos ? (mlParts[i] || 0) : 0;
+          if (cercos) r.lotesTrabajados = cercosLotesN();
         });
         const shared = {
           fecha: els.fFecha.value,
           sem: Number(els.fSem.value) || currentWeek,
-          laborReal: els.fLaborReal.value
+          laborReal: els.fLaborReal.value,
+          totalJr: jrTotal,
+          ml: mlTotal,
+          lotesTrabajados: cercos ? cercosLotesN() : 0
         };
         const res = records.length === 1
           ? await QBApi.saveLabor(records[0])
@@ -4434,7 +4742,7 @@
       showToast("Formulario limpio · lotes del celular se mantienen", null);
     });
     window.QB_onQueueFlushed = n => {
-      showToast(n + " pendiente(s) enviados al recuperar señal", null);
+      showToast(n + " pendiente(s) subidos a la hoja", null);
       renderHistory();
       if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
       updateStatus();
@@ -4530,13 +4838,13 @@
     renderHistory();
     renderLocalLots();
     syncFabVisibility();
+    bindIntegerInput(els.fTotalJr);
+    bindIntegerInput(els.fCercosLotes);
+    bindDecimalInput(els.sumEditAvance);
+    bindDecimalInput(els.fRatio);
     if (consumeAppRefreshFlag()) {
-      tryFlushQueue().then(n => {
-        updateStatus();
-        renderHistory();
-        if (document.getElementById("histModal")?.classList.contains("open")) renderHistFull();
-        showToast(n > 0 ? "App actualizada · " + n + " enviado(s)" : "App actualizada · datos al día", null);
-      });
+      showToast("App actualizada · datos al día", null);
+      tryFlushQueue();
     } else {
       tryFlushQueue();
     }
