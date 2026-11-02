@@ -1750,9 +1750,27 @@
       max-width: var(--app-max);
       margin: 0 auto;
       width: 100%;
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 0.55rem;
+      display: flex;
+      align-items: stretch;
+      gap: 0.65rem;
+      box-sizing: border-box;
+    }
+    .dock-inner .btn {
+      flex: 1 1 0;
+      min-width: 0;
+      width: auto;
+      max-width: none;
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 0.75rem;
+      box-sizing: border-box;
+    }
+    .dock-inner .btn-primary {
+      flex: 1.7 1 0;
+      z-index: 1;
     }
     .btn {
       height: var(--btn-h);
@@ -2160,7 +2178,8 @@
       .picker-option { padding: 1.1rem 1.25rem; }
       .picker-option b { font-size: var(--fs-pick); }
       .dock { padding: 1rem 2rem calc(1rem + var(--safe-b)); }
-      .dock-inner { gap: 0.75rem; }
+      .dock-inner { gap: 0.85rem; }
+      .dock-inner .btn { padding: 0 1rem; }
       .fab-wrap {
         right: 1.35rem;
         bottom: calc(6.25rem + var(--safe-b));
@@ -2932,14 +2951,15 @@
           const value = btn.dataset.value;
           const picker = activePicker;
           if (pickers && picker === pickers.lote) {
-            if (loteMulti.has(value)) {
+            if (loteMulti.has(value) || (localLots && localLots[value])) {
               loteMulti.delete(value);
               btn.classList.remove("selected", "is-captured");
               const tag = btn.querySelector(".opt-tag");
               if (tag) tag.remove();
               removeLocalLot(value, true);
+              syncPickerMultiCount();
               if (els.fLote.value === value) {
-                const next = [...loteMulti][0];
+                const next = [...loteMulti][0] || Object.keys(localLots || {})[0];
                 if (next && byPos.get(next)) {
                   suppressPersist = true;
                   applyCascadeFromLot(byPos.get(next), true);
@@ -2947,8 +2967,13 @@
                   onLoteChange();
                 } else {
                   setPickValue(pickers.lote, "", true);
+                  clearLotDerived();
+                  updatePreview();
                 }
               }
+              renderLocalLots();
+              saveDraft();
+              return;
             } else {
               if (!els.fLaborReal.value) {
                 showToast("Selecciona la labor primero", "error");
@@ -3052,7 +3077,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.54";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.57";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -3987,12 +4012,17 @@
     function removeLocalLot(posKey, silent) {
       if (!posKey || !localLots[posKey]) return;
       delete localLots[posKey];
+      if (typeof loteMulti !== "undefined" && loteMulti && loteMulti.has(posKey)) {
+        loteMulti.delete(posKey);
+      }
       saveLocalLotsMap();
+      if (sumEditKey === posKey) hideSumEditBox();
       if (els.fLote.value === posKey) {
         if (els.fAvance) els.fAvance.value = "";
         clearLotDerived();
       }
       renderLocalLots();
+      updatePreview();
       saveDraft();
       if (!silent) showToast("Lote quitado del día", null);
     }
@@ -4396,19 +4426,18 @@
       }
       persistLotAt(posKey, { avance: av });
       saveLocalLotsMap();
-      sumEditKey = posKey;
       const tot = totalsFromLots();
       if (els.sumKpiLots) els.sumKpiLots.textContent = String(tot.n);
       if (els.sumKpiArea) els.sumKpiArea.textContent = formatHa(tot.area) + " ha";
       if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
       paintEditAvance(posKey, av, area);
-      fillSumEditBox(posKey);
-      setEditOkMsg(true);
       if (els.lotBoard) els.lotBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, false);
+      if (els.sumBoard) els.sumBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, true);
       saveDraft();
+      hideSumEditBox();
       showToast(
         capped
-          ? "Avance limitado a " + formatHa(av) + " ha"
+          ? "Avance limitado a " + formatHa(av) + " ha · Se editó el lote correctamente"
           : "Se editó el lote correctamente",
         capped ? "error" : null
       );
