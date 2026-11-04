@@ -760,6 +760,31 @@
       overflow: hidden;
     }
 
+    .map-labor-banner {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 0.45rem 0.85rem;
+      background: #1e4e8c;
+      color: #fff;
+      text-align: center;
+      z-index: 4;
+    }
+    .map-labor-banner strong {
+      margin: 0;
+      font-size: clamp(0.72rem, 1.35vw, 0.95rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
     .map-wrap {
       flex: 1;
       min-height: 0;
@@ -2031,6 +2056,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .labor-form .field input.is-invalid {
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18);
+    }
     .labor-form .field input:focus,
     .labor-form .cselect-trigger:focus,
     .labor-form .cselect.open .cselect-trigger {
@@ -3108,6 +3137,15 @@
         display: flex;
         flex-direction: column;
       }
+      .map-labor-banner {
+        min-height: 30px;
+        padding: 0.35rem 0.65rem;
+      }
+      .map-labor-banner strong {
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        white-space: normal;
+      }
       .mob-chrome {
         display: flex;
         flex-direction: column;
@@ -3839,8 +3877,8 @@
           <p class="field-hint" style="margin:0.25rem 0 0;font-size:0.68rem;color:#64748b;font-weight:600;">Cada lote = 80 ml</p>
         </div>
         <div class="field jr-field">
-          <label for="fTotalJr">Jornales (JR)</label>
-          <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" value="" placeholder="0" />
+          <label for="fTotalJr">Jornales (JR) *</label>
+          <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" value="" placeholder="0" required />
         </div>
         <div class="cercos-only cercos-kpis" aria-live="polite">
           <div class="cercos-kpi">
@@ -4096,6 +4134,9 @@
           <span id="mobFilterInfo">—</span>
           <span id="mobSyncTime">Sin sincronizar</span>
         </div>
+      </div>
+      <div class="map-labor-banner" id="mapLaborBanner" aria-live="polite">
+        <strong id="mapLaborBannerText">DESHIERBO — FUNDO LICAPA — ARÁNDANO</strong>
       </div>
       <div class="map-wrap" id="viewport">
         <div class="scaler" id="scaler">
@@ -4795,7 +4836,7 @@
     }
 
     function noteRateLimit() {
-      syncPausedUntil = Date.now() + 90000;
+      syncPausedUntil = Date.now() + 45000;
     }
 
     function canSyncNow() {
@@ -5474,6 +5515,14 @@
       }).sort((a, b) => String(a.fechaIso || a.fecha).localeCompare(String(b.fechaIso || b.fecha)));
     }
 
+    function jrGrupoFromValues(vals) {
+      const list = (vals || []).map(v => Math.round(Number(v) || 0));
+      if (!list.length) return 0;
+      const allEq = list.every(v => v === list[0]);
+      if (allEq && list.length > 1) return list[0];
+      return list.reduce((s, n) => s + n, 0);
+    }
+
     function weekRowsFromRecords() {
       const sem = Number(mapQuery.sem != null ? mapQuery.sem : currentWeek);
       const groups = {};
@@ -5485,16 +5534,16 @@
         const fechaIso = String(r.fecha || r.fechaIso || "").slice(0, 10);
         const md = String(r.modulo || "").trim() || "—";
         const k = fechaIso + "|" + md;
-        if (!groups[k]) groups[k] = { fechaIso, modulo: md, lots: {}, jr: 0, ml: 0 };
+        if (!groups[k]) groups[k] = { fechaIso, modulo: md, lots: {}, jrVals: [], ml: 0 };
         const lotKey = String(r.turno || "") + "|" + String(r.lote);
         if (!groups[k].lots[lotKey]) groups[k].lots[lotKey] = Number(r.area) || 0;
-        groups[k].jr += Math.round(Number(r.totalJr) || 0);
+        groups[k].jrVals.push(Math.round(Number(r.totalJr) || 0));
         groups[k].ml += Math.round(Number(r.ml) || 0);
       });
       const cercos = isCercosLabor(wantLabor);
       const raw = Object.values(groups).map(g => {
         const area = roundHa(Object.values(g.lots).reduce((s, n) => s + (Number(n) || 0), 0));
-        const jr = Math.round(g.jr);
+        const jr = jrGrupoFromValues(g.jrVals);
         const ml = Math.round(g.ml);
         return {
           fecha: g.fechaIso ? g.fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—",
@@ -5675,6 +5724,19 @@
       document.body.classList.toggle("labor-cercos", on);
     }
 
+    function mapBannerHa() {
+      const n = Number(data && data.totalHa);
+      return Number.isFinite(n) && n > 0 ? Math.round(n) : 200;
+    }
+
+    function updateMapLaborBanner() {
+      const el = document.getElementById("mapLaborBannerText");
+      if (!el) return;
+      const labor = String(activeLaborReal() || mapQuery.laborReal || "DESHIERBO").toUpperCase().trim();
+      const sem = Number(mapQuery.sem != null && mapQuery.sem !== "" ? mapQuery.sem : currentWeek) || currentWeek;
+      el.textContent = `${labor} - FUNDO LICAPA ${mapBannerHa()} HAS - ARÁNDANO - SEM${sem}`;
+    }
+
     let mapQuery = {
       sem: currentWeek,
       fecha: "",
@@ -5713,6 +5775,7 @@
         if (mapQuery.laborReal) bits.push(mapQuery.laborReal);
         sum.textContent = bits.join(" · ");
       }
+      updateMapLaborBanner();
     }
 
     function buildFilterItems(values, emptyLabel) {
@@ -5870,6 +5933,7 @@
       constrainFechaToSem();
       if (!mapQuery.laborReal) mapQuery.laborReal = "DESHIERBO";
       syncCercosMapLayout();
+      updateMapLaborBanner();
       if (mapQuery.laborReal && typeof laborRealCSelect !== "undefined" && laborRealCSelect) {
         laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
       }
@@ -7978,6 +8042,15 @@
         }
         return false;
       }
+      const jrNeedMulti = parseJr(fTotalJr && fTotalJr.value);
+      if (jrNeedMulti < 1) {
+        if (showFeedback) {
+          showToast("Ingresa los jornales (JR)", true, "Campo obligatorio");
+          showDrawerSavedMsg("Falta jornales (JR)", "error");
+          if (fTotalJr) { fTotalJr.focus(); fTotalJr.classList.add("is-invalid"); }
+        }
+        return false;
+      }
 
       const totalAv = multiLotsTotalAvance();
       if (totalAv <= 0) {
@@ -8016,7 +8089,6 @@
       const jrTotal = parseJr(fTotalJr && fTotalJr.value);
       const cercosSave = isCercosLabor(laborReal);
       const mlTotal = cercosSave ? cercosLotesN() * cercosMlPerLot() : 0;
-      const jrParts = splitIntByWeight(jrTotal, items.map(x => Number(x.lot.ha) || 0));
       const mlParts = splitIntByWeight(mlTotal, items.map(() => 1));
       const records = items.map(({ key, lot }, idx) => {
         const area = roundHa(lot.ha);
@@ -8036,7 +8108,7 @@
           variedad: shared.variedad,
           area,
           avance: av,
-          totalJr: jrParts[idx] || 0,
+          totalJr: jrTotal,
           ml: cercosSave ? (mlParts[idx] || 0) : 0,
           lotesTrabajados: cercosSave ? cercosLotesN() : 0,
           color: currentPaintColor(),
@@ -8058,6 +8130,7 @@
         }
       });
       let queuedAny = false;
+      let queueReason = "";
       let ok = true;
       let savedHa = records.reduce((s, r) => s + roundHa(r.avance), 0);
       let errMsg = "";
@@ -8070,11 +8143,16 @@
             errMsg = res.message || "Validación";
           } else {
             queuedAny = !!res.queued;
+            if (res && res.offline) queueReason = "offline";
+            else if (res && res.rateLimited) queueReason = "rate";
+            else if (res && (res.networkError || res.error)) queueReason = "net";
+            else if (queuedAny) queueReason = "net";
             updatePendingChips();
           }
         } catch (err) {
           console.warn("API BATCH:", err);
           queuedAny = true;
+          queueReason = "net";
         }
       } else {
         for (const rec of records) {
@@ -8114,8 +8192,13 @@
         }
         if (ok) {
           if (queuedAny) {
-            showToast("Guardado en cola", false, detail);
-            showDrawerSavedMsg("Sin señal · quedó pendiente · " + detail, "ok");
+            const qMsg = queueReason === "offline"
+              ? "Sin señal · quedó pendiente"
+              : (queueReason === "rate"
+                ? "Servidor ocupado · quedó en cola (se sube solo)"
+                : "Quedó en cola · se reintenta solo");
+            showToast(qMsg, false, detail);
+            showDrawerSavedMsg(qMsg + " · " + detail, "ok");
           } else {
             showToast("✓ Grupo guardado", false, detail);
             showDrawerSavedMsg(detail, "ok");
@@ -8170,6 +8253,15 @@
         }
         return false;
       }
+      const jrNeed = parseJr(fTotalJr && fTotalJr.value);
+      if (jrNeed < 1) {
+        if (showFeedback) {
+          showToast("Ingresa los jornales (JR)", true, "Campo obligatorio");
+          showDrawerSavedMsg("Falta jornales (JR)", "error");
+          if (fTotalJr) { fTotalJr.focus(); fTotalJr.classList.add("is-invalid"); }
+        }
+        return false;
+      }
       fAvance.value = formatHa(avance);
 
       const saveBtn = document.getElementById("saveLaborBtn");
@@ -8184,15 +8276,21 @@
       }
 
       let queued = false;
+      let queueReason = "";
       let failed = false;
       let savedColor = currentPaintColor();
       try {
         const res = await saveOneLaborRecord(posKey, lot, avance, showFeedback, savedColor);
         if (res && res.error) failed = true;
         queued = !!res.queued;
+        if (res && res.offline) queueReason = "offline";
+        else if (res && res.rateLimited) queueReason = "rate";
+        else if (res && (res.networkError || res.error)) queueReason = "net";
+        else if (queued) queueReason = "net";
         if (res && res.color) savedColor = res.color;
       } catch (err) {
         queued = true;
+        queueReason = "net";
         if (showFeedback) showToast("Guardado en el celular", false, "Se enviará cuando haya señal", "info");
       }
 
@@ -8218,8 +8316,13 @@
           showToast("No se guardó", true, detail);
           showDrawerSavedMsg("Revisa los datos del lote", "error");
         } else if (queued) {
-          showToast("Sin señal · quedó pendiente", false, detail);
-          showDrawerSavedMsg(detail + " · en cola", "ok");
+          const qMsg = queueReason === "offline"
+            ? "Sin señal · quedó pendiente"
+            : (queueReason === "rate"
+              ? "Servidor ocupado · en cola (se sube solo)"
+              : "En cola · se reintenta solo");
+          showToast(qMsg, false, detail);
+          showDrawerSavedMsg(detail + " · " + qMsg, "ok");
         } else {
           showToast("✓ Se guardó correctamente", false, detail);
           showDrawerSavedMsg(detail, "ok");
@@ -8313,7 +8416,11 @@
     });
     bindIntegerInput(fTotalJr);
     bindIntegerInput(fCercosLotes);
-    fTotalJr.addEventListener("input", () => { updateDeskRatio(); previewFromForm(); });
+    fTotalJr.addEventListener("input", () => {
+      fTotalJr.classList.remove("is-invalid");
+      updateDeskRatio();
+      previewFromForm();
+    });
     fTotalJr.addEventListener("change", () => {
       fTotalJr.value = formatJr(fTotalJr.value) === "0" ? "" : formatJr(fTotalJr.value);
       previewFromForm();
@@ -9023,6 +9130,7 @@
 
     normalizeStoredLaborColors();
     refreshAllLaborVisuals();
+    updateMapLaborBanner();
     updateMobileChrome();
     if (API_URL) {
       const pageReadyAt = Date.now();

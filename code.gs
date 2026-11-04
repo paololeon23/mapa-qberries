@@ -425,6 +425,36 @@ function ratioResumen_(labor, area, ml, jr) {
   return area > 0 ? Math.round((jr / area) * 100) / 100 : 0;
 }
 
+/**
+ * JR del grupo (fecha·labor·MD): lo que se ingresó en el formulario.
+ * Misma hora + mismo JR en varios lotes = un solo total (guardado grupal).
+ * JR distintos en la misma tanda = se suman (reparto viejo).
+ * Tandas en distinta hora = se suman.
+ */
+function jrGrupoDesdeEntradas_(entries) {
+  var byHora = {};
+  var i;
+  for (i = 0; i < (entries || []).length; i++) {
+    var e = entries[i] || {};
+    var h = String(e.hora || '').trim() || ('_' + i);
+    if (!byHora[h]) byHora[h] = [];
+    byHora[h].push(numInt_(e.jr));
+  }
+  var total = 0;
+  for (var key in byHora) {
+    if (!byHora.hasOwnProperty(key)) continue;
+    var vals = byHora[key];
+    var sum = 0;
+    var allEq = true;
+    for (var j = 0; j < vals.length; j++) {
+      sum += vals[j];
+      if (j && vals[j] !== vals[0]) allEq = false;
+    }
+    total += (allEq && vals.length > 1) ? vals[0] : sum;
+  }
+  return numInt_(total);
+}
+
 function estilizarEncabezadosResumen_(h) {
   h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length)
     .setFontWeight('bold')
@@ -512,13 +542,13 @@ function actualizarResumenDia_(fechaIso, hojaResumen) {
         labor: labor,
         modulo: md,
         lots: {},
-        jr: 0,
+        jrEntries: [],
         ml: 0
       };
     }
     var lk = claveLote_(row.turno, row.loteNum) || String(row.loteNum);
     if (!groups[gk].lots.hasOwnProperty(lk)) groups[gk].lots[lk] = Number(row.area) || 0;
-    groups[gk].jr += numInt_(row.totalJr);
+    groups[gk].jrEntries.push({ hora: row.horaGuardado || '', jr: numInt_(row.totalJr) });
     groups[gk].ml += numInt_(row.ml);
     if (!groups[gk].sem) groups[gk].sem = num_(row.sem) || 0;
   }
@@ -562,7 +592,7 @@ function actualizarResumenDia_(fechaIso, hojaResumen) {
       if (grp.lots.hasOwnProperty(pk)) area += Number(grp.lots[pk]) || 0;
     }
     area = Math.round(area * 100) / 100;
-    var jr = numInt_(grp.jr);
+    var jr = jrGrupoDesdeEntradas_(grp.jrEntries);
     var ml = esCercos_(grp.labor) ? numInt_(grp.ml) : 0;
     var ratio = ratioResumen_(grp.labor, area, ml, jr);
     var semRow = grp.sem || semIso_();
@@ -594,12 +624,12 @@ function armarResumenLista_(list, laborReal) {
     var lab = norm_(r.laborReal) || norm_(laborReal) || '';
     var md = String(r.modulo || '').trim() || '—';
     var k = fechaIso + '|' + lab + '|' + md;
-    if (!groups[k]) groups[k] = { fechaIso: fechaIso, labor: lab, modulo: md, lots: {}, jr: 0, ml: 0 };
+    if (!groups[k]) groups[k] = { fechaIso: fechaIso, labor: lab, modulo: md, lots: {}, jrEntries: [], ml: 0 };
     var lotKey = norm_(r.turno) + '|' + String(r.lote != null ? r.lote : r.loteNum);
     if (!groups[k].lots.hasOwnProperty(lotKey)) {
       groups[k].lots[lotKey] = Number(r.area) || 0;
     }
-    groups[k].jr += numInt_(r.totalJr);
+    groups[k].jrEntries.push({ hora: r.horaGuardado || '', jr: numInt_(r.totalJr) });
     groups[k].ml += numInt_(r.ml);
   }
   var keys = [];
@@ -615,7 +645,7 @@ function armarResumenLista_(list, laborReal) {
       if (g.lots.hasOwnProperty(lk)) area += Number(g.lots[lk]) || 0;
     }
     area = Math.round(area * 100) / 100;
-    var jr = numInt_(g.jr);
+    var jr = jrGrupoDesdeEntradas_(g.jrEntries);
     var ml = esCercos_(g.labor) ? numInt_(g.ml) : 0;
     out.push({
       fecha: formatFechaSheet_(g.fechaIso),
@@ -1451,7 +1481,12 @@ function validarPayloadLabor_(d) {
   } else {
     ml = 0;
   }
-  if (totalJr < 0 || totalJr > 100000) totalJr = 0;
+  if (totalJr < 1) {
+    return { ok: false, code: 'MISSING_JR', message: 'Ingresa los jornales (JR)' };
+  }
+  if (totalJr > 100000) {
+    return { ok: false, code: 'BAD_JR', message: 'Jornales (JR) inválidos' };
+  }
   if (ml < 0 || ml > 1000000) ml = 0;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
     return { ok: false, code: 'BAD_FECHA', message: 'Fecha inválida' };

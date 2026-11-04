@@ -2321,8 +2321,8 @@
               <p class="field-hint">Cada lote = 80 ml</p>
           </div>
         <div class="field">
-              <label for="fTotalJr">Jornales (JR)</label>
-              <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" placeholder="0" disabled />
+              <label for="fTotalJr">Jornales (JR) *</label>
+              <input id="fTotalJr" type="text" inputmode="numeric" autocomplete="off" placeholder="0" required disabled />
         </div>
         </div>
           <div class="cercos-only cercos-kpis" aria-live="polite">
@@ -3077,7 +3077,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.57";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.3.60";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -4690,19 +4690,27 @@
         return;
       }
 
+      const jrTotal = parseJr(els.fTotalJr && els.fTotalJr.value);
+      if (jrTotal < 1) {
+        showToast("Ingresa los jornales (JR)", "error");
+        if (els.fTotalJr) {
+          els.fTotalJr.disabled = false;
+          els.fTotalJr.focus();
+        }
+        return;
+      }
+
       savingForm = true;
       els.saveBtn.disabled = true;
       els.saveBtn.textContent = records.length > 1 ? "Enviando " + records.length + "..." : "Guardando...";
 
       try {
         const totArea = roundHa(records.reduce((s, r) => s + (Number(r.area) || 0), 0));
-        const jrTotal = parseJr(els.fTotalJr && els.fTotalJr.value);
         const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
         const mlTotal = cercos ? cercosLotesN() * cercosMlPerLot() : 0;
-        const jrParts = splitIntByWeight(jrTotal, records.map(r => Number(r.area) || 0));
         const mlParts = splitIntByWeight(mlTotal, records.map(() => 1));
         records.forEach((r, i) => {
-          r.totalJr = jrParts[i] || 0;
+          r.totalJr = jrTotal;
           r.ml = cercos ? (mlParts[i] || 0) : 0;
           if (cercos) r.lotesTrabajados = cercosLotesN();
         });
@@ -4726,9 +4734,14 @@
           const synced = !!res.synced && !res.queued;
           els.saveBtn.textContent = synced ? "✓ Enviado" : "En cola";
           if (res.queued || !synced) {
+            const why = res.offline
+              ? "Sin señal"
+              : (res.rateLimited
+                ? "Servidor ocupado"
+                : "Pendiente de envío");
             showToast(
-              records.length + " lote(s) en cola hasta el OK (" + (res.pending || QBApi.queueCount()) + ")",
-              "offline"
+              why + " · " + records.length + " lote(s) en cola (" + (res.pending || QBApi.queueCount()) + ")",
+              res.offline ? "offline" : null
             );
           } else if (res.duplicate) {
             showToast("Ya estaba guardado (sin duplicar)", null);

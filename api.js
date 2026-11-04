@@ -239,6 +239,9 @@
     }
     if (!laborReal) errors.push("Falta labor real");
 
+    const totalJrNum = Math.min(100000, Math.max(0, Math.round(Number(record.totalJr) || 0)));
+    if (totalJrNum < 1) errors.push("Ingresa los jornales (JR)");
+
     const base = {
       posKey: record.posKey ? String(record.posKey).slice(0, 32) : undefined,
       sem: sem || "",
@@ -251,7 +254,7 @@
       variedad,
       area,
       avance,
-      totalJr: Math.min(100000, Math.max(0, Math.round(Number(record.totalJr) || 0))),
+      totalJr: totalJrNum,
       ml: isCercos
         ? Math.min(1000000, Math.max(0, Math.round(Number(record.ml != null ? record.ml : record.metrosLineales) || 0)))
         : 0,
@@ -367,11 +370,12 @@
     };
   }
 
-  async function postJson(body) {
+  async function postJson(body, opts) {
     const url = apiUrl();
     if (!url) return { ok: false, local: true, message: "Sin URL de API" };
+    const waitMs = Math.max(20000, Number(opts && opts.timeoutMs) || 90000);
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const t = ctrl ? setTimeout(() => ctrl.abort(), 45000) : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), waitMs) : null;
     let res;
     try {
       res = await fetch(url, {
@@ -383,7 +387,9 @@
         signal: ctrl ? ctrl.signal : undefined
       });
     } catch (err) {
-      return { ok: false, message: String(err.message || err) || "Sin conexión al servidor" };
+      const msg = String(err && (err.message || err)) || "Sin conexión al servidor";
+      const aborted = /abort/i.test(msg);
+      return { ok: false, message: aborted ? "El servidor tardó demasiado" : msg, timeout: aborted };
     } finally {
       if (t) clearTimeout(t);
     }
@@ -422,7 +428,7 @@
     if (!checked.ok) {
       return { ok: false, message: checked.errors.join(" · "), code: "CLIENT_INVALID" };
     }
-    return postJson(apiBody("guardar", checked.record));
+    return postJson(apiBody("guardar", checked.record), { timeoutMs: 70000 });
   }
 
   async function postLaborBatch(items, shared) {
@@ -459,7 +465,7 @@
       lotesTrabajados: shared && (shared.lotesTrabajados != null ? shared.lotesTrabajados : shared.cercosLotes),
       color: shared && (sharedColor || normalizeColor(shared.color) || shared.color),
       items: cleaned
-    }));
+    }), { timeoutMs: 100000 });
   }
 
   async function getLabors(filters = {}) {
@@ -580,7 +586,7 @@
       if (!navigator.onLine) {
         const n = enqueue(payload, savedAt);
         if (window.QB_onStatusChange) window.QB_onStatusChange();
-        return { ok: true, queued: true, savedAt, pending: n, payload };
+        return { ok: true, queued: true, offline: true, savedAt, pending: n, payload };
       }
 
       try {
@@ -605,6 +611,7 @@
           ok: true,
           queued: true,
           synced: false,
+          networkError: true,
           savedAt,
           pending: n,
           payload,
@@ -667,7 +674,7 @@
     if (!navigator.onLine) {
       apiItems.forEach(p => enqueue(p, Date.now()));
       if (window.QB_onStatusChange) window.QB_onStatusChange();
-      return { ok: true, queued: true, count: apiItems.length, payloads };
+      return { ok: true, queued: true, offline: true, count: apiItems.length, payloads };
     }
 
     try {
@@ -697,6 +704,7 @@
         ok: true,
         queued: true,
         synced: false,
+        networkError: true,
         count: apiItems.length,
         payloads,
         error: String(err.message || err)
