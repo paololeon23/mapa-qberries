@@ -7,7 +7,7 @@
  *
  * Hoja "RESUMEN DIA":
  *  FECHA | SEM | LABOR REAL | MD | AREA TOTAL | ML | JR | RATIO
- *  Un renglón por día + labor + módulo (DESHIERBO, ARENADO y CERCOS no se mezclan).
+ *  Un renglón por día + labor + módulo (DESHIERBO, RECOJO, ARENADO y CERCOS no se mezclan).
  *
  * Formatos:
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
@@ -415,11 +415,13 @@ var _resumenRebuildLock = false;
 function laborOrden_(lab) {
   var n = norm_(lab);
   if (n === 'DESHIERBO') return 1;
-  if (n === 'ARENADO DE MACETAS') return 2;
-  if (n === 'CERCOS VIVOS' || n === 'CERCO VIVOS') return 3;
+  if (n === 'RECOJO DE FRUTA') return 2;
+  if (n === 'ARENADO DE MACETAS') return 3;
+  if (n === 'CERCOS VIVOS' || n === 'CERCO VIVOS') return 4;
   return 9;
 }
 
+/** Ratio: CERCOS = ml/JR · DESHIERBO / RECOJO DE FRUTA / ARENADO = JR/área */
 function ratioResumen_(labor, area, ml, jr) {
   if (esCercos_(labor)) return jr > 0 ? Math.round((ml / jr) * 100) / 100 : 0;
   return area > 0 ? Math.round((jr / area) * 100) / 100 : 0;
@@ -939,7 +941,7 @@ function filtrosOpciones_() {
     return num_(String(a).replace(/\D/g, '')) - num_(String(b).replace(/\D/g, ''));
   });
 
-  var canonLab = ['DESHIERBO', 'ARENADO DE MACETAS', 'CERCOS VIVOS'];
+  var canonLab = ['DESHIERBO', 'RECOJO DE FRUTA', 'ARENADO DE MACETAS', 'CERCOS VIVOS'];
   for (var c = 0; c < canonLab.length; c++) laborMap[canonLab[c]] = true;
 
   var laborReal = Object.keys(laborMap);
