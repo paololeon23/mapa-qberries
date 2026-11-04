@@ -5724,17 +5724,12 @@
       document.body.classList.toggle("labor-cercos", on);
     }
 
-    function mapBannerHa() {
-      const n = Number(data && data.totalHa);
-      return Number.isFinite(n) && n > 0 ? Math.round(n) : 200;
-    }
-
     function updateMapLaborBanner() {
       const el = document.getElementById("mapLaborBannerText");
       if (!el) return;
       const labor = String(activeLaborReal() || mapQuery.laborReal || "DESHIERBO").toUpperCase().trim();
       const sem = Number(mapQuery.sem != null && mapQuery.sem !== "" ? mapQuery.sem : currentWeek) || currentWeek;
-      el.textContent = `${labor} - FUNDO LICAPA ${mapBannerHa()} HAS - ARÁNDANO - SEM${sem}`;
+      el.textContent = `${labor} - FUNDO LICAPA - ARÁNDANO - SEM${sem}`;
     }
 
     let mapQuery = {
