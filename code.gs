@@ -440,10 +440,24 @@ function ratioResumen_(labor, area, ml, jr) {
  * Misma hora + mismo JR en varios lotes = un solo total (guardado grupal).
  * JR distintos en la misma tanda = se suman (reparto viejo).
  * Tandas en distinta hora = se suman.
+ * Si TODOS los lotes llevan el mismo JR (ej. 7), cuenta una sola vez aunque
+ * la hora difiera unos segundos (cola / último lote 11:33 vs 11:34 → antes 14).
  */
 function jrGrupoDesdeEntradas_(entries) {
-  var byHora = {};
+  var all = [];
   var i;
+  for (i = 0; i < (entries || []).length; i++) {
+    all.push(numInt_((entries[i] || {}).jr));
+  }
+  if (!all.length) return 0;
+  if (all.length > 1) {
+    var same = true;
+    for (i = 1; i < all.length; i++) {
+      if (all[i] !== all[0]) { same = false; break; }
+    }
+    if (same) return numInt_(all[0]);
+  }
+  var byHora = {};
   for (i = 0; i < (entries || []).length; i++) {
     var e = entries[i] || {};
     var h = String(e.hora || '').trim() || ('_' + i);

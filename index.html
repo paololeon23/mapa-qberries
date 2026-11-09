@@ -1141,10 +1141,15 @@
       box-shadow: none;
     }
     .grid.is-cercos .cell.multi-selected .cell-fill {
-      top: 0;
-      bottom: auto;
-      left: 0;
-      right: auto;
+      top: 0 !important;
+      bottom: auto !important;
+      left: 0 !important;
+      right: auto !important;
+      height: 20% !important;
+      opacity: 0.88;
+      /* width lo pone JS (avance); no dejarlo en 0 del CSS base */
+    }
+    .grid.is-cercos .cell.multi-selected .cell-fill-foot {
       height: 20%;
       opacity: 0.88;
     }
@@ -6527,9 +6532,9 @@
       return clampToPalette(mod.badge || mod.fill || "");
     }
 
-    /** Individual → color del módulo; múltiple → pincel elegido. */
+    /** Individual → color del módulo; selección del día → pincel elegido. */
     function resolvePaintColor(lot, posKey, storedColor) {
-      if (multiLotMode && posKey && multiLotKeys.has(posKey)) {
+      if (posKey && multiLotKeys.has(posKey)) {
         return normalizeHexColor(storedColor) || multiPaintColor;
       }
       const stored = normalizeHexColor(storedColor);
@@ -7528,8 +7533,8 @@
     function applyLaborVisual(cell, lot) {
       if (!cell || !lot) return;
       const key = cell.dataset.key;
-      // No pisar pintura múltiple activa
-      if (multiLotMode && multiLotKeys.has(key)) {
+      // Lotes del día (con o sin “modo múltiple”): no pisar con GET/soft-sync
+      if (key && multiLotKeys.has(key)) {
         paintOneMultiCell(key);
         return;
       }
@@ -7750,7 +7755,8 @@
         const lot = byPos.get(cell.dataset.key);
         if (lot) applyLaborVisual(cell, lot);
       });
-      if (multiLotMode && multiLotKeys.size) syncMultiLotMapPaint();
+      // Siempre reaplicar selección (si no, soft-sync deja solo el borde)
+      if (multiLotKeys.size) syncMultiLotMapPaint();
       updateMobileChrome();
     }
     window.QBRefreshLabors = refreshAllLaborVisuals;
@@ -9078,13 +9084,13 @@
       const cell = getCellByKey(posKey);
       if (!lot || !cell || !multiLotKeys.has(posKey)) return;
       const area = roundHa(lot.ha) || 1;
+      const laborReal = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "MULTI");
       let av = getMultiLotAvance(posKey, lot);
-      av = clampLaborAvance(av, area, fLaborReal.value || mapQuery.laborReal, lot);
-      const laborReal = fLaborReal.value || "MULTI";
+      av = clampLaborAvance(av, area, laborReal, lot) || defaultLaborAvance(area, laborReal, lot);
       cell.style.setProperty("--multi-color", multiPaintColor);
       cell.classList.remove("dim", "active");
       cell.classList.add("multi-selected");
-      // Pinta solo la altura del avance (barra desde abajo), no el celda entera “tosca”
+      // Cercos = franja arriba; deshierbo = relleno desde abajo
       paintCellProgress(cell, lot, av, laborReal, multiPaintColor);
       cell.classList.add("multi-selected");
       cell.classList.remove("labor-done"); // evita borde doble / aspecto pesado
