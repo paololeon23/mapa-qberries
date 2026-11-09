@@ -1,0 +1,108 @@
+{
+  "seedVersion": 2,
+  "fundo": "QBERRIES",
+  "refBase": "46130QBERRIES",
+  "packingDefault": "QPACK",
+  "etapa": "ETAPA 1",
+  "kgPerJarra": 1.0653,
+  "descarteRate": 0.0046936,
+  "jarrasPorJaba": 12,
+  "rows": [
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "20346",
+      "modulo": "M5",
+      "turno": "T15",
+      "lote": 240,
+      "jorna": 202,
+      "jabas": 12,
+      "jarras": 144
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19836",
+      "modulo": "M5",
+      "turno": "T15",
+      "lote": 241,
+      "jorna": 203,
+      "jabas": 16,
+      "jarras": 192
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19840",
+      "modulo": "M5",
+      "turno": "T14",
+      "lote": 237,
+      "jorna": 202,
+      "jabas": 14,
+      "jarras": 168
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19841",
+      "modulo": "M5",
+      "turno": "T12",
+      "lote": 231,
+      "jorna": 202,
+      "jabas": 33,
+      "jarras": 372
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19842",
+      "modulo": "M5",
+      "turno": "T4",
+      "lote": 194,
+      "jorna": 202,
+      "jabas": 49,
+      "jarras": 468
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19843",
+      "modulo": "M5",
+      "turno": "T1",
+      "lote": 183,
+      "jorna": 202,
+      "jabas": 33,
+      "jarras": 396
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19844",
+      "modulo": "M5",
+      "turno": "T3",
+      "lote": 192,
+      "jorna": 202,
+      "jabas": 7,
+      "jarras": 84
+    },
+    {
+      "fecha": "2026-11-04",
+      "packing": "QPACK",
+      "variedad": "SEKOYA POP",
+      "guia": "19845",
+      "modulo": "M5",
+      "turno": "T1",
+      "lote": 185,
+      "jorna": 202,
+      "jabas": 15,
+      "jarras": 180
+    }
+  ]
+}

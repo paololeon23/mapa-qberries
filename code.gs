@@ -190,7 +190,8 @@ function guardar_(d) {
 
     var rows = leerFilas_(hoja);
     var actualizado = false;
-    var previas = buscarEnFilas_(rows, turno, loteNum, sem, laborReal, modulo);
+    // Unicidad por día: mismo lote/labor en OTRO día se conserva (2 colores en mapa)
+    var previas = buscarEnFilasDia_(rows, turno, loteNum, sem, laborReal, modulo, fechaIso);
     if (!editar && localId && yaGuardado_(localId) && previas.length) {
       return {
         ok: true,
@@ -324,7 +325,14 @@ function guardarGrupo_(payload) {
     var uniq = [];
     var seenKey = {};
     for (var j0 = validados.length - 1; j0 >= 0; j0--) {
-      var kk = [validados[j0].sem, validados[j0].turno, validados[j0].lote, validados[j0].laborReal, validados[j0].modulo].join('|');
+      var kk = [
+        validados[j0].sem,
+        validados[j0].fecha,
+        validados[j0].turno,
+        validados[j0].lote,
+        validados[j0].laborReal,
+        validados[j0].modulo
+      ].join('|');
       if (seenKey[kk]) continue;
       seenKey[kk] = true;
       uniq.unshift(validados[j0]);
@@ -333,7 +341,7 @@ function guardarGrupo_(payload) {
 
     for (var j = 0; j < validados.length; j++) {
       var v = validados[j];
-      var previas = buscarEnFilas_(rows, v.turno, v.lote, v.sem, v.laborReal, v.modulo);
+      var previas = buscarEnFilasDia_(rows, v.turno, v.lote, v.sem, v.laborReal, v.modulo, v.fecha);
       if (!v.editar && v.localId && yaGuardado_(v.localId) && previas.length) {
         skipped++;
         saved.push({ ok: true, duplicate: true, lote: v.lote, turno: v.turno });
@@ -811,7 +819,7 @@ function getMapa_(d, e) {
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  var cacheKey = 'map_v13_' + cacheVer + '_' + [
+  var cacheKey = 'map_v14_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
@@ -830,7 +838,7 @@ function getMapa_(d, e) {
 
   var hoja = obtenerHoja_();
   var rows = leerFilas_(hoja);
-  var latest = {};
+  var buckets = {};
   var list = [];
   var fechaIsoFiltro = fechaFiltro ? normalizarFecha_(fechaFiltro) : '';
 
@@ -850,14 +858,13 @@ function getMapa_(d, e) {
     var key = claveLote_(r.turno, r.loteNum);
     if (!key) continue;
     key = key + '|' + (norm_(r.laborReal) || '-');
-    if (!latest[key] || r.rowIndex >= latest[key].rowIndex) {
-      latest[key] = r;
-    }
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r);
   }
 
-  for (var k in latest) {
-    if (!latest.hasOwnProperty(k)) continue;
-    list.push(filaToCliente_(latest[k]));
+  for (var k in buckets) {
+    if (!buckets.hasOwnProperty(k)) continue;
+    list.push(filaToClienteConSegmentos_(buckets[k]));
   }
 
   // Solo list (sin records duplicados) → respuesta más liviana
@@ -1106,8 +1113,75 @@ function filaToCliente_(r) {
     ml: numInt_(r.ml),
     totalJr: numInt_(r.totalJr),
     color: r.color || '',
-    horaGuardado: r.horaGuardado
+    horaGuardado: r.horaGuardado,
+    segmentos: [{
+      fecha: r.fechaIso || r.fecha || '',
+      fechaIso: r.fechaIso || '',
+      avance: numDec_(r.avance),
+      color: r.color || '',
+      horaGuardado: r.horaGuardado || ''
+    }]
   };
+}
+
+/** Varios días del mismo lote → un ítem con segmentos (jueves abajo, viernes arriba). */
+function filaToClienteConSegmentos_(rowsSameLot) {
+  rowsSameLot = (rowsSameLot || []).slice().sort(function (a, b) {
+    var fa = String(a.fechaIso || a.fecha || '');
+    var fb = String(b.fechaIso || b.fecha || '');
+    if (fa !== fb) return fa < fb ? -1 : 1;
+    return (a.rowIndex || 0) - (b.rowIndex || 0);
+  });
+  var byFecha = {};
+  var order = [];
+  for (var i = 0; i < rowsSameLot.length; i++) {
+    var r = rowsSameLot[i];
+    var fIso = String(r.fechaIso || normalizarFecha_(r.fecha) || '').slice(0, 10);
+    if (!fIso) fIso = '9999-99-99';
+    if (!byFecha[fIso]) {
+      byFecha[fIso] = {
+        fecha: fIso,
+        fechaIso: fIso,
+        avance: 0,
+        color: '',
+        horaGuardado: '',
+        row: r
+      };
+      order.push(fIso);
+    }
+    byFecha[fIso].avance = Math.round((byFecha[fIso].avance + numDec_(r.avance)) * 100) / 100;
+    byFecha[fIso].color = r.color || byFecha[fIso].color;
+    byFecha[fIso].horaGuardado = r.horaGuardado || byFecha[fIso].horaGuardado;
+    byFecha[fIso].row = r;
+  }
+  var segmentos = [];
+  var totalAv = 0;
+  var totalMl = 0;
+  var totalJr = 0;
+  for (var j = 0; j < order.length; j++) {
+    var s = byFecha[order[j]];
+    segmentos.push({
+      fecha: s.fechaIso,
+      fechaIso: s.fechaIso,
+      avance: s.avance,
+      color: s.color || '',
+      horaGuardado: s.horaGuardado || ''
+    });
+    totalAv += s.avance;
+    totalMl += numInt_(s.row.ml);
+    totalJr += numInt_(s.row.totalJr);
+  }
+  totalAv = Math.round(totalAv * 100) / 100;
+  var last = byFecha[order[order.length - 1]].row;
+  var base = filaToCliente_(last);
+  base.avance = totalAv;
+  base.ml = totalMl;
+  base.totalJr = totalJr;
+  base.color = segmentos.length ? (segmentos[segmentos.length - 1].color || base.color) : base.color;
+  base.fecha = segmentos.length ? segmentos[segmentos.length - 1].fechaIso : base.fecha;
+  base.fechaIso = base.fecha;
+  base.segmentos = segmentos;
+  return base;
 }
 
 function buscarEnFilas_(rows, turno, loteNum, sem, laborReal, modulo) {
@@ -1123,6 +1197,30 @@ function buscarEnFilas_(rows, turno, loteNum, sem, laborReal, modulo) {
     if (norm_(rows[i].turno) !== turnoNorm) continue;
     if (modNorm && normMod_(rows[i].modulo) !== modNorm) continue;
     if (laborNorm && norm_(rows[i].laborReal) !== laborNorm) continue;
+    idx.push(rows[i].rowIndex);
+  }
+  return idx;
+}
+
+/** Busca solo el mismo día (permite avance de otro día del mismo lote). */
+function buscarEnFilasDia_(rows, turno, loteNum, sem, laborReal, modulo, fechaIso) {
+  var idx = [];
+  var turnoNorm = norm_(turno);
+  var laborNorm = laborReal != null && laborReal !== '' ? norm_(laborReal) : '';
+  var modNorm = modulo ? normMod_(modulo) : '';
+  var semN = num_(sem);
+  var loteN = numLote_(loteNum);
+  var fWant = String(fechaIso || '').slice(0, 10);
+  for (var i = 0; i < rows.length; i++) {
+    if (num_(rows[i].sem) !== semN) continue;
+    if (numLote_(rows[i].loteNum) !== loteN) continue;
+    if (norm_(rows[i].turno) !== turnoNorm) continue;
+    if (modNorm && normMod_(rows[i].modulo) !== modNorm) continue;
+    if (laborNorm && norm_(rows[i].laborReal) !== laborNorm) continue;
+    if (fWant) {
+      var fRow = String(rows[i].fechaIso || normalizarFecha_(rows[i].fecha) || '').slice(0, 10);
+      if (fRow !== fWant) continue;
+    }
     idx.push(rows[i].rowIndex);
   }
   return idx;
@@ -1411,13 +1509,18 @@ function validarToken_(e) {
 
 function rateLimitOk_(e, action) {
   action = String(action || '').toLowerCase();
-  if (action === 'ping') return true;
+  // Lecturas libres: el mapa hace GET frecuente para pintar
+  if (action === 'ping' || action === 'get' || action === 'filtros' ||
+      action === 'resumen' || action === 'consultar' || action === 'dashboard') {
+    return true;
+  }
   try {
     var cache = CacheService.getScriptCache();
     var tok = String(param_(e, 'token') || 'anon').replace(/[^a-zA-Z0-9_\-]/g, '').substring(0, 40);
-    var key = 'rl_' + (tok || 'anon');
+    var key = 'rl_w_' + (tok || 'anon');
     var n = Number(cache.get(key) || '0');
-    if (n >= 90) return false;
+    // Solo escribe (guardar / borrar): tope por minuto
+    if (n >= 60) return false;
     cache.put(key, String(n + 1), 60);
     return true;
   } catch (err) {

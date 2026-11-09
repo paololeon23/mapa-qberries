@@ -355,16 +355,15 @@
     .pend-chip-desk.show { display: inline-flex; }
 
     .week-wrap {
-      max-height: 8.4rem;
-      overflow: auto;
-      scrollbar-width: thin;
+      overflow: hidden;
       border: 1px solid #1e4e8c;
-      border-radius: 8px;
+      border-radius: 12px;
       background: #fff;
     }
     .week-table {
       width: 100%;
       border-collapse: collapse;
+      border-spacing: 0;
       font-variant-numeric: tabular-nums;
     }
     .week-table th {
@@ -377,10 +376,11 @@
       text-align: left;
       padding: 0.32rem 0.45rem;
       white-space: nowrap;
-      position: sticky;
-      top: 0;
-      z-index: 1;
     }
+    .week-table thead th:first-child { border-top-left-radius: 11px; }
+    .week-table thead th:last-child { border-top-right-radius: 11px; }
+    .week-table tfoot td:first-child { border-bottom-left-radius: 11px; }
+    .week-table tfoot td:last-child { border-bottom-right-radius: 11px; }
     .week-table td {
       font-size: 0.74rem;
       font-weight: 600;
@@ -936,6 +936,18 @@
       pointer-events: none;
       z-index: 0;
       transition: height .35s cubic-bezier(.2,.8,.2,1), width .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .cell-fill-seg {
+      position: absolute;
+      left: 0;
+      right: 0;
+      opacity: 0.92;
+      pointer-events: none;
+      z-index: 0;
+      box-sizing: border-box;
+    }
+    .cell-fill-seg + .cell-fill-seg {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.55);
     }
     .cell .t, .cell .l, .cell .h { position: relative; z-index: 1; }
     .grid.is-cercos .cell:not(.empty) {
@@ -3094,6 +3106,1028 @@
       .sidebar { padding: 0.65rem 1rem; }
     }
 
+    /* Frecuencias de cosecha · solo escritorio */
+    .desk-only-btn { display: inline-flex; }
+    @media (max-width: 1023px) {
+      .desk-only-btn { display: none !important; }
+      #freqScreen { display: none !important; }
+    }
+    body.freq-open { overflow: hidden; }
+    .freq-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .freq-screen[hidden] { display: none !important; }
+    /* Mapa frecuencias: solo barra · mismo #grid debajo (sin clonar) */
+    .freq-screen.is-live-map {
+      inset: 0 0 auto 0;
+      height: auto;
+      background: transparent;
+      pointer-events: none;
+      z-index: 90;
+    }
+    .freq-screen.is-live-map .freq-top {
+      pointer-events: auto;
+      flex-wrap: nowrap;
+      gap: 0.45rem;
+      padding: 0.45rem 0.75rem;
+      box-shadow: 0 8px 24px rgba(15, 39, 68, 0.28);
+    }
+    .freq-screen.is-live-map .freq-top * { pointer-events: auto; }
+    .freq-screen.is-live-map .freq-panel,
+    .freq-screen.is-live-map .freq-sub {
+      display: none !important;
+    }
+    .freq-screen.is-live-map .freq-legend-box {
+      padding: 0.25rem 0.55rem;
+      font-size: 0.68rem;
+      max-width: none;
+    }
+    .freq-screen.is-live-map .freq-legend {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.25rem 0.65rem;
+    }
+    .freq-screen.is-live-map .freq-legend-stats { margin-top: 0.2rem; }
+    /* Oculta chrome de labores: solo queda el plano real */
+    body.freq-map-live .app-header,
+    body.freq-map-live .sidebar,
+    body.freq-map-live .labor-actions,
+    body.freq-map-live #laborDrawer,
+    body.freq-map-live .drawer-backdrop,
+    body.freq-map-live .map-labor-banner {
+      display: none !important;
+    }
+    body.freq-map-live {
+      --freq-bar-h: 58px;
+    }
+    body.freq-map-live .workspace {
+      margin: 0;
+      padding-top: var(--freq-bar-h);
+      height: 100vh;
+      height: 100dvh;
+      box-sizing: border-box;
+    }
+    body.freq-map-live .map-panel {
+      height: 100%;
+      min-height: 0;
+    }
+    body.freq-map-live #viewport {
+      height: 100%;
+      border-radius: 0;
+    }
+    body.freq-map-live #grid .cell-fill,
+    body.freq-map-live #grid .cell-fill-foot,
+    body.freq-map-live #grid .cell .h,
+    body.freq-map-live #grid .cercos-foot,
+    body.freq-map-live #grid .cercos-close {
+      display: none !important;
+    }
+    body.freq-map-live #grid .cell:not(.empty) {
+      background: #fff !important;
+    }
+    body.freq-map-live #grid .freq-days {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+      line-height: 1.15;
+      padding: 0.08rem 0 0.1rem;
+      background: rgba(15, 23, 42, 0.82);
+      color: #fff;
+    }
+    body.freq-map-live #grid .freq-days.is-verde { background: #2e7d32; }
+    body.freq-map-live #grid .freq-days.is-amarillo { background: #f9a825; color: #1a1a1a; }
+    body.freq-map-live #grid .freq-days.is-rojo { background: #c62828; }
+    body.freq-map-live #grid .freq-days.is-sin { background: #64748b; }
+    .freq-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+      background: #0f2744;
+      color: #fff;
+      flex-wrap: wrap;
+    }
+    .freq-top h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .freq-top .freq-sub {
+      margin: 0;
+      opacity: 0.75;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .freq-top-grow { flex: 1; }
+    .freq-tabs {
+      display: inline-flex;
+      gap: 0.25rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.2rem;
+    }
+    .freq-tab {
+      border: 0;
+      background: transparent;
+      color: #fff;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+    .freq-tab.is-on {
+      background: #fff;
+      color: #0f2744;
+      opacity: 1;
+    }
+    .freq-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: #eef2f7;
+    }
+    .freq-panel[hidden] { display: none !important; }
+    .freq-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      background: #fff;
+      border-bottom: 1px solid #dbe3ee;
+    }
+    .freq-panel-head h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #0f2744;
+    }
+    .freq-panel-head input[type="search"] {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.4rem 0.65rem;
+      font: inherit;
+      font-weight: 600;
+      min-width: 14rem;
+    }
+    .freq-data-layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      overflow: hidden;
+    }
+    .freq-data-main {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+    .freq-data-main .freq-panel-head {
+      flex: 0 0 auto;
+    }
+    .freq-table-scroll {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 0.85rem 1rem 1rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .freq-table-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+    .freq-data-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+      border: 1px solid #d7dee8;
+      border-radius: 14px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .freq-data-table th {
+      color: #fff;
+      font-size: 0.62rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 0.55rem 0.45rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .freq-data-table th.is-in { background: #15803d; }
+    .freq-data-table th.is-auto { background: #0f2744; }
+    .freq-data-table td {
+      padding: 0.55rem 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 650;
+      border-bottom: 1px solid #eef2f7;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+    .freq-data-table td.num,
+    .freq-data-table th.num { text-align: right; }
+    .freq-data-table td.is-auto {
+      color: #334155;
+      background: #f8fafc;
+      font-weight: 700;
+    }
+    .freq-data-table tbody tr:hover td { background: #f0fdf4; }
+    .freq-data-table tbody tr:hover td.is-auto { background: #ecfdf5; }
+    .freq-data-table .is-empty td {
+      text-align: center;
+      color: #94a3b8;
+      padding: 1.4rem;
+      border: 0;
+      white-space: normal;
+      background: #fff;
+    }
+    .freq-data-table col.c-fecha { width: 9%; }
+    .freq-data-table col.c-var { width: 11%; }
+    .freq-data-table col.c-guia { width: 8%; }
+    .freq-data-table col.c-md { width: 6%; }
+    .freq-data-table col.c-turno { width: 6%; }
+    .freq-data-table col.c-lote { width: 6%; }
+    .freq-data-table col.c-ha { width: 6%; }
+    .freq-data-table col.c-jorna { width: 7%; }
+    .freq-data-table col.c-jabas { width: 6%; }
+    .freq-data-table col.c-jarras { width: 7%; }
+    .freq-data-table col.c-kg { width: 9%; }
+    .freq-data-table col.c-kgha { width: 8%; }
+    .freq-data-table col.c-desc { width: 7%; }
+    .freq-data-table col.c-neto { width: 9%; }
+    .freq-add-box {
+      min-width: 0;
+      border-left: 1px solid #e2e8f0;
+      background: #fff;
+      padding: 0.9rem 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.38rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    .freq-add-box h3 { margin: 0; font-size: 0.95rem; color: #0f172a; }
+    .freq-add-box .freq-meta {
+      margin: 0 0 0.15rem;
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .freq-add-box label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+      min-width: 0;
+    }
+    .freq-add-box label.is-auto-field span.val {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.38rem 0.5rem;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.82rem;
+      font-weight: 700;
+      min-height: 2rem;
+      box-sizing: border-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .freq-add-box input,
+    .freq-add-box select {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.38rem 0.5rem;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #0f172a;
+      min-width: 0;
+    }
+    .freq-add-box .freq-add-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.4rem;
+      min-width: 0;
+    }
+    .freq-add-box .btn {
+      width: 100%;
+      margin-top: 0.25rem;
+      box-sizing: border-box;
+    }
+    .freq-panel-calc {
+      background: #f3f5f7;
+      min-height: 0;
+    }
+    /* Scroll invisible: se puede arrastrar/rueda, sin barra a la vista */
+    .freq-hide-scroll {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .freq-hide-scroll::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+    .freq-calc-layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+      background: #eef2f6;
+    }
+    .freq-calc-nav {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-right: 1px solid #e2e8f0;
+      overflow: auto;
+      padding: 1rem 0.85rem 1.35rem;
+    }
+    .freq-calc-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.35rem 0.35rem 0.95rem;
+      margin-bottom: 0.35rem;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .freq-calc-nav-brand .mark {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #22c55e, #15803d);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+      box-shadow: 0 8px 16px rgba(22, 163, 74, 0.22);
+      flex-shrink: 0;
+    }
+    .freq-calc-nav-brand strong {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 850;
+      color: #0f172a;
+      line-height: 1.15;
+    }
+    .freq-calc-nav-brand span {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.68rem;
+      font-weight: 650;
+      color: #64748b;
+    }
+    .freq-calc-nav-label {
+      margin: 0.55rem 0.4rem 0.55rem;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .freq-nav-mod-btn {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.65rem;
+      border: 1px solid #e8eef5;
+      background: #fff;
+      color: #334155;
+      font: inherit;
+      padding: 0.7rem 0.7rem;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 0.45rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, transform 0.12s ease;
+    }
+    .freq-nav-mod-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    .freq-nav-mod-btn.is-on {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(22, 163, 74, 0.28);
+    }
+    .freq-nav-mod-btn .ico {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 11px;
+      background: #f1f5f9;
+      color: #166534;
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+    .freq-nav-mod-btn.is-on .ico {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+    .freq-nav-mod-btn .txt {
+      min-width: 0;
+    }
+    .freq-nav-mod-btn .txt b {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 850;
+      line-height: 1.15;
+    }
+    .freq-nav-mod-btn .txt small {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.68rem;
+      font-weight: 650;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .freq-nav-mod-btn.is-on .txt small { color: rgba(255,255,255,0.82); }
+    .freq-nav-mod-btn .count {
+      min-width: 1.7rem;
+      height: 1.7rem;
+      padding: 0 0.35rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 850;
+    }
+    .freq-nav-mod-btn.is-on .count {
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+    }
+    .freq-calc-main {
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 0 0;
+    }
+    .freq-calc-main-head {
+      flex: 0 0 auto;
+      padding: 0 1.15rem 0.85rem;
+    }
+    .freq-calc-main-head h3 {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+    .freq-calc-main-head p {
+      margin: 0.2rem 0 0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .freq-turn-board {
+      flex: 1;
+      min-height: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      align-items: stretch;
+      gap: 0.85rem;
+      padding: 0 1.15rem 1.15rem;
+      scroll-snap-type: x proximity;
+    }
+    .freq-turn-col {
+      flex: 0 0 230px;
+      width: 230px;
+      max-width: 230px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+    .freq-turn-col.is-on {
+      border-color: #86efac;
+      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.18);
+    }
+    .freq-turn-col-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.7rem 0.8rem;
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      border: 0;
+      width: 100%;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+      color: inherit;
+    }
+    .freq-turn-col-head:hover { background: #f0fdf4; }
+    .freq-turn-col-head b {
+      font-size: 0.92rem;
+      font-weight: 850;
+      color: #0f172a;
+    }
+    .freq-turn-col-head span {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #64748b;
+      background: #f1f5f9;
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem;
+    }
+    .freq-turn-col.is-on .freq-turn-col-head span {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .freq-turn-col-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .freq-lot-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 0.8rem 0.85rem 0.85rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      width: 100%;
+    }
+    .freq-lot-card:hover {
+      border-color: #86efac;
+      box-shadow: 0 8px 18px rgba(22, 163, 74, 0.12);
+      transform: translateY(-1px);
+    }
+    .freq-lot-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+    .freq-lot-card-top strong {
+      font-size: 0.88rem;
+      font-weight: 850;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .freq-lot-card-plant {
+      width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 999px;
+      border: 0;
+      background: #ecfdf5;
+      color: #15803d;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+    .freq-lot-card:hover .freq-lot-card-plant {
+      background: #16a34a;
+      color: #fff;
+    }
+    .freq-lot-card-dr {
+      font-size: 1.75rem;
+      font-weight: 900;
+      line-height: 1;
+      color: #16a34a;
+      letter-spacing: -0.03em;
+    }
+    .freq-lot-card-dr.is-amarillo { color: #ca8a04; }
+    .freq-lot-card-dr.is-rojo { color: #dc2626; }
+    .freq-lot-card-dr.is-sin { color: #94a3b8; }
+    .freq-lot-card-meta {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.35;
+    }
+    .freq-empty {
+      margin: 3rem auto;
+      text-align: center;
+      color: #94a3b8;
+      font-weight: 700;
+      max-width: 18rem;
+    }
+    .freq-dr-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .freq-dr-modal[hidden] { display: none !important; }
+    .freq-dr-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+    }
+    .freq-dr-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(540px, 92vw);
+      max-height: min(86vh, 780px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+      padding: 1.15rem 1.25rem 1.15rem;
+    }
+    .freq-dr-dialog header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .freq-dr-dialog header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 850;
+      color: #0f172a;
+    }
+    .freq-dr-dialog header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .freq-dr-close {
+      border: 0;
+      background: #f1f5f9;
+      color: #334155;
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .freq-dr-kpis {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.65rem;
+      margin-bottom: 0.9rem;
+    }
+    .freq-dr-kpis div {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 0.65rem 0.75rem;
+    }
+    .freq-dr-kpis span {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .freq-dr-kpis strong {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .freq-dr-table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fff;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .freq-dr-table-wrap::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+    .freq-dr-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    .freq-dr-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #0f2744;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #fff;
+      text-align: left;
+      padding: 0.55rem 0.9rem;
+    }
+    .freq-dr-table th.num { text-align: right; }
+    .freq-dr-table td {
+      padding: 0.48rem 0.9rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-top: 1px solid #f1f5f9;
+      color: #0f172a;
+    }
+    .freq-dr-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    .freq-dr-table td.num { text-align: right; }
+    .freq-dr-table td.dr-verde { background: #dcfce7; }
+    .freq-dr-table td.dr-amarillo { background: #fef9c3; }
+    .freq-dr-table td.dr-rojo { background: #fee2e2; }
+    .freq-dr-table td.dr-sin { background: #e2e8f0; }
+    .freq-panel-map { min-height: 0; }
+    .freq-panel-map .freq-body { flex: 1; min-height: 0; }
+    .freq-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .freq-controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .freq-controls input,
+    .freq-controls select {
+      border: 0;
+      border-radius: 8px;
+      padding: 0.35rem 0.5rem;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f172a;
+      min-width: 9rem;
+    }
+    .freq-legend-box {
+      background: #fff;
+      color: #0f172a;
+      border: 2px solid #1e4e8c;
+      border-radius: 10px;
+      padding: 0.45rem 0.7rem 0.55rem;
+      min-width: 9.5rem;
+      box-shadow: 0 4px 14px rgba(15, 39, 68, 0.18);
+      flex-shrink: 0;
+    }
+    .freq-legend-box strong {
+      display: block;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #1e4e8c;
+      margin-bottom: 0.25rem;
+    }
+    .freq-legend-box .freq-fecha {
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+    }
+    .freq-legend-box .freq-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .freq-legend i {
+      display: inline-block;
+      width: 0.85rem;
+      height: 0.85rem;
+      border-radius: 3px;
+      margin-right: 0.35rem;
+      vertical-align: -2px;
+      border: 1px solid rgba(0,0,0,0.12);
+    }
+    .freq-legend .g { background: #43A047; }
+    .freq-legend .y { background: #F9A825; }
+    .freq-legend .r { background: #E53935; }
+    .freq-legend .s { background: #e8eef5; }
+    .freq-legend-stats {
+      margin-top: 0.35rem;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .freq-body {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 0;
+    }
+    .freq-map-pane {
+      overflow: auto;
+      padding: 0.85rem;
+      background: #dfe7ef;
+      position: relative;
+    }
+    /* Mismo plano que deshierbo: reutiliza .cell / .m1…m10 */
+    .freq-grid {
+      display: grid;
+      gap: 2px;
+      width: max-content;
+      margin: 0 auto;
+      background: #0f172a;
+      padding: 2px;
+      border-radius: 6px;
+    }
+    .freq-grid .cell {
+      cursor: pointer;
+      min-width: 44px;
+      min-height: 48px;
+      width: 44px;
+      height: 48px;
+    }
+    .freq-grid .cell.empty {
+      pointer-events: none;
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      min-width: 44px;
+      min-height: 48px;
+    }
+    .freq-grid .cell .cell-fill,
+    .freq-grid .cell .cell-fill-foot,
+    .freq-grid .cell .cercos-foot,
+    .freq-grid .cell .cercos-close {
+      display: none !important;
+    }
+    /* Solo abajito: días avanzados (DR) */
+    .freq-grid .cell .freq-days {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+      line-height: 1.15;
+      padding: 0.08rem 0 0.1rem;
+      background: rgba(15, 23, 42, 0.82);
+      color: #fff;
+      border-radius: 0 0 2px 2px;
+    }
+    .freq-grid .cell .freq-days.is-verde { background: #2e7d32; }
+    .freq-grid .cell .freq-days.is-amarillo { background: #f9a825; color: #1a1a1a; }
+    .freq-grid .cell .freq-days.is-rojo { background: #c62828; }
+    .freq-grid .cell .freq-days.is-sin { background: #64748b; }
+    .freq-grid .cell.is-on {
+      outline: 2px solid #0f172a;
+      outline-offset: 1px;
+      z-index: 2;
+    }
+    .freq-grid .cell .t,
+    .freq-grid .cell .l,
+    .freq-grid .cell .h {
+      position: relative;
+      z-index: 1;
+    }
+    .freq-side {
+      border-left: 1px solid #cbd5e1;
+      background: #fff;
+      overflow: auto;
+      padding: 0.9rem 1rem;
+    }
+    .freq-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+    .freq-detail-head h3 { margin: 0; font-size: 1.05rem; }
+    .freq-pill {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.25rem 0.5rem;
+      border-radius: 999px;
+      color: #fff;
+    }
+    .freq-pill.tone-verde { background: #43A047; }
+    .freq-pill.tone-amarillo { background: #F9A825; color: #1a1a1a; }
+    .freq-pill.tone-rojo { background: #E53935; }
+    .freq-pill.tone-sin { background: #64748b; }
+    .freq-meta {
+      margin: 0.2rem 0;
+      font-size: 0.78rem;
+      color: #475569;
+      font-weight: 600;
+    }
+    .freq-muted { color: #94a3b8; font-weight: 600; }
+    .freq-empty { padding: 2rem; text-align: center; color: #64748b; font-weight: 700; }
+    .freq-table-wrap {
+      margin-top: 0.75rem;
+      border: 1px solid #1e4e8c;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    .freq-table th {
+      background: #1e4e8c;
+      color: #fff;
+      font-size: 0.58rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 0.35rem 0.5rem;
+    }
+    .freq-table td {
+      padding: 0.28rem 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .freq-table td.num, .freq-table th.num { text-align: right; }
+    .freq-table tbody tr:nth-child(even) td { background: #f8fafc; }
+
     /* Celular: mapa + panel operativo (resumen, módulos, actualizar) */
     .mob-chrome,
     .mob-detail,
@@ -3791,9 +4825,14 @@
         </button>
         <button type="button" class="btn" id="zoomReset" title="Restablecer zoom">100%</button>
       </div>
-      <button type="button" class="btn btn-icon" id="deskRefreshBtn" title="Actualizar" aria-label="Actualizar">
+      <button type="button" class="btn btn-icon desk-only-btn" id="deskRefreshBtn" title="Actualizar" aria-label="Actualizar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+        </svg>
+      </button>
+      <button type="button" class="btn btn-icon desk-only-btn" id="deskFreqBtn" title="Frecuencias de cosecha" aria-label="Frecuencias de cosecha">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
         </svg>
       </button>
       <button type="button" class="btn btn-primary" id="clearBtn">
@@ -4280,6 +5319,164 @@
     </section>
   </div>
 
+  <section class="freq-screen" id="freqScreen" hidden aria-hidden="true">
+    <header class="freq-top">
+      <div>
+        <h2>Frecuencias de cosecha</h2>
+        <p class="freq-sub">1 Data → 2 Cálculo automático → 3 Mapa</p>
+      </div>
+      <nav class="freq-tabs" aria-label="Flujos">
+        <button type="button" class="freq-tab" data-tab="data" data-path="/data" title="/data">/data</button>
+        <button type="button" class="freq-tab" data-tab="calculo" data-path="/calculo" title="/calculo">/calculo</button>
+        <button type="button" class="freq-tab is-on" data-tab="mapa" data-path="/mapa" title="/mapa">/mapa</button>
+      </nav>
+      <div class="freq-top-grow"></div>
+      <div class="freq-controls">
+        <label>Fecha de corte
+          <input type="date" id="freqCutDate" />
+        </label>
+        <label>Variedad
+          <select id="freqVariedad">
+            <option value="SEKOYA POP">SEKOYA POP</option>
+            <option value="MAGICA">MAGICA</option>
+          </select>
+        </label>
+      </div>
+      <aside class="freq-legend-box" id="freqLegendBox" aria-label="Leyenda">
+        <strong>Leyenda</strong>
+        <div class="freq-fecha">Fecha: <span id="freqCutLabel">—</span></div>
+        <div class="freq-legend">
+          <span><i class="g"></i>0–8 días</span>
+          <span><i class="y"></i>9–11 días</span>
+          <span><i class="r"></i>12+ días</span>
+          <span><i class="s"></i>Sin historial</span>
+        </div>
+        <div class="freq-legend-stats" id="freqLegendStats"></div>
+      </aside>
+      <button type="button" class="btn" id="freqCloseBtn" style="background:#fff;color:#0f2744;font-weight:800">Cerrar</button>
+    </header>
+
+    <!-- 1) DATA · simulación frontend (Excel DATA EXP) -->
+    <div class="freq-panel freq-panel-data" data-panel="data" hidden>
+      <div class="freq-data-layout">
+        <div class="freq-data-main">
+          <div class="freq-panel-head">
+            <h3>Data de producción</h3>
+            <span id="freqDataMeta">—</span>
+          </div>
+          <div class="freq-table-scroll">
+            <table class="freq-data-table" id="freqDataTable">
+              <colgroup>
+                <col class="c-fecha" />
+                <col class="c-var" />
+                <col class="c-guia" />
+                <col class="c-md" />
+                <col class="c-turno" />
+                <col class="c-lote" />
+                <col class="c-ha" />
+                <col class="c-jorna" />
+                <col class="c-jabas" />
+                <col class="c-jarras" />
+                <col class="c-kg" />
+                <col class="c-kgha" />
+                <col class="c-desc" />
+                <col class="c-neto" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="is-in">Fecha</th>
+                  <th class="is-in">Variedad</th>
+                  <th class="is-in">Guía</th>
+                  <th class="is-in">MD</th>
+                  <th class="is-in">Turno</th>
+                  <th class="is-in num">Lote</th>
+                  <th class="is-auto num">HA</th>
+                  <th class="is-in num">Jorna</th>
+                  <th class="is-in num">Jabas</th>
+                  <th class="is-in num">Jarras</th>
+                  <th class="is-auto num">Kg bruto</th>
+                  <th class="is-auto num">Kg/HA</th>
+                  <th class="is-auto num">Desc.</th>
+                  <th class="is-auto num">Kg netos</th>
+                </tr>
+              </thead>
+              <tbody id="freqDataBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="freq-add-box">
+          <h3>Agregar cosecha</h3>
+          <p class="freq-meta">Verde = input · Azul = automático. Cascade del mapa.</p>
+          <label>Fecha <input type="date" id="freqAddFecha" /></label>
+          <label>Variedad
+            <select id="freqAddVariedad">
+              <option value="SEKOYA POP">SEKOYA POP</option>
+              <option value="MAGICA">MAGICA</option>
+            </select>
+          </label>
+          <label>Packing <input type="text" id="freqAddPacking" value="QPACK" /></label>
+          <label>Nº guía interna <input type="text" id="freqAddGuia" inputmode="numeric" placeholder="20346" /></label>
+          <label>Módulo
+            <select id="freqAddModulo"><option value="">Seleccionar</option></select>
+          </label>
+          <label>Turno
+            <select id="freqAddTurno" disabled><option value="">Seleccionar</option></select>
+          </label>
+          <label>Lote
+            <select id="freqAddLote" disabled><option value="">Seleccionar</option></select>
+          </label>
+          <div class="freq-add-row">
+            <label class="is-auto-field">Cod <span class="val" id="freqAddCod">—</span></label>
+            <label class="is-auto-field">HA <span class="val" id="freqAddHa">—</span></label>
+          </div>
+          <div class="freq-add-row">
+            <label>Jorna <input type="number" id="freqAddJorna" min="0" step="1" placeholder="202" /></label>
+            <label>Jabas <input type="number" id="freqAddJabas" min="0" step="1" placeholder="12" /></label>
+          </div>
+          <label>Jarras <input type="number" id="freqAddJarras" min="0" step="1" placeholder="auto = jabas×12" /></label>
+          <div class="freq-add-row">
+            <label class="is-auto-field">Kg bruto <span class="val" id="freqAddKgBruto">—</span></label>
+            <label class="is-auto-field">Kg netos <span class="val" id="freqAddKgNeto">—</span></label>
+          </div>
+          <button type="button" class="btn btn-primary" id="freqAddBtn">Guardar y calcular</button>
+        </aside>
+      </div>
+    </div>
+
+    <!-- 2) CÁLCULO · módulos → turnos → cards de lotes → modal DR -->
+    <div class="freq-panel freq-panel-calc" data-panel="calculo" hidden>
+      <div class="freq-panel-head">
+        <h3>N° de entradas · cálculo DR</h3>
+        <input type="search" id="freqCalcSearch" placeholder="Buscar lote / turno…" />
+      </div>
+      <div class="freq-calc-layout" id="freqCalcGrid"></div>
+      <div class="freq-dr-modal" id="freqDrModal" hidden>
+        <div class="freq-dr-backdrop" id="freqDrBackdrop"></div>
+        <div class="freq-dr-dialog" role="dialog" aria-modal="true" aria-labelledby="freqDrTitle">
+          <header>
+            <div>
+              <h3 id="freqDrTitle">Lote</h3>
+              <p id="freqDrSub">—</p>
+            </div>
+            <button type="button" class="freq-dr-close" id="freqDrClose" aria-label="Cerrar">×</button>
+          </header>
+          <div class="freq-dr-kpis" id="freqDrKpis"></div>
+          <div class="freq-dr-table-wrap">
+            <table class="freq-dr-table">
+              <thead>
+                <tr><th>N°</th><th>Fecha ingreso</th><th class="num">DR</th></tr>
+              </thead>
+              <tbody id="freqDrBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3) MAPA: pinta el #grid real de deshierbo (sin clonar) -->
+    <div class="freq-panel freq-panel-map" data-panel="mapa" hidden></div>
+  </section>
+
   <div class="save-toast" id="saveToast" role="status"></div>
   <div class="sync-cloud" id="syncCloud" role="status" aria-live="polite" aria-atomic="true" hidden>
     <div class="sync-cloud-inner">
@@ -4304,6 +5501,7 @@
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script src="data.js?v=8"></script>
+  <script src="frecuencias.js"></script>
   <script>
     const API_URL = (window.QB_CONFIG && QB_CONFIG.API_URL) || "";
 
@@ -5302,29 +6500,47 @@
       if (dropped) saveLaborRecords();
     }
 
-    function applyApiRecords(records, opts = {}) {
-      if (!records) return 0;
-      let n = 0;
-      const changed = [];
-      const pendingByPos = pendingLaborByPos();
-      const wantLabor = String((opts.laborReal || mapQuery.laborReal || "")).toUpperCase().replace(/\s+/g, " ").trim();
-      const entries = Array.isArray(records)
-        ? records.map(r => [null, r])
-        : Object.entries(records);
-      entries.forEach(([, rec]) => {
-        if (!rec || !rec.laborReal) return;
-        const posKey = posKeyFromRecord(rec);
-        if (!posKey) return;
-        if (wantLabor && !sameLaborName(rec.laborReal, wantLabor)) return;
-        if (savingLabor) return;
-        if (Object.prototype.hasOwnProperty.call(pendingByPos, posKey)) {
-          const pendingLab = pendingByPos[posKey];
-          if (!wantLabor || !pendingLab || sameLaborName(pendingLab, wantLabor)) return;
-        }
-        const lot = byPos.get(posKey);
-        const fromApi = (typeof QBApi.colorNameToHex === "function" ? QBApi.colorNameToHex(rec.color) : "") ||
-          normalizeHexColor(rec.color) || "";
-        const next = {
+    function segmentColorHex(colorNameOrHex) {
+      return (typeof QBApi.colorNameToHex === "function" ? QBApi.colorNameToHex(colorNameOrHex) : "") ||
+        normalizeHexColor(colorNameOrHex) || "";
+    }
+
+    function normalizeSegmentos(rec, fallbackColor) {
+      const raw = Array.isArray(rec && rec.segmentos) ? rec.segmentos : [];
+      const segs = raw.map(s => ({
+        fecha: String((s && (s.fechaIso || s.fecha)) || "").slice(0, 10),
+        avance: roundHa(s && s.avance),
+        color: segmentColorHex(s && s.color) || fallbackColor || ""
+      })).filter(s => s.avance > 0);
+      segs.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+      if (segs.length) return segs;
+      const av = roundHa(rec && rec.avance);
+      if (av > 0) {
+        return [{
+          fecha: String((rec && (rec.fechaIso || rec.fecha)) || "").slice(0, 10),
+          avance: av,
+          color: fallbackColor || ""
+        }];
+      }
+      return [];
+    }
+
+    function recordFromApiRow(rec) {
+      if (!rec || !rec.laborReal) return null;
+      const posKey = posKeyFromRecord(rec);
+      if (!posKey) return null;
+      const lot = byPos.get(posKey);
+      const fromApi = segmentColorHex(rec.color);
+      const prev = laborRecords[posKey];
+      let color = fromApi || modulePaintColor(lot) || "";
+      if (!color && prev && prev.color) color = modulePaintColor(lot) || prev.color;
+      const segmentos = normalizeSegmentos(rec, color);
+      const avance = segmentos.length
+        ? roundHa(segmentos.reduce((s, x) => s + Number(x.avance || 0), 0))
+        : roundHa(rec.avance);
+      return {
+        posKey,
+        next: {
           sem: Number(rec.sem) || currentWeek,
           fecha: rec.fechaIso || rec.fecha || "",
           laborPpto: String(rec.laborPpto || "").toUpperCase(),
@@ -5334,38 +6550,64 @@
           lote: Number(rec.lote),
           variedad: String(rec.variedad || "SEKOYA POP").toUpperCase(),
           area: roundHa(rec.area),
-          avance: roundHa(rec.avance),
+          avance,
           ml: Math.round(Number(rec.ml) || 0),
           totalJr: Math.round(Number(rec.totalJr) || 0),
-          color: fromApi || modulePaintColor(lot) || ""
-        };
-        const prev = laborRecords[posKey];
-        const same = prev &&
-          Number(prev.avance) === next.avance &&
-          String(prev.laborReal || "") === next.laborReal &&
-          Number(prev.sem) === next.sem &&
-          String(prev.fecha || "") === String(next.fecha || "") &&
-          normalizeHexColor(prev.color) === normalizeHexColor(next.color);
-        if (prev && prev.color && !next.color) {
-          const lotKeep = byPos.get(posKey);
-          next.color = modulePaintColor(lotKeep) || prev.color;
+          color: segmentos.length ? (segmentos[segmentos.length - 1].color || color) : color,
+          segmentos
         }
-        laborRecords[posKey] = next;
-        n++;
-        if (!same) changed.push(posKey);
-      });
-      saveLaborRecords();
-      if (opts.fullPaint || changed.length > 60) {
-        refreshAllLaborVisuals();
-      } else if (changed.length) {
-        changed.forEach(key => {
-          const cell = getCellByKey(key);
-          const lot = byPos.get(key);
-          if (cell && lot) applyLaborVisual(cell, lot);
+      };
+    }
+
+    function applyApiRecords(records, opts = {}) {
+      if (!records) return 0;
+      const wantLabor = String((opts.laborReal || mapQuery.laborReal || "")).toUpperCase().replace(/\s+/g, " ").trim();
+      const list = Array.isArray(records) ? records : Object.values(records || {});
+      return paintFromApiList(list, wantLabor, { replace: !!opts.replace });
+    }
+
+    /** GET → pintar: aplica la lista de la hoja y refresca el mapa. */
+    function paintFromApiList(payload, wantLabor, opts = {}) {
+      const labor = String(wantLabor || "").toUpperCase().replace(/\s+/g, " ").trim();
+      const pendingByPos = pendingLaborByPos();
+      const replace = !!opts.replace;
+      const nextMap = {};
+
+      if (!replace) {
+        Object.keys(laborRecords).forEach(k => { nextMap[k] = laborRecords[k]; });
+      } else {
+        // Conservar otras labores; esta labor se reemplaza con el GET
+        Object.keys(laborRecords).forEach(k => {
+          const rec = laborRecords[k];
+          if (rec && labor && !sameLaborName(rec.laborReal, labor)) nextMap[k] = rec;
         });
-        if (multiLotMode && multiLotKeys.size) syncMultiLotMapPaint();
-        updateMobileChrome();
       }
+
+      let n = 0;
+      (payload || []).forEach(rec => {
+        if (!rec || !rec.laborReal) return;
+        if (labor && !sameLaborName(rec.laborReal, labor)) return;
+        const built = recordFromApiRow(rec);
+        if (!built) return;
+        nextMap[built.posKey] = built.next;
+        n++;
+      });
+
+      // Cola local encima (sin bloquear el resto del GET)
+      Object.keys(pendingByPos).forEach(k => {
+        const local = laborRecords[k];
+        if (!local) return;
+        const pendingLab = pendingByPos[k];
+        if (!labor || !pendingLab || sameLaborName(pendingLab, labor) || sameLaborName(local.laborReal, labor)) {
+          nextMap[k] = local;
+        }
+      });
+
+      laborRecords = nextMap;
+      if (labor) pruneRecordsToLabor(labor);
+      saveLaborRecords();
+      normalizeStoredLaborColors();
+      refreshAllLaborVisuals();
       return n;
     }
 
@@ -5373,40 +6615,28 @@
       try {
         const wantLabor = String(opts.laborReal || filters.laborReal || (mapQuery && mapQuery.laborReal) || "").toUpperCase().replace(/\s+/g, " ").trim();
         if (wantLabor && !filters.laborReal) filters.laborReal = wantLabor;
-        const json = await QBApi.getLabors(filters);
+        let json = await QBApi.getLabors(filters);
+        // Un reintento corto si el servidor estaba saturado
+        if (json && isApiRateLimited(json)) {
+          await new Promise(r => setTimeout(r, 1800));
+          filters = Object.assign({}, filters, { nocache: true });
+          json = await QBApi.getLabors(filters);
+        }
         if (!json?.ok) {
           if (isApiRateLimited(json)) {
             notifyRateLimitSoft();
             return { n: 0, ok: false, rateLimited: true };
           }
-          return { n: 0, ok: false };
+          return { n: 0, ok: false, message: json && json.message };
         }
         const payload = Array.isArray(json.list)
           ? json.list
           : (json.records || []);
         renderWeekResumen(Array.isArray(json.resumen) ? json.resumen : null);
-        const pendingByPos = pendingLaborByPos();
-        if (opts.replace) {
-          const keep = {};
-          Object.keys(pendingByPos).forEach(k => {
-            const rec = laborRecords[k];
-            if (!rec) return;
-            const pendingLab = pendingByPos[k];
-            if (!wantLabor || !pendingLab || sameLaborName(pendingLab, wantLabor) || sameLaborName(rec.laborReal, wantLabor)) {
-              keep[k] = rec;
-            }
-          });
-          laborRecords = keep;
-          saveLaborRecords();
-          const n = applyApiRecords(payload, { fullPaint: true, replace: true, laborReal: wantLabor });
-          pruneRecordsToLabor(wantLabor);
-          normalizeStoredLaborColors();
-          refreshAllLaborVisuals();
-          return { n, ok: true };
-        }
-        const n = applyApiRecords(payload, { fullPaint: !!opts.fullPaint, laborReal: wantLabor });
-        pruneRecordsToLabor(wantLabor);
-        return { n, ok: true };
+        const n = paintFromApiList(payload, wantLabor, {
+          replace: opts.replace !== false
+        });
+        return { n, ok: true, listCount: payload.length };
       } catch (err) {
         if (isApiRateLimited(err) || /demasiadas solicitudes/i.test(String(err?.message || err))) {
           notifyRateLimitSoft();
@@ -5932,7 +7162,6 @@
       if (mapQuery.laborReal && typeof laborRealCSelect !== "undefined" && laborRealCSelect) {
         laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
       }
-      refreshAllLaborVisuals();
       syncFilterBtnState();
       if (mapQuery.modulo) {
         const mid = Number(String(mapQuery.modulo).replace(/\D/g, ""));
@@ -6003,7 +7232,12 @@
       return grid.querySelector(`.cell[data-key="${posKey}"]`);
     }
 
-    function paintCellProgress(cell, lot, avance, laborReal, fillColor) {
+    function clearCellFillSegs(cell) {
+      if (!cell) return;
+      cell.querySelectorAll(".cell-fill-seg").forEach(el => el.remove());
+    }
+
+    function paintCellProgress(cell, lot, avance, laborReal, fillColor, segmentos) {
       if (!cell || !lot) return;
       const area = roundHa(lot.ha) || 1;
       let av = roundHa(avance);
@@ -6018,6 +7252,7 @@
       let fillFoot = cell.querySelector(".cell-fill-foot");
       const posKey = cell.dataset.key || "";
       const paint = resolvePaintColor(lot, posKey, fillColor);
+      clearCellFillSegs(cell);
       if (!laborReal || av <= 0) {
         fill.style.background = "transparent";
         fill.style.height = "0%";
@@ -6035,7 +7270,46 @@
         return { pct: 0, st: { key: "empty" }, area, av: 0 };
       }
       const cercos = isCercosLabor(laborReal || mapQuery.laborReal);
-      if (cercos) {
+      const segs = (Array.isArray(segmentos) ? segmentos : [])
+        .map(s => ({
+          fecha: String(s.fecha || "").slice(0, 10),
+          avance: roundHa(s.avance),
+          color: segmentColorHex(s.color) || paint || "#64B5F6"
+        }))
+        .filter(s => s.avance > 0)
+        .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+
+      if (!cercos && segs.length > 1 && area > 0) {
+        // Varios días: jueves abajo → viernes arriba (orden fecha)
+        fill.style.background = "transparent";
+        fill.style.height = "0%";
+        fill.style.width = "";
+        fill.style.top = "auto";
+        fill.style.bottom = "0";
+        fill.style.left = "0";
+        fill.style.right = "0";
+        if (fillFoot) {
+          fillFoot.style.height = "0%";
+          fillFoot.style.width = "0%";
+        }
+        let bottomPct = 0;
+        let used = 0;
+        segs.forEach(seg => {
+          let h = (seg.avance / area) * 100;
+          if (bottomPct + h > 100) h = Math.max(0, 100 - bottomPct);
+          if (h <= 0) return;
+          const band = document.createElement("div");
+          band.className = "cell-fill-seg";
+          band.style.bottom = bottomPct + "%";
+          band.style.height = h + "%";
+          band.style.background = seg.color;
+          band.title = `${seg.fecha || "día"} · ${formatHa(seg.avance)} ha · ${colorDetailText(seg.color)}`;
+          cell.insertBefore(band, fill.nextSibling);
+          bottomPct += h;
+          used += seg.avance;
+        });
+        av = roundHa(Math.min(area, used || av));
+      } else if (cercos) {
         const barW = area > 0 ? Math.min(100, (av / area) * 100) : 0;
         fill.style.top = "0";
         fill.style.bottom = "auto";
@@ -6066,7 +7340,9 @@
       const st = laborStatus(fakeRec, area, laborReal, lot);
       cell.classList.toggle("labor-done", st.key === "done");
       cell.classList.toggle("labor-progress", st.key === "progress");
-      const colorLabel = colorDetailText(paint);
+      const colorLabel = segs.length > 1
+        ? segs.map(s => colorDetailText(s.color) || s.fecha).filter(Boolean).join(" + ")
+        : colorDetailText(paint);
       cell.title = `${st.label} · ${laborReal} · Avance ${formatHa(av)} / ${formatHa(area)} ha` +
         (colorLabel ? ` · ${colorLabel}` : "");
       return { pct, st, area, av };
@@ -6082,7 +7358,7 @@
       }
       const rec = recForMapLot(key);
       const paint = resolvePaintColor(lot, key, rec?.color);
-      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, paint);
+      paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, paint, rec?.segmentos);
       if (rec?.laborPpto && rec?.laborReal) {
         cell.title += ` · Ppto: ${rec.laborPpto}`;
       }
@@ -6300,6 +7576,7 @@
       if (multiLotMode && multiLotKeys.size) syncMultiLotMapPaint();
       updateMobileChrome();
     }
+    window.QBRefreshLabors = refreshAllLaborVisuals;
 
     function normalizeStoredLaborColors() {
       let changed = false;
@@ -6677,6 +7954,10 @@
           <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
           ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
         cell.addEventListener("click", e => {
+          if (document.body.classList.contains("freq-map-live")) {
+            selectLot(lot, cell);
+            return;
+          }
           const drawerOpen = !isMobileMap() &&
             document.getElementById("laborDrawer").classList.contains("open");
           if (!drawerOpen) {
@@ -7812,7 +9093,10 @@
         const lot = byPos.get(posKey);
         if (lot) {
           const rec = recForMapLot(posKey);
-          paintCellProgress(cell, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, posKey, rec?.color));
+          paintCellProgress(
+            cell, lot, rec?.avance, rec?.laborReal,
+            resolvePaintColor(lot, posKey, rec?.color), rec?.segmentos
+          );
         }
       }
 
@@ -7868,7 +9152,10 @@
           const lot = byPos.get(key);
           if (!lot) return;
           const rec = recForMapLot(key);
-          paintCellProgress(c, lot, rec?.avance, rec?.laborReal, resolvePaintColor(lot, key, rec?.color));
+          paintCellProgress(
+            c, lot, rec?.avance, rec?.laborReal,
+            resolvePaintColor(lot, key, rec?.color), rec?.segmentos
+          );
         });
         syncMultiLotSummary();
         renderDeskLotBoard();
@@ -7946,9 +9233,18 @@
         return { queued: false, area, avance: av, error: true };
       }
       const paint = currentPaintColor() || normalizeHexColor(fillColor) || multiPaintColor;
+      const fechaHoy = String(fFecha.value || "").slice(0, 10);
+      const prevRec = laborRecords[posKey];
+      const sameLabor = prevRec && sameLaborName(prevRec.laborReal, laborReal) &&
+        Number(prevRec.sem) === (Number(fSem.value) || currentWeek);
+      let segmentos = sameLabor ? normalizeSegmentos(prevRec, prevRec.color) : [];
+      segmentos = segmentos.filter(s => s.fecha && s.fecha !== fechaHoy);
+      segmentos.push({ fecha: fechaHoy, avance: av, color: paint });
+      segmentos.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+      const avanceTotal = roundHa(segmentos.reduce((s, x) => s + Number(x.avance || 0), 0));
       laborRecords[posKey] = {
         sem: Number(fSem.value) || currentWeek,
-        fecha: fFecha.value,
+        fecha: fechaHoy,
         laborPpto: String(fLaborPpto.value || "").toUpperCase(),
         laborReal,
         modulo: String(mod?.label || "").toUpperCase(),
@@ -7956,11 +9252,12 @@
         lote: lot.lote,
         variedad: fVariedad.value === "MAGICA" ? "MAGICA" : "SEKOYA POP",
         area,
-        avance: av,
+        avance: avanceTotal,
         totalJr: parseJr(fTotalJr && fTotalJr.value),
         ml: isCercosLabor(laborReal) ? cercosLotesN() * cercosMlPerLot() : 0,
         lotesTrabajados: isCercosLabor(laborReal) ? cercosLotesN() : 0,
         color: paint,
+        segmentos,
         editar: true
       };
       saveLaborRecords();
@@ -7973,8 +9270,11 @@
         applyLaborVisual(cellEager, lot);
       }
 
+      // Al API solo el avance de HOY (el total se arma con segmentos)
+      const postRec = Object.assign({}, laborRecords[posKey], { avance: av });
+
       if (QBApi.validateRecord) {
-        const v = QBApi.validateRecord(Object.assign({ posKey }, laborRecords[posKey]));
+        const v = QBApi.validateRecord(Object.assign({ posKey }, postRec));
         if (!v.ok) {
           if (showFeedback) showToast("No se puede guardar", true, v.errors.join(" · "));
           return { queued: false, area, avance: av, error: true, color: paint };
@@ -7984,7 +9284,7 @@
       let queued = false;
       if (API_URL) {
         try {
-          const payload = Object.assign({ posKey }, laborRecords[posKey]);
+          const payload = Object.assign({ posKey }, postRec);
           const res = await QBApi.saveLabor(payload);
           if (res && res.ok === false && !res.queued) {
             if (showFeedback) showToast("Rechazado", true, res.message || "Validación");
