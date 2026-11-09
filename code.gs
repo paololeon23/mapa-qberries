@@ -819,7 +819,7 @@ function getMapa_(d, e) {
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  var cacheKey = 'map_v14_' + cacheVer + '_' + [
+  var cacheKey = 'map_v15_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
@@ -855,9 +855,11 @@ function getMapa_(d, e) {
       if (rIso !== fechaIsoFiltro && rRaw !== fechaFiltro && rDisp !== fechaFiltro) continue;
     }
 
-    var key = claveLote_(r.turno, r.loteNum);
-    if (!key) continue;
-    key = key + '|' + (norm_(r.laborReal) || '-');
+    // Agrupa por lote+labor (+módulo): mismo LOTE en días distintos aunque el turno
+    // en hoja varíe (ej. T10 jueves / T9 viernes) → un solo ítem con segmentos.
+    var loteN = numLote_(r.loteNum);
+    if (!loteN) continue;
+    var key = loteN + '|' + (norm_(r.laborReal) || '-') + '|' + (normMod_(r.modulo) || '-');
     if (!buckets[key]) buckets[key] = [];
     buckets[key].push(r);
   }

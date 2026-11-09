@@ -6589,7 +6589,36 @@
         if (labor && !sameLaborName(rec.laborReal, labor)) return;
         const built = recordFromApiRow(rec);
         if (!built) return;
-        nextMap[built.posKey] = built.next;
+        const prev = nextMap[built.posKey];
+        // Mismo lote en mapa (aunque turno en hoja difiera T9/T10): apilar días
+        if (prev && sameLaborName(prev.laborReal, built.next.laborReal)) {
+          const byFecha = new Map();
+          normalizeSegmentos(prev, prev.color).forEach(s => {
+            if (!s.fecha) return;
+            byFecha.set(s.fecha, { fecha: s.fecha, avance: s.avance, color: s.color });
+          });
+          normalizeSegmentos(built.next, built.next.color).forEach(s => {
+            if (!s.fecha) return;
+            const cur = byFecha.get(s.fecha);
+            if (cur) {
+              cur.avance = roundHa(cur.avance + s.avance);
+              if (s.color) cur.color = s.color;
+            } else {
+              byFecha.set(s.fecha, { fecha: s.fecha, avance: s.avance, color: s.color });
+            }
+          });
+          const segmentos = [...byFecha.values()].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+          const avance = roundHa(segmentos.reduce((s, x) => s + Number(x.avance || 0), 0));
+          const last = segmentos[segmentos.length - 1] || {};
+          nextMap[built.posKey] = Object.assign({}, prev, built.next, {
+            avance,
+            color: last.color || built.next.color || prev.color,
+            fecha: last.fecha || built.next.fecha || prev.fecha,
+            segmentos
+          });
+        } else {
+          nextMap[built.posKey] = built.next;
+        }
         n++;
       });
 
