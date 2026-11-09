@@ -819,7 +819,8 @@ function getMapa_(d, e) {
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  var cacheKey = 'map_v15_' + cacheVer + '_' + [
+  // v16: resumen por día (sin sumar JR de segmentos multi-día)
+  var cacheKey = 'map_v16_' + cacheVer + '_' + [
     sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
@@ -840,6 +841,7 @@ function getMapa_(d, e) {
   var rows = leerFilas_(hoja);
   var buckets = {};
   var list = [];
+  var dayList = [];
   var fechaIsoFiltro = fechaFiltro ? normalizarFecha_(fechaFiltro) : '';
 
   for (var i = 0; i < rows.length; i++) {
@@ -859,6 +861,7 @@ function getMapa_(d, e) {
     // en hoja varíe (ej. T10 jueves / T9 viernes) → un solo ítem con segmentos.
     var loteN = numLote_(r.loteNum);
     if (!loteN) continue;
+    dayList.push(filaToCliente_(r));
     var key = loteN + '|' + (norm_(r.laborReal) || '-') + '|' + (normMod_(r.modulo) || '-');
     if (!buckets[key]) buckets[key] = [];
     buckets[key].push(r);
@@ -869,7 +872,9 @@ function getMapa_(d, e) {
     list.push(filaToClienteConSegmentos_(buckets[k]));
   }
 
-  // Solo list (sin records duplicados) → respuesta más liviana
+  // Solo list (sin records duplicados) → respuesta más liviana.
+  // Resumen SIEMPRE desde filas por día (dayList): si se arma desde `list` con
+  // segmentos, JR de jueves+viernes se infla (ej. 14+14 → 76 al colapsar MD).
   var result = {
     ok: true,
     count: list.length,
@@ -882,7 +887,7 @@ function getMapa_(d, e) {
       fecha: fechaFiltro || null
     },
     list: list,
-    resumen: armarResumenLista_(list, laborReal),
+    resumen: armarResumenLista_(dayList, laborReal),
     fromCache: false
   };
 
@@ -1159,7 +1164,6 @@ function filaToClienteConSegmentos_(rowsSameLot) {
   var segmentos = [];
   var totalAv = 0;
   var totalMl = 0;
-  var totalJr = 0;
   for (var j = 0; j < order.length; j++) {
     var s = byFecha[order[j]];
     segmentos.push({
@@ -1171,14 +1175,14 @@ function filaToClienteConSegmentos_(rowsSameLot) {
     });
     totalAv += s.avance;
     totalMl += numInt_(s.row.ml);
-    totalJr += numInt_(s.row.totalJr);
   }
   totalAv = Math.round(totalAv * 100) / 100;
   var last = byFecha[order[order.length - 1]].row;
   var base = filaToCliente_(last);
   base.avance = totalAv;
   base.ml = totalMl;
-  base.totalJr = totalJr;
+  // JR del último día (no sumar segmentos: 3+14 inflaba el resumen a 76)
+  base.totalJr = numInt_(last.totalJr);
   base.color = segmentos.length ? (segmentos[segmentos.length - 1].color || base.color) : base.color;
   base.fecha = segmentos.length ? segmentos[segmentos.length - 1].fechaIso : base.fecha;
   base.fechaIso = base.fecha;

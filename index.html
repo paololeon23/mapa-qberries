@@ -6747,20 +6747,21 @@
           ? r.fecha
           : (fechaIso ? fechaIso.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1") : "—");
         const k = fechaIso || fecha;
-        if (!byFecha[k]) byFecha[k] = { fecha, fechaIso, mods: [], area: 0, jr: 0, ml: 0 };
+        if (!byFecha[k]) byFecha[k] = { fecha, fechaIso, mods: [], area: 0, jrVals: [], ml: 0 };
         String(r.modulo || "").split(/[-,;/|]+/).forEach(part => {
           const md = String(part || "").trim();
           if (md && md !== "—" && byFecha[k].mods.indexOf(md) < 0) byFecha[k].mods.push(md);
         });
         byFecha[k].area += Number(r.area) || 0;
-        byFecha[k].jr += Number(r.jr) || 0;
+        // Misma cuadrilla en M1+M3 → mismo JR (14+14 = 14). JR distintos sí se suman.
+        byFecha[k].jrVals.push(Math.round(Number(r.jr) || 0));
         byFecha[k].ml += Number(r.ml) || 0;
       });
       const cercos = isCercosLabor(mapQuery.laborReal);
       return Object.values(byFecha).map(g => {
         const mods = g.mods.slice().sort((a, b) => modSortKey(a) - modSortKey(b) || String(a).localeCompare(String(b)));
         const area = roundHa(g.area);
-        const jr = Math.round(g.jr);
+        const jr = jrGrupoFromValues(g.jrVals);
         const ml = Math.round(g.ml);
         return {
           fecha: g.fecha,
