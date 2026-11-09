@@ -5929,7 +5929,9 @@
             }
           }
           if (showCloud) setMapSyncProgress(42, "Leyendo labores…");
-          const doReplace = forceReplace || (!soft && !fast);
+          // Soft también replace: el avance de cada día queda FIJO como en la hoja
+          // (antes soft merge sumaba y el jueves “subía solo” en cada sync).
+          const doReplace = forceReplace || soft || !fast;
           const syncRes = await syncLaborsFromSheet(filters, {
             replace: doReplace,
             fullPaint: doReplace || !!opts.fullPaint,
