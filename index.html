@@ -6590,7 +6590,9 @@
         const built = recordFromApiRow(rec);
         if (!built) return;
         const prev = nextMap[built.posKey];
-        // Mismo lote en mapa (aunque turno en hoja difiera T9/T10): apilar días
+        // Mismo lote en mapa (aunque turno en hoja difiera T9/T10): apilar días.
+        // Misma fecha: REEMPLAZAR avance (no sumar). El soft-sync sumaba 0.15+0.15…
+        // y el naranja de abajo crecía hasta llenar el lote.
         if (prev && sameLaborName(prev.laborReal, built.next.laborReal)) {
           const byFecha = new Map();
           normalizeSegmentos(prev, prev.color).forEach(s => {
@@ -6600,12 +6602,11 @@
           normalizeSegmentos(built.next, built.next.color).forEach(s => {
             if (!s.fecha) return;
             const cur = byFecha.get(s.fecha);
-            if (cur) {
-              cur.avance = roundHa(cur.avance + s.avance);
-              if (s.color) cur.color = s.color;
-            } else {
-              byFecha.set(s.fecha, { fecha: s.fecha, avance: s.avance, color: s.color });
-            }
+            byFecha.set(s.fecha, {
+              fecha: s.fecha,
+              avance: s.avance,
+              color: s.color || (cur && cur.color) || ""
+            });
           });
           const segmentos = [...byFecha.values()].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
           const avance = roundHa(segmentos.reduce((s, x) => s + Number(x.avance || 0), 0));
