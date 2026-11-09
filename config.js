@@ -17,7 +17,7 @@ window.QB_CONFIG = {
 
   BRAND: "Q Berries",
   APP_NAME: "Q Berries · Labores",
-  APP_VERSION: "1.3.87",
+  APP_VERSION: "1.3.88",
 
   LABOR_OPTS: {
     labor_ppto: [

@@ -5775,19 +5775,28 @@
       }
     }
 
-    function formatTitle(raw) {
-      const week = getCurrentWeek();
+    function formatTitle(raw, week) {
+      const sem = Number(week != null && week !== "" ? week : getCurrentWeek()) || getCurrentWeek();
       const base = String(raw || "PLANO DE COSECHA ETAPA I")
         .replace(/I-\s*/i, "I — ")
         .replace(/\s*—?\s*SEM\s*\d+/i, "")
         .trim();
-      return `${base} — SEM ${week}`;
+      return `${base} — SEM ${sem}`;
     }
 
     const currentWeek = getCurrentWeek();
-    const pageTitle = formatTitle(data.title);
-    document.title = `${data.brand || "Q Berries"} · ${pageTitle}`;
-    document.getElementById("title").textContent = pageTitle;
+    const titleSource = data.title;
+    function syncPageTitleFromFilter(week) {
+      const sem = Number(week != null && week !== "" ? week : currentWeek) || currentWeek;
+      const pageTitle = formatTitle(titleSource, sem);
+      const titleEl = document.getElementById("title");
+      if (titleEl) titleEl.textContent = pageTitle;
+      document.title = `${data.brand || "Q Berries"} · ${pageTitle}`;
+      const mobTitle = document.getElementById("mobTitle");
+      if (mobTitle) mobTitle.textContent = pageTitle;
+      return pageTitle;
+    }
+    const pageTitle = syncPageTitleFromFilter(currentWeek);
     const eyebrow = document.querySelector(".brand-eyebrow");
     if (eyebrow) eyebrow.textContent = `${data.brand || "Q Berries"} · Operations · Harvest`;
 
@@ -6864,6 +6873,7 @@
       }
       const kpiSem = document.querySelector(".kpi-head-row h2");
       if (kpiSem) kpiSem.textContent = "Semana " + sem;
+      syncPageTitleFromFilter(sem);
     }
 
     function currentMapFilters() {
