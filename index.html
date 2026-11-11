@@ -1131,6 +1131,10 @@
     .cell.m3  { background: #fff; border-color: #1E88E5; }
     .cell.m4  { background: #fff; border-color: #F9A825; }
     .cell.m5  { background: #fff; border-color: #E64A19; }
+    .cell.m6  { background: #fff; border-color: #5E35B1; }
+    .cell.m7  { background: #fff; border-color: #1565C0; }
+    .cell.m8  { background: #fff; border-color: #2E7D32; }
+    .cell.m9  { background: #fff; border-color: #EF6C00; }
     .cell.m10 { background: #fff; border-color: #00695C; }
 
     .cell-fill {
@@ -5777,15 +5781,16 @@
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script src="data.js?v=8"></script>
+  <script src="data-licapa2.js?v=1"></script>
   <script src="frecuencias.js"></script>
   <script>
     const API_URL = (window.QB_CONFIG && QB_CONFIG.API_URL) || "";
 
-    const data = window.MAP_DATA;
-    const lots = data.lots || [];
-    const modules = data.modules || [];
-    const modById = Object.fromEntries(modules.map(m => [m.id, m]));
-    const uniqueLotes = new Set(lots.map(l => l.lote)).size;
+    let data = window.MAP_DATA;
+    let lots = data.lots || [];
+    let modules = data.modules || [];
+    let modById = Object.fromEntries(modules.map(m => [m.id, m]));
+    let uniqueLotes = new Set(lots.map(l => l.lote)).size;
 
     function getCurrentWeek(date = new Date()) {
       const d = new Date(date.getTime());
@@ -5919,9 +5924,15 @@
     }
 
     const FUNDOS = {
-      licapa1: { id: "licapa1", label: "LICAPA I", etapa: "I", hasMap: true },
-      licapa2: { id: "licapa2", label: "LICAPA II", etapa: "II", hasMap: false }
+      licapa1: { id: "licapa1", label: "LICAPA I", etapa: "I", hasMap: true, dataKey: "MAP_DATA" },
+      licapa2: { id: "licapa2", label: "LICAPA II", etapa: "II", hasMap: true, dataKey: "MAP_DATA_LICAPA2" }
     };
+    function fundoDataset(id) {
+      const f = FUNDOS[id] || FUNDOS.licapa1;
+      const raw = window[f.dataKey];
+      if (raw && Array.isArray(raw.lots) && raw.lots.length) return raw;
+      return null;
+    }
     function readStoredFundo() {
       try {
         const raw = String(localStorage.getItem("qb-fundo") || "").toLowerCase();
@@ -5960,18 +5971,28 @@
     function setActiveFundo(id, opts = {}) {
       const next = FUNDOS[id] ? id : "licapa1";
       const changed = next !== activeFundoId;
+      if (changed && fundoHooksReady && typeof applyFundoMap === "function") {
+        // Guarda labores del fundo saliente y carga el mapa del nuevo
+        applyFundoMap(next, { skipSave: false });
+      } else if (!changed && fundoHooksReady && opts.force && typeof applyFundoMap === "function") {
+        applyFundoMap(next, { skipSave: true });
+      }
       activeFundoId = next;
       try { localStorage.setItem("qb-fundo", activeFundoId); } catch (_) { /* ok */ }
+      // hasMap según dataset real
+      const ds = fundoDataset(activeFundoId);
+      FUNDOS[activeFundoId].hasMap = !!(ds && ds.lots && ds.lots.length);
       syncFundoUI();
       if (fundoHooksReady) {
         const sem = (mapQuery.sem != null && mapQuery.sem !== "") ? mapQuery.sem : currentWeek;
         syncPageTitleFromFilter(sem);
         updateMapLaborBanner();
-        if (typeof syncSidebarForFundo === "function") syncSidebarForFundo({ changed });
+        if (typeof syncSidebarForFundo === "function") syncSidebarForFundo({ changed: changed || !!opts.force });
       }
       if (changed && !opts.silent && fundoHooksReady) {
         const f = activeFundo();
-        showToast(f.label, false, f.hasMap ? "Plano activo" : "Plano en preparación", "info");
+        const nLots = (lots && lots.length) || 0;
+        showToast(f.label, false, f.hasMap ? (nLots + " lotes · plano activo") : "Plano en preparación", "info");
       }
     }
 
@@ -6690,8 +6711,19 @@
       labor_real: []
     };
 
+    function laborStorageKey(fundoId) {
+      const id = fundoId || activeFundoId || "licapa1";
+      return id === "licapa1" ? "qb-labores" : ("qb-labores-" + id);
+    }
     let laborRecords = {};
-    try { laborRecords = JSON.parse(localStorage.getItem("qb-labores") || "{}"); } catch { laborRecords = {}; }
+    function loadLaborRecordsForFundo(fundoId) {
+      try {
+        laborRecords = JSON.parse(localStorage.getItem(laborStorageKey(fundoId)) || "{}");
+      } catch {
+        laborRecords = {};
+      }
+    }
+    loadLaborRecordsForFundo(activeFundoId);
 
     let multiLotMode = false;
     /** @type {Map<string, { avance: number }>} */
@@ -6805,7 +6837,7 @@
     document.documentElement.style.setProperty("--multi-color", multiPaintColor);
 
     function saveLaborRecords() {
-      localStorage.setItem("qb-labores", JSON.stringify(laborRecords));
+      localStorage.setItem(laborStorageKey(), JSON.stringify(laborRecords));
     }
 
     function normTurnoLabel(t) {
@@ -7481,8 +7513,6 @@
     document.getElementById("fundoSelect")?.addEventListener("change", e => {
       setActiveFundo(String(e.target.value || "licapa1"));
     });
-    // Restaurar fundo guardado (título + banner + vacío Licapa II)
-    setActiveFundo(activeFundoId, { silent: true, force: true });
 
     let filterOptions = {
       sem: [currentWeek],
@@ -8112,12 +8142,26 @@
     }
 
     // Grid
-    const minC = Math.min(...lots.map(l => l.c));
-    const maxC = Math.max(...lots.map(l => l.c));
-    const cols = maxC - minC + 1;
-    const labelRows = [...new Set(lots.map(l => l.r))].sort((a, b) => a - b);
-    const byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
-    const rowsCount = labelRows.length;
+    let minC = Math.min(...lots.map(l => l.c));
+    let maxC = Math.max(...lots.map(l => l.c));
+    let cols = maxC - minC + 1;
+    let labelRows = [...new Set(lots.map(l => l.r))].sort((a, b) => a - b);
+    let byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+    let rowsCount = labelRows.length;
+
+    function recomputeMapGeometry() {
+      if (!lots.length) {
+        minC = 0; maxC = 0; cols = 1; labelRows = []; byPos = new Map(); rowsCount = 0;
+        return;
+      }
+      minC = Math.min(...lots.map(l => l.c));
+      maxC = Math.max(...lots.map(l => l.c));
+      cols = maxC - minC + 1;
+      labelRows = [...new Set(lots.map(l => l.r))].sort((a, b) => a - b);
+      byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+      rowsCount = labelRows.length;
+      uniqueLotes = new Set(lots.map(l => l.lote)).size;
+    }
 
     let baseCellW = 40;
     let baseCellH = 38;
@@ -8449,98 +8493,146 @@
       updateMobFiltersHeight();
     }
 
-    labelRows.forEach(r => {
-      for (let c = minC; c <= maxC; c++) {
-        const lot = byPos.get(`${r},${c}`);
-        const cell = document.createElement("div");
-        if (!lot) {
-          cell.className = "cell empty";
-          grid.appendChild(cell);
-          continue;
-        }
-        const m = lot.modulo;
-        cell.className = "cell" + (m ? ` m${m}` : "") + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
-        cell.dataset.key = `${lot.r},${lot.c}`;
-        cell.dataset.lote = String(lot.lote);
-        cell.dataset.tunel = lot.tunel;
-        cell.dataset.mod = m == null ? "" : String(m);
-        const posKey = `${lot.r},${lot.c}`;
-        cell.innerHTML = `
-          <div class="cell-fill"></div>
-          <span class="t">${String(lot.tunel).toUpperCase()}</span>
-          <span class="l">LT.${lot.lote}</span>
-          <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
-          ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
-        cell.addEventListener("click", e => {
-          if (document.body.classList.contains("freq-map-live")) {
-            selectLot(lot, cell);
-            return;
+    function buildMapGrid() {
+      if (!grid) return;
+      grid.innerHTML = "";
+      labelRows.forEach(r => {
+        for (let c = minC; c <= maxC; c++) {
+          const lot = byPos.get(`${r},${c}`);
+          const cell = document.createElement("div");
+          if (!lot) {
+            cell.className = "cell empty";
+            grid.appendChild(cell);
+            continue;
           }
-          const desk = !isMobileMap();
-          const drawerOpen = desk &&
-            document.getElementById("laborDrawer").classList.contains("open");
-          if (!drawerOpen) {
-            // Escritorio: 1 clic = ver área/trabajado; 2 clic = abrir formulario
-            if (desk) {
-              clearTimeout(cell._deskClickTimer);
-              cell._deskClickTimer = setTimeout(() => {
-                cell._deskClickTimer = null;
-            selectLot(lot, cell);
-              }, 280);
+          const m = lot.modulo;
+          cell.className = "cell" + (m ? ` m${m}` : "") + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
+          cell.dataset.key = `${lot.r},${lot.c}`;
+          cell.dataset.lote = String(lot.lote);
+          cell.dataset.tunel = lot.tunel;
+          cell.dataset.mod = m == null ? "" : String(m);
+          const posKey = `${lot.r},${lot.c}`;
+          cell.innerHTML = `
+            <div class="cell-fill"></div>
+            <span class="t">${String(lot.tunel).toUpperCase()}</span>
+            <span class="l">LT.${lot.lote}</span>
+            <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
+            ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
+          cell.addEventListener("click", e => {
+            if (document.body.classList.contains("freq-map-live")) {
+              selectLot(lot, cell);
+              return;
+            }
+            const desk = !isMobileMap();
+            const drawerOpen = desk &&
+              document.getElementById("laborDrawer").classList.contains("open");
+            if (!drawerOpen) {
+              // Escritorio: 1 clic = ver área/trabajado; 2 clic = abrir formulario
+              if (desk) {
+                clearTimeout(cell._deskClickTimer);
+                cell._deskClickTimer = setTimeout(() => {
+                  cell._deskClickTimer = null;
+                  selectLot(lot, cell);
+                }, 280);
+                return;
+              }
+              selectLot(lot, cell);
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            // Escritorio: 2º clic en el mismo lote → deseleccionar
+            if (desk && multiLotKeys.has(posKey)) {
+              removeMultiLot(posKey);
+              cell.classList.remove("active");
+              if (fLote && fLote.value === posKey) {
+                if (loteCSelect) loteCSelect.setValue("", true);
+                if (fArea) fArea.value = "";
+                if (fAvance) fAvance.value = "";
+              }
+              renderDeskLotBoard();
+              updateAvanceBar();
+              syncLaborGate();
+              return;
+            }
+            if (multiLotMode) {
+              addMultiLot(posKey, true);
               return;
             }
             selectLot(lot, cell);
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-          // Escritorio: 2º clic en el mismo lote → deseleccionar
-          if (desk && multiLotKeys.has(posKey)) {
-            removeMultiLot(posKey);
-            cell.classList.remove("active");
-            if (fLote && fLote.value === posKey) {
-              if (loteCSelect) loteCSelect.setValue("", true);
-              if (fArea) fArea.value = "";
-              if (fAvance) fAvance.value = "";
+            fillLaborForm(posKey);
+            if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
+              fAvance.value = "0.";
+              updateAvanceBar();
+              previewFromForm();
             }
-            renderDeskLotBoard();
-            updateAvanceBar();
-            syncLaborGate();
-            return;
-          }
-          if (multiLotMode) {
-            addMultiLot(posKey, true);
-            return;
-          }
-          selectLot(lot, cell);
-          fillLaborForm(posKey);
-          if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
-            fAvance.value = "0.";
-            updateAvanceBar();
-            previewFromForm();
-          }
-        });
-        cell.addEventListener("dblclick", e => {
-          if (document.body.classList.contains("freq-map-live")) return;
-          if (isMobileMap()) return;
-          e.preventDefault();
-          e.stopPropagation();
-          clearTimeout(cell._deskClickTimer);
-          cell._deskClickTimer = null;
-          const drawerOpen = document.getElementById("laborDrawer")?.classList.contains("open");
-          selectLot(lot, cell);
-          if (drawerOpen) {
-            if (multiLotMode) addMultiLot(posKey, true);
-            else fillLaborForm(posKey);
-            return;
-          }
-          openLaborDrawer(posKey);
-        });
-        applyLaborVisual(cell, lot);
-        grid.appendChild(cell);
+          });
+          cell.addEventListener("dblclick", e => {
+            if (document.body.classList.contains("freq-map-live")) return;
+            if (isMobileMap()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            clearTimeout(cell._deskClickTimer);
+            cell._deskClickTimer = null;
+            const drawerOpen = document.getElementById("laborDrawer")?.classList.contains("open");
+            selectLot(lot, cell);
+            if (drawerOpen) {
+              if (multiLotMode) addMultiLot(posKey, true);
+              else fillLaborForm(posKey);
+              return;
+            }
+            openLaborDrawer(posKey);
+          });
+          applyLaborVisual(cell, lot);
+          grid.appendChild(cell);
+        }
+      });
+      syncCercosMapLayout();
+    }
+    buildMapGrid();
+
+    let deskSelectsReady = false;
+    function applyFundoMap(fundoId, opts = {}) {
+      const id = FUNDOS[fundoId] ? fundoId : "licapa1";
+      const ds = fundoDataset(id);
+      const fundo = FUNDOS[id];
+      if (!ds) {
+        FUNDOS[id].hasMap = false;
+        syncFundoUI();
+        return false;
       }
-    });
-    syncCercosMapLayout();
+      fundo.hasMap = true;
+      // guardar labores del fundo actual antes de cambiar
+      if (!opts.skipSave) saveLaborRecords();
+      data = ds;
+      lots = ds.lots || [];
+      modules = ds.modules || [];
+      modById = Object.fromEntries(modules.map(m => [m.id, m]));
+      recomputeMapGeometry();
+      loadLaborRecordsForFundo(id);
+      if (typeof clearMultiLots === "function") clearMultiLots(true);
+      if (typeof setActiveMod === "function") setActiveMod(null);
+      if (deskSelectsReady) {
+        try {
+          if (moduloCSelect && moduloCSelect.updateItems) {
+            moduloCSelect.updateItems(modules.map(m => ({ value: String(m.id), label: m.label })));
+            moduloCSelect.setValue("", true);
+          }
+          if (typeof resetTurnoLoteSelects === "function") resetTurnoLoteSelects();
+        } catch (_) { /* selects aún no listos */ }
+      }
+      if (filterOptions) filterOptions.md = modules.map(m => m.label);
+      buildMapGrid();
+      rebuildBaseMetrics();
+      maxZoomMul = computeMaxZoomMul();
+      zoomMul = 1;
+      fitToScreen();
+      if (typeof refreshAllLaborVisuals === "function") refreshAllLaborVisuals();
+      if (typeof renderDeskLotBoard === "function") renderDeskLotBoard();
+      if (typeof refreshWeekResumen === "function") refreshWeekResumen();
+      return true;
+    }
+
     grid.addEventListener("contextmenu", e => {
       if (isMobileMap()) return;
       const cell = e.target.closest(".cell[data-key]");
@@ -9280,6 +9372,9 @@
       }
     });
     loteCSelect.setEnabled(false);
+    deskSelectsReady = true;
+    // Restaurar fundo (Licapa I / II) cuando ya hay mapa + selects listos
+    setActiveFundo(activeFundoId, { silent: true, force: true });
 
     const variedadCSelect = {
       setValue(v) {

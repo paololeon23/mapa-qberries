@@ -1,4 +1,4 @@
-const CACHE = "qb-v176";
+const CACHE = "qb-v177";
 const SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,8 @@ const SHELL = [
   "./api.js",
   "./data.js",
   "./data.js?v=8",
+  "./data-licapa2.js",
+  "./data-licapa2.js?v=1",
   "./frecuencias.js",
   "./frecuencias-data.json",
   "./frecuencias-prod-seed.json",
