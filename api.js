@@ -220,8 +220,21 @@
     if (!tNum) errors.push("Falta túnel");
     else turno = "T" + tNum;
 
-    const lote = Number(record.lote);
-    if (!lote || lote < 1 || lote > 99999 || !Number.isFinite(lote)) errors.push("Lote inválido");
+    // Licapa I: número. Licapa II: también "208A" / "328B" (sin mezclar datasets; solo aceptar el formato).
+    let loteNorm = null;
+    if (typeof record.lote === "number" && Number.isFinite(record.lote)) {
+      const n = Math.round(record.lote);
+      if (n >= 1 && n <= 99999) loteNorm = n;
+    } else {
+      const s = String(record.lote == null ? "" : record.lote).trim().replace(/\s+/g, "").toUpperCase();
+      if (/^\d{1,5}$/.test(s)) {
+        const n = parseInt(s, 10);
+        if (n >= 1 && n <= 99999) loteNorm = n;
+      } else if (/^\d{1,5}[A-Z]$/.test(s)) {
+        loteNorm = s;
+      }
+    }
+    if (loteNorm == null) errors.push("Lote inválido");
 
     const sem = Number(record.sem) || "";
     if (sem !== "" && (sem < 1 || sem > 53)) errors.push("Semana inválida");
@@ -243,14 +256,14 @@
     if (totalJrNum < 1) errors.push("Ingresa los jornales (JR)");
 
     const base = {
-      posKey: record.posKey ? String(record.posKey).slice(0, 32) : undefined,
+      posKey: record.posKey ? String(record.posKey).slice(0, 40) : undefined,
       sem: sem || "",
       fecha,
       laborPpto,
       laborReal,
       modulo: safeText(record.modulo, 12),
       turno,
-      lote: Math.round(lote) || 0,
+      lote: loteNorm == null ? 0 : loteNorm,
       variedad,
       area,
       avance,
@@ -263,6 +276,8 @@
         : 0,
       color: normalizeColor(record.color)
     };
+    if (record.fundo) base.fundo = safeText(record.fundo, 40);
+    if (record.etapa) base.etapa = safeText(record.etapa, 12);
     if (isCercos && base.ml <= 0 && base.lotesTrabajados > 0) {
       const per = Number((window.QB_CONFIG && QB_CONFIG.CERCOS_ML_PER_LOT) || 80) || 80;
       base.ml = base.lotesTrabajados * per;

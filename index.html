@@ -596,26 +596,39 @@
       text-overflow: ellipsis;
     }
     .leg-item .ha {
-      font-size: 0.98rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #0f3327;
       font-variant-numeric: tabular-nums;
-      line-height: 1.1;
+      line-height: 1.05;
       white-space: nowrap;
     }
     .leg-item .ha small {
-      font-size: 0.62rem;
+      font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: #94a3b8;
-      margin-left: 0.15rem;
+      margin-left: 0.18rem;
     }
     .leg-item .lots {
-      font-size: 0.62rem;
-      font-weight: 650;
-      color: #64748b;
-      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.2rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 7px;
+      background: #e8eef0;
+      border: 1px solid #d5dee3;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #0f3327;
+      font-variant-numeric: tabular-nums;
+    }
+    .leg-item.active .lots {
+      background: #dcfce7;
+      border-color: #bbf7d0;
+      color: #14532d;
     }
     /* 5+ días en resumen semana → números más grandes (tabla + módulos) */
     body.week-rows-dense .week-table th {
@@ -639,14 +652,14 @@
       font-size: 0.78rem;
     }
     body.week-rows-dense .leg-item .ha {
-      font-size: 1.22rem;
+      font-size: 1.42rem;
     }
     body.week-rows-dense .leg-item .ha small {
-      font-size: 0.72rem;
+      font-size: 0.78rem;
     }
     body.week-rows-dense .leg-item .lots {
-      font-size: 0.74rem;
-      font-weight: 700;
+      font-size: 0.95rem;
+      font-weight: 800;
     }
     body.week-rows-dense .leg-swatch {
       width: 10px;
@@ -657,10 +670,12 @@
         grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
         gap: 0.32rem;
       }
-      .leg-item { padding: 0.42rem 0.5rem; }
-      .leg-item .ha { font-size: 0.86rem; }
-      body.week-rows-dense .leg-item { padding: 0.5rem 0.58rem; }
-      body.week-rows-dense .leg-item .ha { font-size: 1.05rem; }
+      .leg-item { padding: 0.48rem 0.55rem; }
+      .leg-item .ha { font-size: 1.18rem; }
+      .leg-item .lots { font-size: 0.8rem; }
+      body.week-rows-dense .leg-item { padding: 0.55rem 0.62rem; }
+      body.week-rows-dense .leg-item .ha { font-size: 1.28rem; }
+      body.week-rows-dense .leg-item .lots { font-size: 0.88rem; }
       body.week-rows-dense .week-table td { font-size: 0.82rem; }
     }
     @media (max-width: 980px) {
@@ -1024,9 +1039,41 @@
     }
 
     .stage {
+      position: relative;
       width: 100%;
       height: 100%;
       padding: 0;
+    }
+    .map-labels {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      overflow: visible;
+    }
+    .map-zone-label {
+      position: absolute;
+      transform: translate(-50%, calc(-100% - 8px));
+      background: #0f2744;
+      color: #fff;
+      font-weight: 800;
+      font-size: clamp(8px, calc(var(--fs-cell, 11px) * 0.95), 13px);
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      padding: 3px 8px;
+      border-radius: 3px;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(15, 39, 68, 0.35);
+    }
+    .map-zone-label.is-bottom {
+      transform: translate(-50%, calc(-100% - 8px));
+    }
+    .map-zone-label.is-center {
+      transform: translate(-50%, -50%);
+    }
+    .cell .l.is-compact {
+      letter-spacing: -0.03em;
+      font-size: calc(var(--fs-cell, 11px) * 0.92);
     }
 
     .grid {
@@ -1136,6 +1183,13 @@
     .cell.m8  { background: #fff; border-color: #2E7D32; }
     .cell.m9  { background: #fff; border-color: #EF6C00; }
     .cell.m10 { background: #fff; border-color: #00695C; }
+    /* Identificación visual MAGICA (solo zona: 213-216, 223-224) */
+    .cell.is-magica {
+      background: #f3e5f5 !important;
+      border-color: #8e24aa !important;
+      box-shadow: inset 0 0 0 1px rgba(142, 36, 170, 0.35);
+    }
+    .cell.is-magica .l { color: #6a1b9a; }
 
     .cell-fill {
       position: absolute;
@@ -1161,6 +1215,69 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.55);
     }
     .cell .t, .cell .l, .cell .h { position: relative; z-index: 1; }
+    /* Lote partido en 2 mitades (Licapa II: 313/312, 288/289, 325/422, 328b/327) */
+    .cell.is-split {
+      padding: 0;
+      justify-content: stretch;
+      gap: 0;
+    }
+    .cell.is-split .split-half {
+      position: relative;
+      z-index: 1;
+      flex: 1 1 50%;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.05;
+      box-sizing: border-box;
+      cursor: pointer;
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.55);
+    }
+    .cell.is-split .split-half.is-top {
+      border-bottom: 1.5px solid rgba(15, 39, 68, 0.45);
+    }
+    .cell.is-split .split-half:hover {
+      background: rgba(15, 61, 46, 0.07);
+    }
+    .cell.is-split .split-half .cell-fill-half {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.88;
+    }
+    .cell.is-split .split-half.is-on,
+    .cell.is-split .split-half.multi-half-on {
+      outline: 2px solid var(--forest);
+      outline-offset: -2px;
+      background: rgba(15, 61, 46, 0.12);
+      z-index: 2;
+      box-shadow: inset 0 0 0 1px rgba(15, 61, 46, 0.25);
+    }
+    .cell.is-split .split-half .t,
+    .cell.is-split .split-half .l,
+    .cell.is-split .split-half .h {
+      position: relative;
+      z-index: 1;
+      font-size: calc(var(--fs-cell, 11px) * 0.82);
+      max-width: 96%;
+      pointer-events: none;
+    }
+    .cell.is-split .split-half .h {
+      margin-top: 0;
+      opacity: 0.92;
+    }
+    .cell.is-split.active {
+      outline: none;
+      box-shadow: none;
+    }
+    .cell.is-split.active:not(:has(.split-half.is-on)) {
+      outline: none;
+    }
     .grid.is-cercos .cell:not(.empty) {
       overflow: hidden;
       padding: 0;
@@ -4629,6 +4746,26 @@
         border-radius: 50%;
         border: 1px solid rgba(0,0,0,0.08);
       }
+      .mob-mod-chip .mob-mod-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.35rem;
+        height: 1.15rem;
+        padding: 0 0.28rem;
+        border-radius: 999px;
+        background: #e8eef0;
+        border: 1px solid #d5dee3;
+        font-size: 0.62rem;
+        font-weight: 800;
+        color: #334155;
+        font-variant-numeric: tabular-nums;
+      }
+      .mob-mod-chip.active .mob-mod-count {
+        background: #dcfce7;
+        border-color: #bbf7d0;
+        color: #14532d;
+      }
       .mob-mod-chip.active {
         background: #ecfdf3;
         border-color: #2f8a58;
@@ -5456,6 +5593,7 @@
         <div class="scaler" id="scaler">
           <div class="stage" id="stage">
             <div class="grid" id="grid"></div>
+            <div class="map-labels" id="mapLabels" aria-hidden="true"></div>
           </div>
         </div>
         <div class="map-sync-loader" id="mapSyncLoader" hidden aria-live="polite" aria-busy="false">
@@ -5781,7 +5919,7 @@
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script src="data.js?v=8"></script>
-  <script src="data-licapa2.js?v=1"></script>
+  <script src="data-licapa2.js?v=11"></script>
   <script src="frecuencias.js"></script>
   <script>
     const API_URL = (window.QB_CONFIG && QB_CONFIG.API_URL) || "";
@@ -5791,6 +5929,11 @@
     let modules = data.modules || [];
     let modById = Object.fromEntries(modules.map(m => [m.id, m]));
     let uniqueLotes = new Set(lots.map(l => l.lote)).size;
+
+    // Declarar temprano: setActiveFundo / showToast / isMobileMap pueden correr antes del bloque del mapa
+    const MOBILE_MAP_MQ = "(max-width: 768px), ((max-height: 520px) and (max-width: 1024px))";
+    let toastTimer = null;
+    let drawerMsgTimer = null;
 
     function getCurrentWeek(date = new Date()) {
       const d = new Date(date.getTime());
@@ -6202,24 +6345,29 @@
       const q = searchTerm.trim().toLowerCase().replace(/\s+/g, "");
       lots.forEach(lot => {
         if (activeMod != null && lot.modulo !== activeMod) return;
-        const lote = String(lot.lote);
-        const tunel = String(lot.tunel || "").toLowerCase();
+        const parts = lotHasSplit(lot)
+          ? [
+              { lote: String(lot.lote), tunel: String(lot.tunel || "").toLowerCase(), ha: lot.ha, key: splitTopKey(lot) },
+              { lote: String(lot.split.lote), tunel: String(lot.split.tunel || "").toLowerCase(), ha: lot.split.ha, key: splitBotKey(lot) }
+            ]
+          : [{ lote: String(lot.lote), tunel: String(lot.tunel || "").toLowerCase(), ha: lot.ha, key: `${lot.r},${lot.c}` }];
         const mod = lot.modulo == null ? "" : String(lot.modulo);
-        const matchQ = !q ||
-          lote.includes(q) ||
-          (`lt.${lote}`).includes(q) ||
-          (`lt${lote}`).includes(q) ||
-          tunel.includes(q) ||
-          (`m${mod}`).includes(q);
-        if (!matchQ) return;
-        visibleLots++;
-        const area = roundHa(lot.ha);
-        visibleHa += area;
-        const rec = recForMapLot(`${lot.r},${lot.c}`);
-        if (rec?.laborReal) {
-          withLabor++;
-          avanceHa += roundHa(rec.avance);
-        }
+        parts.forEach(p => {
+          const matchQ = !q ||
+            p.lote.includes(q) ||
+            (`lt.${p.lote}`).includes(q) ||
+            (`lt${p.lote}`).includes(q) ||
+            p.tunel.includes(q) ||
+            (`m${mod}`).includes(q);
+          if (!matchQ) return;
+          visibleLots++;
+          visibleHa += roundHa(p.ha);
+          const rec = recForMapLot(p.key) || recForMapLot(`${lot.r},${lot.c}`);
+          if (rec?.laborReal) {
+            withLabor++;
+            avanceHa += roundHa(rec.avance);
+          }
+        });
       });
       const mobKpiLots = document.getElementById("mobKpiLots");
       const mobKpiHa = document.getElementById("mobKpiHa");
@@ -6530,10 +6678,27 @@
         btn.type = "button";
         btn.className = "mob-mod-chip" + (activeMod === m.id ? " active" : "");
         btn.dataset.mod = String(m.id);
-        btn.innerHTML = `<span class="dot" style="background:${m.fill}"></span>${m.label}`;
+        const count = countLotesModulo(m);
+        btn.innerHTML = `<span class="dot" style="background:${m.fill}"></span>${m.label}<span class="mob-mod-count">${count}</span>`;
+        btn.title = `${m.label} · ${count} lotes`;
         btn.addEventListener("click", () => setActiveMod(activeMod === m.id ? null : m.id));
         mobModScroll.appendChild(btn);
       });
+    }
+
+    function countLotesModulo(m) {
+      if (!m) return 0;
+      if (m.lotes != null && m.lotes !== "") return Number(m.lotes) || 0;
+      const mid = m.id;
+      let n = 0;
+      (lots || []).forEach(l => {
+        if (l.modulo === mid) n += 1;
+        if (lotHasSplit(l)) {
+          const botMod = l.split.modulo != null ? l.split.modulo : l.modulo;
+          if (botMod === mid) n += 1;
+        }
+      });
+      return n;
     }
 
     function renderModList() {
@@ -6546,8 +6711,8 @@
         return;
       }
       modules.forEach(m => {
-        const count = lots.filter(l => l.modulo === m.id).length;
-        const haTxt = formatHa(m.ha);
+        const count = countLotesModulo(m);
+        const haTxt = formatHa(m.ha != null ? m.ha : 0);
         const div = document.createElement("div");
         div.className = "leg-item" + (activeMod === m.id ? " active" : "");
         div.dataset.mod = m.id;
@@ -6598,7 +6763,7 @@
       renderModList();
       buildMobModChips();
       if (opts.changed !== false) refreshWeekResumen();
-      updateMobileChrome();
+      try { updateMobileChrome(); } catch (_) { /* mapa móvil aún no listo */ }
     }
 
     buildMobModChips();
@@ -6845,21 +7010,44 @@
     }
 
     /** Empareja registro de hoja → celda del mapa (r,c). Con duplicados T7·208 usa área del lote. */
+    function mapLotParts() {
+      const out = [];
+      lots.forEach(l => {
+        if (lotHasSplit(l)) {
+          out.push({
+            r: l.r, c: l.c, modulo: l.modulo, tunel: l.tunel, lote: l.lote, ha: l.ha,
+            posKey: `${l.r},${l.c}#${l.lote}`, half: "top", cellLot: l
+          });
+          out.push({
+            r: l.r, c: l.c, modulo: l.modulo, tunel: l.split.tunel, lote: l.split.lote, ha: l.split.ha,
+            posKey: `${l.r},${l.c}#${l.split.lote}`, half: "bot", cellLot: l
+          });
+        } else {
+          out.push({
+            r: l.r, c: l.c, modulo: l.modulo, tunel: l.tunel, lote: l.lote, ha: l.ha,
+            posKey: `${l.r},${l.c}`, half: "", cellLot: l
+          });
+        }
+      });
+      return out;
+    }
+
     function posKeyFromRecord(rec) {
       if (!rec) return null;
       const loteNum = Number(rec.lote);
       const turno = normTurnoLabel(rec.turno);
       if (!loteNum) return null;
 
-      let candidates = lots.filter(l =>
+      const parts = mapLotParts();
+      let candidates = parts.filter(l =>
         Number(l.lote) === loteNum &&
         normTurnoLabel(l.tunel) === turno
       );
       if (!candidates.length && turno) {
-        candidates = lots.filter(l => Number(l.lote) === loteNum);
+        candidates = parts.filter(l => Number(l.lote) === loteNum);
       }
       if (!candidates.length) return null;
-      if (candidates.length === 1) return `${candidates[0].r},${candidates[0].c}`;
+      if (candidates.length === 1) return candidates[0].posKey;
 
       const modLabel = String(rec.modulo || "").toUpperCase().replace(/\s+/g, "");
       if (modLabel) {
@@ -6867,14 +7055,14 @@
           const m = l.modulo != null ? modById[l.modulo] : null;
           return m && normTurnoLabel(m.label) === modLabel;
         });
-        if (byMod.length === 1) return `${byMod[0].r},${byMod[0].c}`;
+        if (byMod.length === 1) return byMod[0].posKey;
         if (byMod.length) candidates = byMod;
       }
 
       const recArea = roundHa(rec.area != null ? rec.area : rec.areaLote);
       if (recArea > 0) {
         const byArea = candidates.filter(l => roundHa(l.ha) === recArea);
-        if (byArea.length === 1) return `${byArea[0].r},${byArea[0].c}`;
+        if (byArea.length === 1) return byArea[0].posKey;
         if (byArea.length) candidates = byArea;
       }
 
@@ -6889,10 +7077,10 @@
             bestDiff = diff;
           }
         }
-        return `${best.r},${best.c}`;
+        return best.posKey;
       }
 
-      return `${candidates[0].r},${candidates[0].c}`;
+      return candidates[0].posKey;
     }
 
     function sameLaborName(a, b) {
@@ -6994,7 +7182,7 @@
 
     /** Avance del formulario = solo lo de HOY (encima del avance previo). */
     function todayAvanceCap(lot, posKey, laborReal) {
-      const area = roundHa(lot && lot.ha);
+      const area = lotTotalHa(lot);
       const prior = priorAvanceHa(posKey, laborReal);
       return roundHa(Math.max(0, area - prior));
     }
@@ -7007,7 +7195,7 @@
       if (existing > 0) return clampLaborAvance(existing, cap, labor, lot) || existing;
       const prior = priorAvanceHa(posKey, labor);
       if (prior > 0) return clampLaborAvance(cap, cap, labor, lot) || cap;
-      return defaultLaborAvance(roundHa(lot.ha), labor, lot);
+      return defaultLaborAvance(lotTotalHa(lot), labor, lot);
     }
 
     function draftSegmentosForPaint(posKey, todayAv, paint, laborReal) {
@@ -7033,7 +7221,7 @@
       if (!rec || !rec.laborReal) return null;
         const posKey = posKeyFromRecord(rec);
       if (!posKey) return null;
-        const lot = byPos.get(posKey);
+        const lot = resolvePosKey(posKey);
       const fromApi = segmentColorHex(rec.color);
       const prev = laborRecords[posKey];
       let color = fromApi || modulePaintColor(lot) || "";
@@ -7340,13 +7528,13 @@
       const cercos = isCercosLabor(mapQuery.laborReal);
       const zeroMid = cercos ? "0" : "0.00";
       if (!list.length) {
-        body.innerHTML = '<tr class="is-empty"><td colspan="5">Sin datos de la semana</td></tr>';
+        body.innerHTML = '<tr class="is-empty"><td colspan="5">Sin fechas · área y JR vacíos</td></tr>';
         const za = document.getElementById(totAreaId);
         const zj = document.getElementById(totJrId);
         const zr = document.getElementById(totRatioId);
-        if (za) za.textContent = zeroMid;
-        if (zj) zj.textContent = "0";
-        if (zr) zr.textContent = "0.00";
+        if (za) za.textContent = "—";
+        if (zj) zj.textContent = "—";
+        if (zr) zr.textContent = "—";
         return;
       }
       let area = 0, jr = 0, ml = 0;
@@ -7392,6 +7580,43 @@
       }
     }
 
+    function moduloTokensForActiveFundo() {
+      const out = new Set();
+      (modules || []).forEach(m => {
+        const id = String(m.id);
+        const lab = String(m.label || "").toUpperCase().replace(/\s+/g, "");
+        out.add(id);
+        out.add("M" + id);
+        out.add(lab);
+        if (/^M0*\d+$/i.test(lab)) out.add(lab.replace(/^M0+/, "M"));
+      });
+      return out;
+    }
+
+    function resumenRowMatchesFundo(row) {
+      const tokens = moduloTokensForActiveFundo();
+      if (!tokens.size) return false;
+      const parts = String(row?.modulo || "")
+        .toUpperCase()
+        .split(/[-,;/|+\s]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (!parts.length) return false;
+      return parts.some(p => {
+        const compact = p.replace(/\s+/g, "");
+        if (tokens.has(compact) || tokens.has(p)) return true;
+        const n = compact.replace(/^M0*/, "");
+        return tokens.has(n) || tokens.has("M" + n);
+      });
+    }
+
+    function filterResumenForActiveFundo(rows) {
+      const list = Array.isArray(rows) ? rows : [];
+      const hit = list.filter(resumenRowMatchesFundo);
+      // Si nada coincide con módulos del fundo activo (ej. API trae M1-M3 en Licapa II) → vacío
+      return hit;
+    }
+
     async function refreshWeekResumen() {
       const sem = mapQuery.sem != null ? mapQuery.sem : currentWeek;
       const labor = String(mapQuery.laborReal || "").toUpperCase().trim();
@@ -7399,8 +7624,12 @@
         try {
           const json = await QBApi.getResumen(sem, labor);
           if (json?.ok && Array.isArray(json.resumen) && json.resumen.length) {
-            renderWeekResumen(json.resumen);
-            return;
+            const scoped = filterResumenForActiveFundo(json.resumen);
+            if (scoped.length) {
+              renderWeekResumen(scoped);
+              return;
+            }
+            // API de otro fundo → no pintar; usar solo local del fundo activo
           }
         } catch (e) { /* fallback local */ }
       }
@@ -7773,7 +8002,9 @@
 
     function getCellByKey(posKey) {
       if (!posKey) return null;
-      return grid.querySelector(`.cell[data-key="${posKey}"]`);
+      const raw = String(posKey);
+      const base = raw.indexOf("#") >= 0 ? raw.slice(0, raw.indexOf("#")) : raw;
+      return grid.querySelector(`.cell[data-key="${base}"]`);
     }
 
     function clearCellFillSegs(cell) {
@@ -7783,7 +8014,7 @@
 
     function paintCellProgress(cell, lot, avance, laborReal, fillColor, segmentos) {
       if (!cell || !lot) return;
-      const area = roundHa(lot.ha) || 1;
+      const area = lotTotalHa(lot) || 1;
       let av = roundHa(avance);
       if (area > 0 && av > area) av = area;
       const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
@@ -7892,9 +8123,61 @@
       return { pct, st, area, av };
     }
 
+    function paintSplitHalfProgress(halfEl, partLot, posKey) {
+      if (!halfEl || !partLot) return;
+      let fill = halfEl.querySelector(".cell-fill-half");
+      if (!fill) {
+        fill = document.createElement("div");
+        fill.className = "cell-fill-half";
+        halfEl.insertBefore(fill, halfEl.firstChild);
+      }
+      if (multiLotKeys.has(posKey)) {
+        paintOneMultiCell(posKey);
+        return;
+      }
+      const rec = recForMapLot(posKey);
+      const area = roundHa(partLot.ha) || 1;
+      let av = roundHa(rec?.avance);
+      if (area > 0 && av > area) av = area;
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      const paint = resolvePaintColor(partLot, posKey, rec?.color) || "#64B5F6";
+      if (!rec?.laborReal || av <= 0) {
+        fill.style.background = "transparent";
+        fill.style.height = "0%";
+        fill.style.top = "";
+        fill.style.bottom = "0";
+        return;
+      }
+      fill.style.left = "0";
+      fill.style.right = "0";
+      fill.style.top = "auto";
+      fill.style.bottom = "0";
+      fill.style.width = "100%";
+      fill.style.height = pct + "%";
+      fill.style.background = paint;
+      halfEl.title = `LT.${partLot.lote} · Avance ${formatHa(av)} / ${formatHa(area)} ha`;
+    }
+
     function applyLaborVisual(cell, lot) {
       if (!cell || !lot) return;
       const key = cell.dataset.key;
+      if (lotHasSplit(lot)) {
+        const topKey = splitTopKey(lot);
+        const botKey = splitBotKey(lot);
+        const topHalf = cell.querySelector('.split-half[data-half="top"]');
+        const botHalf = cell.querySelector('.split-half[data-half="bot"]');
+        if (multiLotKeys.has(topKey) || multiLotKeys.has(botKey)) {
+          if (multiLotKeys.has(topKey)) paintOneMultiCell(topKey);
+          else paintSplitHalfProgress(topHalf, resolvePosKey(topKey), topKey);
+          if (multiLotKeys.has(botKey)) paintOneMultiCell(botKey);
+          else paintSplitHalfProgress(botHalf, resolvePosKey(botKey), botKey);
+          return;
+        }
+        paintSplitHalfProgress(topHalf, resolvePosKey(topKey), topKey);
+        paintSplitHalfProgress(botHalf, resolvePosKey(botKey), botKey);
+        cell.title = `Partes: LT.${lot.lote} y LT.${lot.split.lote} · elige una`;
+        return;
+      }
       // Lotes del día (con o sin “modo múltiple”): no pisar con GET/soft-sync
       if (key && multiLotKeys.has(key)) {
         paintOneMultiCell(key);
@@ -7911,7 +8194,7 @@
     function deskCapturedLots() {
       if (multiLotKeys.size) return getMultiLots();
       const key = fLote && fLote.value;
-      const lot = key ? byPos.get(key) : null;
+      const lot = key ? resolvePosKey(key) : null;
       if (!lot) return [];
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       return [{ key, lot, avance: roundHa(fAvance && fAvance.value) || defaultTodayAvance(lot, key, labor) }];
@@ -7919,7 +8202,7 @@
 
     function updateDeskRatio() {
       const items = deskCapturedLots();
-      const area = roundHa(items.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+      const area = roundHa(items.reduce((s, x) => s + lotTotalHa(x.lot), 0));
       const jr = parseJr(fTotalJr && fTotalJr.value);
       const el = document.getElementById("deskRatioFormula");
       if (isCercosLabor(fLaborReal && fLaborReal.value)) {
@@ -7961,7 +8244,7 @@
       board.innerHTML = Object.keys(groups).map(id => {
         const mod = modById[id] || modById[Number(id)];
         const rows = groups[id].slice().sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
-        const areaG = roundHa(rows.reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+        const areaG = roundHa(rows.reduce((s, x) => s + lotTotalHa(x.lot), 0));
         return `<div class="mod-group">
           <div class="mod-group-head">
             <b>${mod ? mod.label : ("M" + id)}</b>
@@ -8006,9 +8289,9 @@
         updateDrawerPreview();
         return;
       }
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       if (!lot) return;
-      const area = roundHa(lot.ha) || 0;
+      const area = lotTotalHa(lot) || 0;
       const laborReal = fLaborReal.value;
       const cap = todayAvanceCap(lot, posKey, laborReal);
       let avance = roundHa(fAvance && fAvance.value);
@@ -8023,13 +8306,16 @@
       const cell = getCellByKey(posKey);
       if (cell) {
         cell.classList.remove("dim");
-        // Si ya hay avance previo, solo pinta el tramo de HOY encima (no desde 0)
-        paintDraftFromToday(cell, lot, posKey, avance, laborReal, paint);
+        if (lot._half) {
+          markSplitHalfSelected(cell, posKey);
+          const halfEl = cell.querySelector(`.split-half[data-half="${lot._half}"]`);
+          if (halfEl) paintSplitHalfDraft(halfEl, lot, posKey, avance, laborReal, paint);
+        } else {
+          // Si ya hay avance previo, solo pinta el tramo de HOY encima (no desde 0)
+          paintDraftFromToday(cell, lot, posKey, avance, laborReal, paint);
+        }
       }
     }
-
-    let toastTimer = null;
-    let drawerMsgTimer = null;
 
     function positionSaveToast() {
       const toast = document.getElementById("saveToast");
@@ -8110,6 +8396,15 @@
       const cell = getCellByKey(posKey);
       if (!cell) return;
       cell.classList.remove("dim");
+      const lot = resolvePosKey(posKey);
+      if (lot && lot._half) {
+        const half = cell.querySelector(`.split-half[data-half="${lot._half}"]`);
+        if (half) {
+          half.classList.add("labor-flash");
+          setTimeout(() => half.classList.remove("labor-flash"), 700);
+          return;
+        }
+      }
       cell.classList.add("labor-flash");
       setTimeout(() => cell.classList.remove("labor-flash"), 700);
     }
@@ -8129,7 +8424,7 @@
     function normalizeStoredLaborColors() {
       let changed = false;
       Object.keys(laborRecords).forEach(key => {
-        const lot = byPos.get(key);
+        const lot = resolvePosKey(key);
         if (!lot) return;
         const expected = modulePaintColor(lot);
         if (!expected) return;
@@ -8160,7 +8455,189 @@
       labelRows = [...new Set(lots.map(l => l.r))].sort((a, b) => a - b);
       byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
       rowsCount = labelRows.length;
-      uniqueLotes = new Set(lots.map(l => l.lote)).size;
+      uniqueLotes = new Set(lots.flatMap(l => l.split ? [l.lote, l.split.lote] : [l.lote])).size;
+    }
+
+    function lotHasSplit(lot) {
+      return !!(lot && lot.split && (lot.split.lote != null || lot.split.lote === 0));
+    }
+
+    /** Vista compacta: "208 A" → "208A" (no cambia el dato guardado) */
+    function formatLoteTag(lote) {
+      return String(lote == null ? "" : lote).replace(/\s+/g, "").toUpperCase();
+    }
+
+    function cellBaseKey(lot) {
+      if (!lot) return "";
+      if (lot._baseKey) return lot._baseKey;
+      return `${lot.r},${lot.c}`;
+    }
+
+    function splitTopKey(lot) {
+      if (!lot) return "";
+      const cellLot = lot._cellLot || lot;
+      return `${cellLot.r},${cellLot.c}#${cellLot.lote}`;
+    }
+
+    function splitBotKey(lot) {
+      if (!lotHasSplit(lot)) return "";
+      const cellLot = lot._cellLot || lot;
+      return `${cellLot.r},${cellLot.c}#${cellLot.split.lote}`;
+    }
+
+    /** Clave de una mitad: siempre r,c#lote (cada parte es un lote) */
+    function partKeyFromHalf(lot, half) {
+      const cellLot = lot._cellLot || lot;
+      if (half === "bot" && lotHasSplit(cellLot)) return splitBotKey(cellLot);
+      if (lotHasSplit(cellLot)) return splitTopKey(cellLot);
+      return cellBaseKey(cellLot);
+    }
+
+    function makeHalfLot(cellLot, half) {
+      if (!cellLot) return null;
+      const base = `${cellLot.r},${cellLot.c}`;
+      if (half === "bot") {
+        if (!lotHasSplit(cellLot)) return null;
+        return {
+          r: cellLot.r,
+          c: cellLot.c,
+          modulo: cellLot.modulo,
+          tunel: cellLot.split.tunel,
+          lote: cellLot.split.lote,
+          ha: cellLot.split.ha,
+          _baseKey: base,
+          _half: "bot",
+          _cellLot: cellLot
+        };
+      }
+      return {
+        r: cellLot.r,
+        c: cellLot.c,
+        modulo: cellLot.modulo,
+        tunel: cellLot.tunel,
+        lote: cellLot.lote,
+        ha: cellLot.ha,
+        _baseKey: base,
+        _half: lotHasSplit(cellLot) ? "top" : "",
+        _cellLot: lotHasSplit(cellLot) ? cellLot : null
+      };
+    }
+
+    function resolvePosKey(posKey) {
+      const raw = String(posKey || "");
+      if (!raw) return null;
+      const hash = raw.indexOf("#");
+      const base = hash >= 0 ? raw.slice(0, hash) : raw;
+      const partId = hash >= 0 ? raw.slice(hash + 1) : "";
+      const cellLot = byPos.get(base);
+      if (!cellLot) return null;
+      if (!lotHasSplit(cellLot)) {
+        if (partId && String(cellLot.lote) !== String(partId)) return null;
+        return cellLot;
+      }
+      // Celda partida: cada #lote es un lote independiente
+      if (!partId || String(cellLot.lote) === String(partId)) {
+        return makeHalfLot(cellLot, "top");
+      }
+      if (String(cellLot.split.lote) === String(partId)) {
+        return makeHalfLot(cellLot, "bot");
+      }
+      return null;
+    }
+
+    function lotTotalHa(lot) {
+      if (!lot) return 0;
+      // Si ya es una mitad resuelta, solo su ha
+      if (lot._half) return roundHa(lot.ha);
+      let n = roundHa(lot.ha);
+      if (lotHasSplit(lot)) n = roundHa(n + roundHa(lot.split.ha));
+      return n;
+    }
+
+    function getCellByPartKey(posKey) {
+      const lot = resolvePosKey(posKey);
+      if (!lot) return null;
+      return getCellByKey(cellBaseKey(lot));
+    }
+
+    function lotCellHtml(lot) {
+      if (!lotHasSplit(lot)) {
+        const tag = formatLoteTag(lot.lote);
+        const compact = /[A-Z]/.test(tag) ? " is-compact" : "";
+        return `
+          <div class="cell-fill"></div>
+          <span class="t">${String(lot.tunel).toUpperCase()}</span>
+          <span class="l${compact}">LT.${tag}</span>
+          <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
+          ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
+      }
+      const top = splitTopKey(lot);
+      const bot = splitBotKey(lot);
+      const a = lot;
+      const b = lot.split;
+      const tagA = formatLoteTag(a.lote);
+      const tagB = formatLoteTag(b.lote);
+      const compactA = /[A-Z]/.test(tagA) ? " is-compact" : "";
+      const compactB = /[A-Z]/.test(tagB) ? " is-compact" : "";
+      return `
+          <div class="split-half is-top" data-part-key="${top}" data-half="top" data-lote="${a.lote}" role="button" tabindex="0" title="LOTE ${tagA} · ${formatHa(a.ha)} ha · tocar solo esta parte">
+            <div class="cell-fill-half" aria-hidden="true"></div>
+            <span class="t">${String(a.tunel || "").toUpperCase()}</span>
+            <span class="l${compactA}">LT.${tagA}</span>
+            <span class="h">${a.ha != null ? Number(a.ha).toFixed(2) : ""}</span>
+          </div>
+          <div class="split-half is-bot" data-part-key="${bot}" data-half="bot" data-lote="${b.lote}" role="button" tabindex="0" title="LOTE ${tagB} · ${formatHa(b.ha)} ha · tocar solo esta parte">
+            <div class="cell-fill-half" aria-hidden="true"></div>
+            <span class="t">${String(b.tunel || "").toUpperCase()}</span>
+            <span class="l${compactB}">LT.${tagB}</span>
+            <span class="h">${b.ha != null ? Number(b.ha).toFixed(2) : ""}</span>
+          </div>`;
+    }
+
+    function renderMapLabels() {
+      const box = document.getElementById("mapLabels");
+      if (!box) return;
+      const labels = (data && Array.isArray(data.labels)) ? data.labels : [];
+      box.innerHTML = "";
+      if (!labelRows.length || !cellW || !cellH) return;
+      labels.forEach(lab => {
+        if (!lab || !lab.text) return;
+        // Solo zonas/variedad (cuadritos). Módulos ya van en sidebar.
+        if (lab.kind === "module") return;
+        const ri = labelRows.indexOf(Number(lab.r));
+        if (ri < 0) return;
+        const c0 = Number(lab.cStart != null ? lab.cStart : lab.c);
+        const c1 = Number(lab.cEnd != null ? lab.cEnd : c0);
+        if (!Number.isFinite(c0) || !Number.isFinite(c1)) return;
+        const midC = (c0 + c1) / 2;
+        const x = (midC - minC + 0.5) * cellW;
+        const y = ri * cellH;
+        const el = document.createElement("div");
+        el.className = "map-zone-label";
+        if (lab.anchor === "bottom") el.classList.add("is-bottom");
+        else if (lab.anchor === "center") el.classList.add("is-center");
+        if (String(lab.text).toUpperCase() === "MAGICA") {
+          el.style.background = "#6a1b9a";
+        }
+        el.textContent = String(lab.text);
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        box.appendChild(el);
+      });
+    }
+
+    function clearSplitHalfSelection(cell) {
+      if (!cell) return;
+      cell.querySelectorAll(".split-half.is-on").forEach(el => el.classList.remove("is-on"));
+    }
+
+    function markSplitHalfSelected(cell, posKey) {
+      if (!cell) return;
+      clearSplitHalfSelection(cell);
+      const want = String(posKey || "");
+      cell.querySelectorAll(".split-half").forEach(el => {
+        if (el.getAttribute("data-part-key") === want) el.classList.add("is-on");
+      });
     }
 
     let baseCellW = 40;
@@ -8184,8 +8661,6 @@
     let panY = 0;
     let mobChromeOpen = true;
     try { mobChromeOpen = sessionStorage.getItem("qb-mob-chrome") !== "0"; } catch { /* ignore */ }
-
-    const MOBILE_MAP_MQ = "(max-width: 768px), ((max-height: 520px) and (max-width: 1024px))";
 
     function isMobileMap() {
       return window.matchMedia(MOBILE_MAP_MQ).matches;
@@ -8315,6 +8790,10 @@
 
     const MAP_BORDER_INSET = 2;
 
+    // Misma densidad visual que Licapa I (no achicar celdas si el fundo tiene más filas)
+    const REF_MAP_COLS = 34;
+    const REF_MAP_ROWS = 11;
+
     function rebuildBaseMetrics() {
       const mobile = isMobileMap();
       const { w: vw, h: vh } = getViewportSize();
@@ -8325,8 +8804,9 @@
           baseCellH = MOB_CELL_H;
         }
       } else {
-        const fitW = (vw - inset) / cols;
-        const fitH = (vh - inset) / rowsCount;
+        // Ancho/alto de celda = como Licapa I (referencia fija). Licapa II se hace más grande y se hace pan.
+        const fitW = (vw - inset) / REF_MAP_COLS;
+        const fitH = (vh - inset) / REF_MAP_ROWS;
         const deskMinW = vw >= 1600 ? 39 : (vw >= 1280 ? 35 : (vw >= 1024 ? 31 : 22));
         const deskMinH = vh >= 900 ? 37 : (vh >= 720 ? 33 : (vh >= 600 ? 29 : 20));
         baseCellW = Math.max(deskMinW, fitW);
@@ -8357,6 +8837,7 @@
       stage.style.height = mapH + "px";
       scaler.style.width = mapW + "px";
       scaler.style.height = mapH + "px";
+      renderMapLabels();
       const fsCell = computeCellFontSize(cellW, cellH, mobile);
       const mobOverview =
         mobile &&
@@ -8481,7 +8962,10 @@
           availH / (rowsCount * baseCellH)
         );
         maxZoomMul = computeMaxZoomMul();
-        zoomMul = Math.max(minZoomMul, fitZoom);
+        // Mismo tamaño de celda que Licapa I: si el fundo es más alto/ancho, no achicar (pan).
+        // fitZoom < 1 → empezar al 100%; se puede alejar hasta ver todo el plano.
+        minZoomMul = Math.min(1, Math.max(0.2, fitZoom));
+        zoomMul = fitZoom >= 1 ? Math.min(maxZoomMul, fitZoom) : 1;
         applyMapLayout();
       }
 
@@ -8506,46 +8990,62 @@
             continue;
           }
           const m = lot.modulo;
-          cell.className = "cell" + (m ? ` m${m}` : "") + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
+          const isMagica = !!(lot.zonaMagica || (lot.split && lot.split.zonaMagica));
+          cell.className = "cell"
+            + (m ? ` m${m}` : "")
+            + (lotHasSplit(lot) ? " is-split" : "")
+            + (isMagica ? " is-magica" : "")
+            + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
           cell.dataset.key = `${lot.r},${lot.c}`;
           cell.dataset.lote = String(lot.lote);
           cell.dataset.tunel = lot.tunel;
           cell.dataset.mod = m == null ? "" : String(m);
+          if (isMagica) cell.dataset.magica = "1";
+          if (lotHasSplit(lot)) cell.dataset.loteSplit = String(lot.split.lote);
           const posKey = `${lot.r},${lot.c}`;
-          cell.innerHTML = `
-            <div class="cell-fill"></div>
-            <span class="t">${String(lot.tunel).toUpperCase()}</span>
-            <span class="l">LT.${lot.lote}</span>
-            <span class="h">${lot.ha != null ? Number(lot.ha).toFixed(2) : ""}</span>
-            ${lotHasCercosFoot(lot) ? '<div class="cercos-foot" aria-hidden="true"></div><i class="cercos-close" aria-hidden="true"></i><div class="cell-fill-foot"></div>' : ""}`;
-          cell.addEventListener("click", e => {
+          cell.innerHTML = lotCellHtml(lot);
+
+          function interactPart(partKey, ev, mode) {
+            const partLot = resolvePosKey(partKey) || lot;
             if (document.body.classList.contains("freq-map-live")) {
-              selectLot(lot, cell);
+              selectLot(partLot, cell, partKey);
               return;
             }
             const desk = !isMobileMap();
             const drawerOpen = desk &&
               document.getElementById("laborDrawer").classList.contains("open");
+            if (mode === "dbl") {
+              if (!desk) return;
+              selectLot(partLot, cell, partKey);
+              if (drawerOpen) {
+                if (multiLotMode) addMultiLot(partKey, true);
+                else fillLaborForm(partKey);
+                return;
+              }
+              openLaborDrawer(partKey);
+              return;
+            }
             if (!drawerOpen) {
-              // Escritorio: 1 clic = ver área/trabajado; 2 clic = abrir formulario
               if (desk) {
                 clearTimeout(cell._deskClickTimer);
                 cell._deskClickTimer = setTimeout(() => {
                   cell._deskClickTimer = null;
-                  selectLot(lot, cell);
+                  selectLot(partLot, cell, partKey);
                 }, 280);
                 return;
               }
-              selectLot(lot, cell);
+              selectLot(partLot, cell, partKey);
               return;
             }
-            e.preventDefault();
-            e.stopPropagation();
-            // Escritorio: 2º clic en el mismo lote → deseleccionar
-            if (desk && multiLotKeys.has(posKey)) {
-              removeMultiLot(posKey);
+            if (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+            if (desk && multiLotKeys.has(partKey)) {
+              removeMultiLot(partKey);
+              clearSplitHalfSelection(cell);
               cell.classList.remove("active");
-              if (fLote && fLote.value === posKey) {
+              if (fLote && fLote.value === partKey) {
                 if (loteCSelect) loteCSelect.setValue("", true);
                 if (fArea) fArea.value = "";
                 if (fAvance) fAvance.value = "";
@@ -8556,37 +9056,51 @@
               return;
             }
             if (multiLotMode) {
-              addMultiLot(posKey, true);
+              addMultiLot(partKey, true);
               return;
             }
-            selectLot(lot, cell);
-            fillLaborForm(posKey);
+            selectLot(partLot, cell, partKey);
+            fillLaborForm(partKey);
             if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
               fAvance.value = "0.";
               updateAvanceBar();
               previewFromForm();
             }
-          });
-          cell.addEventListener("dblclick", e => {
-            if (document.body.classList.contains("freq-map-live")) return;
-            if (isMobileMap()) return;
-            e.preventDefault();
-            e.stopPropagation();
-            clearTimeout(cell._deskClickTimer);
-            cell._deskClickTimer = null;
-            const drawerOpen = document.getElementById("laborDrawer")?.classList.contains("open");
-            selectLot(lot, cell);
-            if (drawerOpen) {
-              if (multiLotMode) addMultiLot(posKey, true);
-              else fillLaborForm(posKey);
-              return;
-            }
-            openLaborDrawer(posKey);
-          });
+          }
+
+          if (lotHasSplit(lot)) {
+            cell.querySelectorAll(".split-half").forEach(half => {
+              const partKey = half.getAttribute("data-part-key");
+              half.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                interactPart(partKey, e, "click");
+              });
+              half.addEventListener("dblclick", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearTimeout(cell._deskClickTimer);
+                cell._deskClickTimer = null;
+                interactPart(partKey, e, "dbl");
+              });
+            });
+          } else {
+            cell.addEventListener("click", e => interactPart(posKey, e, "click"));
+            cell.addEventListener("dblclick", e => {
+              if (document.body.classList.contains("freq-map-live")) return;
+              if (isMobileMap()) return;
+              e.preventDefault();
+              e.stopPropagation();
+              clearTimeout(cell._deskClickTimer);
+              cell._deskClickTimer = null;
+              interactPart(posKey, e, "dbl");
+            });
+          }
           applyLaborVisual(cell, lot);
           grid.appendChild(cell);
         }
       });
+      renderMapLabels();
       syncCercosMapLayout();
     }
     buildMapGrid();
@@ -8635,21 +9149,26 @@
 
     grid.addEventListener("contextmenu", e => {
       if (isMobileMap()) return;
+      const half = e.target.closest(".split-half[data-part-key]");
       const cell = e.target.closest(".cell[data-key]");
       if (!cell) return;
       e.preventDefault();
       e.stopPropagation();
-      openCellDeleteModal(cell.dataset.key);
+      openCellDeleteModal(half ? half.getAttribute("data-part-key") : cell.dataset.key);
     });
 
-    function selectLot(lot, cell) {
+    function selectLot(lot, cell, partKey) {
       if (!lot) return;
-      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+      document.querySelectorAll(".cell.active").forEach(c => {
+        c.classList.remove("active");
+        clearSplitHalfSelection(c);
+      });
       if (cell) cell.classList.add("active");
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      const posKey = `${lot.r},${lot.c}`;
+      const posKey = partKey || (lot._half ? partKeyFromHalf(lot, lot._half) : `${lot.r},${lot.c}`);
+      if (lot._half && cell) markSplitHalfSelected(cell, posKey);
       const rec = recForMapLot(posKey);
-      const area = roundHa(lot.ha);
+      const area = lotTotalHa(lot);
       let trabajado = 0;
       if (multiLotMode && multiLotKeys.has(posKey)) {
         trabajado = getMultiLotAvance(posKey, lot);
@@ -8659,6 +9178,7 @@
       if (trabajado > area) trabajado = area;
       const falta = roundHa(Math.max(0, area - trabajado));
       const laborTxt = rec?.laborReal ? String(rec.laborReal) : "Sin labor registrada";
+      const titleLot = `${String(lot.tunel || "").toUpperCase()} · Lt.${formatLoteTag(lot.lote)}`;
 
       if (isMobileMap()) {
         const mobDetail = document.getElementById("mobDetail");
@@ -8670,7 +9190,7 @@
         } else if (mobPill) {
           mobPill.style.display = "none";
         }
-        document.getElementById("mobDTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
+        document.getElementById("mobDTitle").textContent = titleLot;
         document.getElementById("mobDHa").textContent = area ? formatHa(area) + " ha" : "—";
         document.getElementById("mobDAvance").textContent = formatHa(trabajado) + " ha";
         document.getElementById("mobDFalta").textContent = formatHa(falta) + " ha";
@@ -8689,7 +9209,7 @@
       } else {
         pill.style.display = "none";
       }
-      document.getElementById("dTitle").textContent = `${lot.tunel} · Lt.${lot.lote}`;
+      document.getElementById("dTitle").textContent = titleLot;
       document.getElementById("dHa").textContent = area ? formatHa(area) + " ha" : "—";
       document.getElementById("dAvance").textContent = formatHa(trabajado) + " ha";
       document.getElementById("dFalta").textContent = formatHa(falta) + " ha";
@@ -8699,27 +9219,36 @@
 
     document.getElementById("closeDetail").onclick = () => {
       detail.classList.remove("open");
-      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+      document.querySelectorAll(".cell.active").forEach(c => {
+        c.classList.remove("active");
+        clearSplitHalfSelection(c);
+      });
     };
 
     document.getElementById("mobDetailClose")?.addEventListener("click", () => {
       const mobDetail = document.getElementById("mobDetail");
       mobDetail?.classList.remove("open");
       mobDetail?.setAttribute("aria-hidden", "true");
-      document.querySelectorAll(".cell.active").forEach(c => c.classList.remove("active"));
+      document.querySelectorAll(".cell.active").forEach(c => {
+        c.classList.remove("active");
+        clearSplitHalfSelection(c);
+      });
     });
 
     function applyFilter() {
       const q = searchTerm.trim().toLowerCase().replace(/\s+/g, "");
       document.querySelectorAll(".cell:not(.empty)").forEach(cell => {
-        const lote = cell.dataset.lote;
-        const tunel = cell.dataset.tunel.toLowerCase();
+        const lote = cell.dataset.lote || "";
+        const lote2 = cell.dataset.loteSplit || "";
+        const tunel = (cell.dataset.tunel || "").toLowerCase();
         const mod = cell.dataset.mod;
         const matchMod = activeMod == null || mod === String(activeMod);
         const matchQ = !q ||
-          lote.includes(q) ||
-          (`lt.${lote}`).includes(q) ||
-          (`lt${lote}`).includes(q) ||
+          lote.toLowerCase().includes(q) ||
+          lote2.toLowerCase().includes(q) ||
+          (`lt.${lote}`).toLowerCase().includes(q) ||
+          (`lt${lote}`).toLowerCase().includes(q) ||
+          (lote2 && (`lt.${lote2}`).toLowerCase().includes(q)) ||
           tunel.includes(q) ||
           (`m${mod}`).includes(q);
         cell.classList.toggle("dim", !(matchMod && matchQ));
@@ -9235,10 +9764,14 @@
       const seen = new Set();
       const out = [];
       lotsForModulo(modId).forEach(lot => {
-        const t = String(lot.tunel || "").toUpperCase();
-        if (!t || seen.has(t)) return;
-        seen.add(t);
-        out.push({ value: t, label: t });
+        const add = (tun) => {
+          const t = String(tun || "").toUpperCase();
+          if (!t || seen.has(t)) return;
+          seen.add(t);
+          out.push({ value: t, label: t });
+        };
+        add(lot.tunel);
+        if (lotHasSplit(lot)) add(lot.split.tunel);
       });
       out.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
       return out;
@@ -9246,13 +9779,38 @@
     function loteItemsFor(modId, turno) {
       const t = String(turno || "").toUpperCase();
       return lotsForModulo(modId)
-        .filter(l => !t || String(l.tunel || "").toUpperCase() === t)
-        .sort((a, b) => Number(a.lote) - Number(b.lote))
-        .map(lot => ({
-      value: `${lot.r},${lot.c}`,
-      label: `LOTE ${lot.lote}`,
-          sub: String(lot.tunel || "").toUpperCase() + " · " + formatHa(lot.ha) + " ha"
-        }));
+        .filter(l => {
+          if (!t) return true;
+          const top = String(l.tunel || "").toUpperCase() === t;
+          const bot = lotHasSplit(l) && String(l.split.tunel || "").toUpperCase() === t;
+          return top || bot;
+        })
+        .sort((a, b) => String(a.lote).localeCompare(String(b.lote), undefined, { numeric: true }))
+        .flatMap(lot => {
+          if (lotHasSplit(lot)) {
+            const out = [];
+            if (!t || String(lot.tunel || "").toUpperCase() === t) {
+              out.push({
+                value: splitTopKey(lot),
+                label: `LOTE ${formatLoteTag(lot.lote)}`,
+                sub: String(lot.tunel || "").toUpperCase() + " · " + formatHa(lot.ha) + " ha · parte"
+              });
+            }
+            if (!t || String(lot.split.tunel || "").toUpperCase() === t) {
+              out.push({
+                value: splitBotKey(lot),
+                label: `LOTE ${formatLoteTag(lot.split.lote)}`,
+                sub: String(lot.split.tunel || "").toUpperCase() + " · " + formatHa(lot.split.ha) + " ha · parte"
+              });
+            }
+            return out;
+          }
+          return [{
+            value: `${lot.r},${lot.c}`,
+            label: `LOTE ${formatLoteTag(lot.lote)}`,
+            sub: String(lot.tunel || "").toUpperCase() + " · " + formatHa(lot.ha) + " ha"
+          }];
+        });
     }
     function loteOptionMeta(it) {
       if (multiLotKeys.has(it.value)) return { captured: true, tag: "En el día" };
@@ -9275,7 +9833,7 @@
       }
     }
     function applyDeskCascadeFromLot(posKey) {
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       if (!lot) return false;
       const modId = lot.modulo != null ? String(lot.modulo) : "";
       const turno = String(lot.tunel || "").toUpperCase();
@@ -9293,11 +9851,11 @@
         loteCSelect.setValue(posKey, true);
         loteCSelect.refresh();
       }
-      if (fArea) fArea.value = lot.ha != null ? formatHa(lot.ha) : "";
+      if (fArea) fArea.value = lotTotalHa(lot) ? formatHa(lotTotalHa(lot)) : "";
       return true;
     }
     function captureDeskLot(posKey) {
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       if (!lot) return;
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const av = defaultTodayAvance(lot, posKey, labor);
@@ -9391,7 +9949,7 @@
       onChange: () => {
         const labor = String(fLaborReal.value || "").toUpperCase();
         multiLotKeys.forEach((meta, key) => {
-          const lot = byPos.get(key);
+          const lot = resolvePosKey(key);
           if (!lot || !meta) return;
           meta.avance = defaultTodayAvance(lot, key, labor);
         });
@@ -9417,13 +9975,13 @@
 
     function getMultiLots() {
       return [...multiLotKeys.entries()]
-        .map(([k, meta]) => ({ key: k, lot: byPos.get(k), avance: roundHa(meta?.avance) }))
+        .map(([k, meta]) => ({ key: k, lot: resolvePosKey(k), avance: roundHa(meta?.avance) }))
         .filter(x => x.lot)
         .sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
     }
 
     function multiLotsTotalHa() {
-      return roundHa(getMultiLots().reduce((s, x) => s + (Number(x.lot.ha) || 0), 0));
+      return roundHa(getMultiLots().reduce((s, x) => s + lotTotalHa(x.lot), 0));
     }
 
     function multiLotsTotalAvance() {
@@ -9532,24 +10090,30 @@
 
     function syncMultiLotMapPaint() {
       const selected = new Set(multiLotKeys.keys());
-      document.querySelectorAll(".cell.multi-selected").forEach(c => {
-        const key = c.dataset.key;
-        if (selected.has(key)) return;
-        c.classList.remove("multi-selected");
-        c.style.removeProperty("--multi-color");
+      document.querySelectorAll(".cell.multi-selected, .split-half.multi-half-on").forEach(el => {
+        const cell = el.classList.contains("cell") ? el : el.closest(".cell");
+        if (!cell) return;
+        const key = cell.dataset.key;
+        const still =
+          selected.has(key) ||
+          [...selected].some(k => String(k).startsWith(key + "#") || k === key);
+        if (still && el.classList.contains("cell") && selected.has(key)) return;
+        if (el.classList.contains("split-half")) {
+          const partKey = el.getAttribute("data-part-key");
+          if (selected.has(partKey)) return;
+          el.classList.remove("multi-half-on", "is-on");
+        } else {
+          cell.classList.remove("multi-selected");
+          cell.style.removeProperty("--multi-color");
+        }
         const lot = byPos.get(key);
-        if (!lot) return;
-        const rec = recForMapLot(key);
-        paintCellProgress(
-          c, lot, rec?.avance, rec?.laborReal,
-          resolvePaintColor(lot, key, rec?.color), rec?.segmentos
-        );
+        if (lot) applyLaborVisual(cell, lot);
       });
       selected.forEach(key => paintOneMultiCell(key));
     }
 
     function paintOneMultiCell(posKey) {
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       const cell = getCellByKey(posKey);
       if (!lot || !cell || !multiLotKeys.has(posKey)) return;
       const laborReal = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "MULTI");
@@ -9558,12 +10122,52 @@
       av = clampLaborAvance(av, cap, laborReal, lot) || defaultTodayAvance(lot, posKey, laborReal);
       if (cap > 0 && av > cap) av = cap;
       cell.style.setProperty("--multi-color", multiPaintColor);
-      cell.classList.remove("dim", "active");
+      cell.classList.remove("dim");
+      if (lot._half) {
+        markSplitHalfSelected(cell, posKey);
+        const halfEl = cell.querySelector(`.split-half[data-half="${lot._half}"]`);
+        if (halfEl) {
+          halfEl.classList.add("multi-half-on");
+          paintSplitHalfDraft(halfEl, lot, posKey, av, laborReal, multiPaintColor);
+        }
+        return;
+      }
+      cell.classList.remove("active");
       cell.classList.add("multi-selected");
       // Avance previo se mantiene; el color de hoy solo pinta hacia arriba
       paintDraftFromToday(cell, lot, posKey, av, laborReal, multiPaintColor);
       cell.classList.add("multi-selected");
       cell.classList.remove("labor-done"); // evita borde doble / aspecto pesado
+    }
+
+    function paintSplitHalfDraft(halfEl, partLot, posKey, todayAv, laborReal, paint) {
+      if (!halfEl || !partLot) return;
+      let fill = halfEl.querySelector(".cell-fill-half");
+      if (!fill) {
+        fill = document.createElement("div");
+        fill.className = "cell-fill-half";
+        halfEl.insertBefore(fill, halfEl.firstChild);
+      }
+      const area = roundHa(partLot.ha) || 1;
+      const segs = draftSegmentosForPaint(posKey, todayAv, paint, laborReal);
+      let av = roundHa(segs.reduce((s, x) => s + Number(x.avance || 0), 0));
+      if (area > 0 && av > area) av = area;
+      const pct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+      const color = paint || resolvePaintColor(partLot, posKey) || "#64B5F6";
+      if (av <= 0) {
+        fill.style.background = "transparent";
+        fill.style.height = "0%";
+        fill.style.top = "";
+        fill.style.bottom = "0";
+        return;
+      }
+      fill.style.left = "0";
+      fill.style.right = "0";
+      fill.style.top = "auto";
+      fill.style.bottom = "0";
+      fill.style.width = "100%";
+      fill.style.height = pct + "%";
+      fill.style.background = color;
     }
 
     function updateMultiLotTotalsOnly() {
@@ -9598,9 +10202,9 @@
       // Al rearmar la lista, inputs destruidos disparan change="" y dejaban avance 0 en todos
       if (multiListBusy || !inp || !inp.isConnected) return;
       const key = inp.getAttribute("data-avance");
-      const lot = byPos.get(key);
+      const lot = resolvePosKey(key);
       if (!lot || !multiLotKeys.has(key)) return;
-      const area = roundHa(lot.ha);
+      const area = lotTotalHa(lot);
       const raw = String(inp.value || "").trim().replace(",", ".");
       // Mientras escribe: no tocar el valor (ni tope, ni toast, ni formato)
       const incomplete = raw === "" || raw === "." || raw === "-" || /\.$/.test(raw);
@@ -9653,11 +10257,12 @@
         } else {
           list.innerHTML = items.map(({ key, lot }) => {
             const mod = lot.modulo != null ? modById[lot.modulo] : null;
-            const area = roundHa(lot.ha);
+            const area = lotTotalHa(lot);
             const av = getMultiLotAvance(key, lot);
+            const lotLbl = `LOTE ${lot.lote}`;
             return `<div class="multi-lot-row" data-key="${key}">
             <div>
-              <strong>LOTE ${lot.lote}</strong>
+              <strong>${lotLbl}</strong>
               <span class="meta">${String(lot.tunel || "").toUpperCase()}${mod ? " · " + mod.label : ""} · área ${formatHa(area)} ha</span>
             </div>
             <div class="multi-lot-avance">
@@ -9704,14 +10309,14 @@
      * Otra forma de quitar: × en el modal
      */
     function addMultiLot(posKey, openModalIfNeeded) {
-      if (!posKey || !byPos.get(posKey)) return;
+      const lot = resolvePosKey(posKey);
+      if (!posKey || !lot) return;
 
       if (multiLotKeys.has(posKey)) {
         removeMultiLot(posKey);
         return;
       }
 
-      const lot = byPos.get(posKey);
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const av = defaultTodayAvance(lot, posKey, labor);
       multiLotKeys.set(posKey, { avance: av });
@@ -9738,15 +10343,26 @@
       // Solo despinta ESE lote; el resto queda firme
       const cell = getCellByKey(posKey);
       if (cell) {
-        cell.classList.remove("multi-selected");
-        cell.style.removeProperty("--multi-color");
-        const lot = byPos.get(posKey);
-        if (lot) {
-          const rec = recForMapLot(posKey);
-          paintCellProgress(
-            cell, lot, rec?.avance, rec?.laborReal,
-            resolvePaintColor(lot, posKey, rec?.color), rec?.segmentos
-          );
+        const lot = resolvePosKey(posKey);
+        if (lot && lot._half) {
+          const halfEl = cell.querySelector(`.split-half[data-half="${lot._half}"]`);
+          halfEl?.classList.remove("is-on", "multi-half-on");
+          if (halfEl) paintSplitHalfProgress(halfEl, lot, posKey);
+          const otherKey = lot._half === "top" ? splitBotKey(lot._cellLot) : splitTopKey(lot._cellLot);
+          if (!multiLotKeys.has(otherKey)) {
+            cell.classList.remove("multi-selected");
+            cell.style.removeProperty("--multi-color");
+          }
+        } else {
+          cell.classList.remove("multi-selected");
+          cell.style.removeProperty("--multi-color");
+          if (lot) {
+            const rec = recForMapLot(posKey);
+            paintCellProgress(
+              cell, lot, rec?.avance, rec?.laborReal,
+              resolvePaintColor(lot, posKey, rec?.color), rec?.segmentos
+            );
+          }
         }
       }
 
@@ -9795,17 +10411,15 @@
         showToast("Modo múltiple", false, "Marca más lotes en el mapa o en la lista");
       } else {
         closeMultiLotModal();
+        document.querySelectorAll(".split-half.multi-half-on").forEach(h => {
+          h.classList.remove("multi-half-on", "is-on");
+        });
         document.querySelectorAll(".cell.multi-selected").forEach(c => {
           c.classList.remove("multi-selected");
           c.style.removeProperty("--multi-color");
           const key = c.dataset.key;
           const lot = byPos.get(key);
-          if (!lot) return;
-          const rec = recForMapLot(key);
-          paintCellProgress(
-            c, lot, rec?.avance, rec?.laborReal,
-            resolvePaintColor(lot, key, rec?.color), rec?.segmentos
-          );
+          if (lot) applyLaborVisual(c, lot);
         });
         syncMultiLotSummary();
         renderDeskLotBoard();
@@ -9838,13 +10452,13 @@
 
     function fillLaborForm(posKey) {
       if (!posKey) return;
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       if (!lot) return;
       applyDeskCascadeFromLot(posKey);
       if (fAvance && fAvance.removeAttribute) fAvance.removeAttribute("max");
       if (mapQuery.laborReal) laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
       const rec = recForMapLot(posKey);
-      const areaHa = roundHa(lot.ha);
+      const areaHa = lotTotalHa(lot);
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       if (rec) {
         const up = (v) => String(v || "").toUpperCase();
@@ -9858,7 +10472,8 @@
       } else if (!roundHa(fAvance && fAvance.value)) {
         const av = defaultTodayAvance(lot, posKey, labor);
         fAvance.value = av ? formatHa(av) : "";
-        variedadCSelect.setValue("SEKOYA POP");
+        const vLot = String((lot.zonaMagica ? "MAGICA" : lot.variedad) || "").toUpperCase();
+        variedadCSelect.setValue(vLot === "MAGICA" ? "MAGICA" : "SEKOYA POP");
       }
       if (!multiLotKeys.has(posKey)) captureDeskLot(posKey);
       syncLaborGate();
@@ -9868,7 +10483,7 @@
     }
 
     async function saveOneLaborRecord(posKey, lot, avance, showFeedback, fillColor) {
-      const area = roundHa(lot.ha);
+      const area = lotTotalHa(lot);
       const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
       const cap = todayAvanceCap(lot, posKey, laborReal);
       let av = roundHa(avance);
@@ -9911,7 +10526,10 @@
         lotesTrabajados: isCercosLabor(laborReal) ? cercosLotesN() : 0,
         color: paint,
         segmentos,
-        editar: true
+        editar: true,
+        // Separación Licapa I / II (mismas claves locales distintas + fundo en payload)
+        fundo: String(activeFundo().label || "").toUpperCase(),
+        etapa: String(activeFundo().etapa || "")
       };
       saveLaborRecords();
 
@@ -10031,7 +10649,9 @@
         totalJr: parseJr(fTotalJr && fTotalJr.value),
         ml: isCercosLabor(laborReal) ? cercosLotesN() * cercosMlPerLot() : 0,
         lotesTrabajados: isCercosLabor(laborReal) ? cercosLotesN() : 0,
-        color: brush.label
+        color: brush.label,
+        fundo: String(activeFundo().label || "").toUpperCase(),
+        etapa: String(activeFundo().etapa || "")
       };
 
       const jrTotal = parseJr(fTotalJr && fTotalJr.value);
@@ -10041,7 +10661,7 @@
       const paintHex = currentPaintColor() || multiPaintColor;
       const fechaHoy = String(shared.fecha || "").slice(0, 10);
       const records = items.map(({ key, lot }, idx) => {
-        const area = roundHa(lot.ha);
+        const area = lotTotalHa(lot);
         const cap = todayAvanceCap(lot, key, laborReal);
         let av = getMultiLotAvance(key, lot);
         if (av <= 0) av = defaultTodayAvance(lot, key, laborReal);
@@ -10072,7 +10692,9 @@
           lotesTrabajados: cercosSave ? cercosLotesN() : 0,
           color: paintHex,
           segmentos,
-          editar: true
+          editar: true,
+          fundo: shared.fundo,
+          etapa: shared.etapa
         };
         laborRecords[key] = stored;
         // Al API solo el avance de HOY; el mapa usa segmentos/total en laborRecords
@@ -10083,10 +10705,14 @@
       // Pintar ya (optimista) antes del POST
       records.forEach(rec => {
         const cell = getCellByKey(rec.posKey);
-        const lot = byPos.get(rec.posKey);
+        const part = resolvePosKey(rec.posKey);
+        const lot = part && (part._cellLot || part);
         if (cell && lot) {
           cell.classList.remove("multi-selected");
           cell.style.removeProperty("--multi-color");
+          cell.querySelectorAll(".split-half.multi-half-on").forEach(h => {
+            h.classList.remove("multi-half-on", "is-on");
+          });
           applyLaborVisual(cell, lot);
         }
       });
@@ -10117,7 +10743,7 @@
         }
       } else {
         for (const rec of records) {
-          const lot = byPos.get(rec.posKey);
+          const lot = resolvePosKey(rec.posKey);
           if (!lot) continue;
           const r = await saveOneLaborRecord(rec.posKey, lot, rec.avance, false, multiPaintColor);
           if (r.error) { ok = false; errMsg = "Error en un lote"; }
@@ -10131,7 +10757,7 @@
         multiLotKeys.clear();
         records.forEach(rec => flashSavedCell(rec.posKey));
         const first = records[0];
-        const firstLot = first && byPos.get(first.posKey);
+        const firstLot = first && resolvePosKey(first.posKey);
         if (firstLot) updateDrawerPreview();
         if (API_URL) scheduleSoftSync(500);
       }
@@ -10200,9 +10826,9 @@
         }
         return false;
       }
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       if (!lot) return false;
-      const area = roundHa(lot.ha);
+      const area = lotTotalHa(lot);
       const laborNow = String(fLaborReal.value || "").toUpperCase().trim();
       const cap = todayAvanceCap(lot, posKey, laborNow);
       let avance = roundHa(fAvance.value);
@@ -10361,8 +10987,8 @@
         previewFromForm();
         return;
       }
-      const lot = byPos.get(fLote.value);
-      const area = lot ? roundHa(lot.ha) : 0;
+      const lot = resolvePosKey(fLote.value);
+      const area = lot ? lotTotalHa(lot) : 0;
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const cap = lot ? todayAvanceCap(lot, fLote.value, labor) : area;
       const raw = String(fAvance.value || "").trim().replace(",", ".");
@@ -10515,7 +11141,7 @@
     const cellDelModal = document.getElementById("cellDelModal");
     function openCellDeleteModal(posKey) {
       if (isMobileMap()) return;
-      const lot = byPos.get(posKey);
+      const lot = resolvePosKey(posKey);
       const rec = laborRecords[posKey];
       if (!lot) return;
       if (!rec || !rec.laborReal) {
@@ -10538,7 +11164,7 @@
     async function confirmCellDelete() {
       const posKey = pendingCellDel;
       const rec = posKey ? laborRecords[posKey] : null;
-      const lot = posKey ? byPos.get(posKey) : null;
+      const lot = posKey ? resolvePosKey(posKey) : null;
       if (!posKey || !rec || !lot) {
         closeCellDeleteModal();
         return;
@@ -10660,7 +11286,7 @@
           const lotsHtml = items.map(([key, r]) => {
             const st = laborStatus(r, Number(r.area) || 1);
             const pillClass = st.key === "done" ? "done" : st.key === "progress" ? "progress" : "pending";
-            const lot = byPos.get(key);
+            const lot = resolvePosKey(key);
             const loteLabel = lot
               ? `${String(lot.tunel).toUpperCase()} · LT.${lot.lote}`
               : `LT.${r.lote}`;
