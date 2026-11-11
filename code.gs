@@ -13,6 +13,13 @@
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
  *
  * Acciones: ping · guardar · guardar_grupo · consultar · get · filtros · dashboard
+ *           get_prod · guardar_prod · guardar_prod_grupo · eliminar_prod
+ *
+ * Hoja "PRODUCCION" (frecuencias /data):
+ *  FECHA | SEM | MES | FUNDO | REF | PACKING | REF2 | ETAPA | VARIEDAD | GUIA |
+ *  MD | TURNO | LOTE | COD | HA | JORNA | JABAS | JARRAS | KILOS BRUTO | KILOS/HA |
+ *  JABAS/JR | KG/JR | DESCARTE | KILOS NETOS | HORA GUARDADO | LOCAL_ID
+ *
  * Deploy: Web app · Execute as Me · Anyone
  * Seguridad: Script property API_TOKEN (obligatorio en producción)
  * Opcional: MAX_BATCH (default 40)
@@ -21,6 +28,7 @@
 var TZ = 'America/Lima';
 var HOJA = 'LABORES';
 var HOJA_RESUMEN = 'RESUMEN DIA';
+var HOJA_PROD = 'PRODUCCION';
 var FILA_ENC = 1;
 var FILA_INI = 2;
 
@@ -148,6 +156,20 @@ function procesar_(e, metodo) {
         laborReal: laborRes || null,
         resumen: laborRes ? armarResumenLista_(listRes, laborRes) : leerResumenSemana_(semRes)
       };
+    }
+
+    // ─── PRODUCCIÓN (/data frecuencias) ────────────────────────────────────
+    if (action === 'get_prod' || action === 'prod' || action === 'produccion' || action === 'list_prod') {
+      return getProduccion_(body.data || body, e);
+    }
+    if (action === 'guardar_prod' || action === 'save_prod') {
+      return guardarProduccion_(body.data || body);
+    }
+    if (action === 'guardar_prod_grupo' || action === 'save_prod_batch') {
+      return guardarProduccionGrupo_(body.data || body);
+    }
+    if (action === 'eliminar_prod' || action === 'delete_prod') {
+      return eliminarProduccion_(body.data || body);
     }
 
     return { ok: false, code: 'BAD_ACTION', message: 'Acción no válida' };
@@ -1531,7 +1553,8 @@ function rateLimitOk_(e, action) {
   action = String(action || '').toLowerCase();
   // Lecturas libres: el mapa hace GET frecuente para pintar
   if (action === 'ping' || action === 'get' || action === 'filtros' ||
-      action === 'resumen' || action === 'consultar' || action === 'dashboard') {
+      action === 'resumen' || action === 'consultar' || action === 'dashboard' ||
+      action === 'get_prod' || action === 'prod' || action === 'produccion' || action === 'list_prod') {
     return true;
   }
   try {
@@ -1812,3 +1835,525 @@ function semIso_(date) {
   var week1 = new Date(d.getFullYear(), 0, 4);
   return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
 }
+
+// ─── PRODUCCIÓN (/data · frecuencias) ───────────────────────────────────────
+
+var COLUMNAS_PROD = [
+  'FECHA', 'SEM', 'MES', 'FUNDO', 'REF', 'PACKING', 'REF2', 'ETAPA', 'VARIEDAD', 'GUIA',
+  'MD', 'TURNO', 'LOTE', 'COD', 'HA', 'JORNA', 'JABAS', 'JARRAS',
+  'KILOS BRUTO', 'KILOS/HA', 'JABAS/JR', 'KG/JR', 'DESCARTE', 'KILOS NETOS',
+  'HORA GUARDADO', 'LOCAL_ID'
+];
+
+var COL_PROD = {
+  FECHA: 0, SEM: 1, MES: 2, FUNDO: 3, REF: 4, PACKING: 5, REF2: 6, ETAPA: 7,
+  VARIEDAD: 8, GUIA: 9, MD: 10, TURNO: 11, LOTE: 12, COD: 13, HA: 14,
+  JORNA: 15, JABAS: 16, JARRAS: 17, KILOS_BRUTO: 18, KILOS_HA: 19,
+  JABAS_JR: 20, KG_JR: 21, DESCARTE: 22, KILOS_NETOS: 23,
+  HORA_GUARDADO: 24, LOCAL_ID: 25
+};
+
+var MES_ES_PROD_ = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+function prodCfg_() {
+  var p = PropertiesService.getScriptProperties();
+  return {
+    fundo: String(p.getProperty('PROD_FUNDO') || 'QBERRIES'),
+    refBase: String(p.getProperty('PROD_REF_BASE') || '46130QBERRIES'),
+    packingDefault: String(p.getProperty('PROD_PACKING') || 'QPACK'),
+    etapa: String(p.getProperty('PROD_ETAPA') || 'ETAPA I'),
+    kgPerJarra: Number(p.getProperty('PROD_KG_JARRA') || '1.0653') || 1.0653,
+    descarteRate: Number(p.getProperty('PROD_DESCARTE') || '0.0046936') || 0.0046936,
+    jarrasPorJaba: Number(p.getProperty('PROD_JARRAS_JABA') || '12') || 12
+  };
+}
+
+function obtenerHojaProd_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var h = ss.getSheetByName(HOJA_PROD);
+  if (!h) {
+    var prev = ss.getActiveSheet();
+    h = ss.insertSheet(HOJA_PROD);
+    h.getRange(FILA_ENC, 1, 1, COLUMNAS_PROD.length).setValues([COLUMNAS_PROD]);
+    estilizarEncabezadosProd_(h);
+    try { if (prev) ss.setActiveSheet(prev); } catch (e) { /* ok */ }
+  } else {
+    asegurarEncabezadosProd_(h);
+  }
+  return h;
+}
+
+function estilizarEncabezadosProd_(h) {
+  h.getRange(FILA_ENC, 1, 1, COLUMNAS_PROD.length)
+    .setFontWeight('bold')
+    .setBackground('#0f2744')
+    .setFontColor('#FFFFFF');
+  h.setFrozenRows(FILA_ENC);
+}
+
+function asegurarEncabezadosProd_(h) {
+  var lastCol = Math.max(h.getLastColumn(), COLUMNAS_PROD.length);
+  var headers = [];
+  if (h.getLastRow() >= FILA_ENC) {
+    headers = h.getRange(FILA_ENC, 1, 1, lastCol).getValues()[0];
+  }
+  var ok = headers && headers.length >= COLUMNAS_PROD.length;
+  if (ok) {
+    for (var i = 0; i < COLUMNAS_PROD.length; i++) {
+      if (headerNorm_(headers[i]) !== headerNorm_(COLUMNAS_PROD[i])) {
+        ok = false;
+        break;
+      }
+    }
+  }
+  if (ok) return false;
+  h.getRange(FILA_ENC, 1, 1, COLUMNAS_PROD.length).setValues([COLUMNAS_PROD]);
+  estilizarEncabezadosProd_(h);
+  return true;
+}
+
+function mesDesdeIso_(fechaIso) {
+  var p = String(fechaIso || '').split('-');
+  var m = Number(p[1]) || 0;
+  return m >= 1 && m <= 12 ? MES_ES_PROD_[m - 1] : '';
+}
+
+function claveProd_(fechaIso, turno, lote, guia, variedad) {
+  return [
+    String(fechaIso || ''),
+    normalizarTurno_(turno) || '',
+    String(num_(lote) || ''),
+    norm_(guia) || '',
+    norm_(variedad) || ''
+  ].join('|');
+}
+
+function calcProdCampos_(d, cfg) {
+  cfg = cfg || prodCfg_();
+  var jabas = numDec_(d.jabas);
+  var jarras = d.jarras != null && d.jarras !== ''
+    ? numDec_(d.jarras)
+    : Math.round(jabas * (cfg.jarrasPorJaba || 12) * 100) / 100;
+  var kilosBruto = Math.round(jarras * (cfg.kgPerJarra || 1.0653) * 100) / 100;
+  var ha = numDec_(d.ha);
+  var jorna = numInt_(d.jorna != null ? d.jorna : d.jornal);
+  var descarte = Math.round(kilosBruto * (cfg.descarteRate || 0.0046936) * 100) / 100;
+  var kilosNetos = Math.round((kilosBruto - descarte) * 100) / 100;
+  return {
+    jabas: jabas,
+    jarras: jarras,
+    kilosBruto: kilosBruto,
+    kilosHa: ha > 0 ? Math.round((kilosBruto / ha) * 100) / 100 : 0,
+    jabasJr: jorna > 0 ? Math.round((jabas / jorna) * 100) / 100 : 0,
+    kgJr: jorna > 0 ? Math.round((kilosBruto / jorna) * 100) / 100 : 0,
+    descarte: descarte,
+    kilosNetos: kilosNetos,
+    jorna: jorna,
+    ha: ha
+  };
+}
+
+function validarProdPayload_(d) {
+  d = d || {};
+  var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || hoy_());
+  if (!fechaIso) {
+    return { ok: false, code: 'BAD_FECHA', message: 'Fecha inválida' };
+  }
+  var turno = normalizarTurno_(d.turno || d.tunel || '');
+  var lote = num_(d.lote);
+  if (!turno || !lote) {
+    return { ok: false, code: 'BAD_LOTE', message: 'Turno y lote son obligatorios' };
+  }
+  var jabas = numDec_(d.jabas);
+  var jarrasIn = d.jarras != null && d.jarras !== '' ? numDec_(d.jarras) : 0;
+  if (jabas <= 0 && jarrasIn <= 0) {
+    return { ok: false, code: 'BAD_JABAS', message: 'Ingresa jabas o jarras' };
+  }
+  var variedad = formatVariedad_(d.variedad || 'SEKOYA POP') || 'SEKOYA POP';
+  var guia = safeSheetText_(d.guia || d.guiaInterna || '', 40);
+  var modulo = normMod_(d.modulo || d.md || '');
+  var packing = safeSheetText_(d.packing || '', 40) || prodCfg_().packingDefault;
+  var cfg = prodCfg_();
+  var calc = calcProdCampos_({
+    jabas: jabas,
+    jarras: jarrasIn > 0 ? jarrasIn : '',
+    ha: d.ha,
+    jorna: d.jorna != null ? d.jorna : d.jornal
+  }, cfg);
+  var sem = num_(d.sem) || semIso_(fechaIso + 'T12:00:00');
+  var cod = d.cod != null && String(d.cod).trim()
+    ? safeSheetText_(d.cod, 20)
+    : ('Q' + String(lote));
+  var ref = safeSheetText_(d.ref || cfg.refBase, 40);
+  var fundo = safeSheetText_(d.fundo || cfg.fundo, 40);
+  var etapa = safeSheetText_(d.etapa || cfg.etapa, 40);
+  var ref2 = safeSheetText_(d.ref2 || (ref + norm_(variedad).replace(/\s+/g, '') + packing), 80);
+  return {
+    ok: true,
+    fechaIso: fechaIso,
+    sem: sem,
+    mes: mesDesdeIso_(fechaIso),
+    fundo: fundo,
+    ref: ref,
+    packing: packing,
+    ref2: ref2,
+    etapa: etapa,
+    variedad: variedad,
+    guia: guia,
+    modulo: modulo,
+    turno: turno,
+    lote: lote,
+    cod: cod,
+    ha: calc.ha,
+    jorna: calc.jorna,
+    jabas: calc.jabas,
+    jarras: calc.jarras,
+    kilosBruto: calc.kilosBruto,
+    kilosHa: calc.kilosHa,
+    jabasJr: calc.jabasJr,
+    kgJr: calc.kgJr,
+    descarte: calc.descarte,
+    kilosNetos: calc.kilosNetos,
+    localId: safeId_(d.localId || d.id || ''),
+    editar: d.editar === true || d.editar === 1 || d.editar === '1'
+  };
+}
+
+function filaProdArray_(v, hora) {
+  return [
+    formatFechaSheet_(v.fechaIso),
+    v.sem,
+    v.mes,
+    v.fundo,
+    v.ref,
+    v.packing,
+    v.ref2,
+    v.etapa,
+    v.variedad,
+    v.guia,
+    v.modulo,
+    v.turno,
+    v.lote,
+    v.cod,
+    v.ha,
+    v.jorna,
+    v.jabas,
+    v.jarras,
+    v.kilosBruto,
+    v.kilosHa,
+    v.jabasJr,
+    v.kgJr,
+    v.descarte,
+    v.kilosNetos,
+    hora || Utilities.formatDate(new Date(), TZ, 'HH:mm:ss'),
+    v.localId || ''
+  ];
+}
+
+function filaProdToCliente_(row, rowIndex) {
+  var fechaIso = normalizarFecha_(row[COL_PROD.FECHA]);
+  return {
+    rowIndex: rowIndex,
+    fecha: fechaIso,
+    fechaIso: fechaIso,
+    sem: num_(row[COL_PROD.SEM]),
+    mes: String(row[COL_PROD.MES] || '').trim(),
+    fundo: String(row[COL_PROD.FUNDO] || '').trim(),
+    ref: String(row[COL_PROD.REF] || '').trim(),
+    packing: String(row[COL_PROD.PACKING] || '').trim(),
+    ref2: String(row[COL_PROD.REF2] || '').trim(),
+    etapa: String(row[COL_PROD.ETAPA] || '').trim(),
+    variedad: String(row[COL_PROD.VARIEDAD] || '').trim(),
+    guia: String(row[COL_PROD.GUIA] || '').trim(),
+    modulo: String(row[COL_PROD.MD] || '').trim(),
+    turno: String(row[COL_PROD.TURNO] || '').trim(),
+    lote: num_(row[COL_PROD.LOTE]),
+    cod: String(row[COL_PROD.COD] || '').trim(),
+    ha: numDec_(row[COL_PROD.HA]),
+    jorna: numInt_(row[COL_PROD.JORNA]),
+    jabas: numDec_(row[COL_PROD.JABAS]),
+    jarras: numDec_(row[COL_PROD.JARRAS]),
+    kilosBruto: numDec_(row[COL_PROD.KILOS_BRUTO]),
+    kilosHa: numDec_(row[COL_PROD.KILOS_HA]),
+    jabasJr: numDec_(row[COL_PROD.JABAS_JR]),
+    kgJr: numDec_(row[COL_PROD.KG_JR]),
+    descarte: numDec_(row[COL_PROD.DESCARTE]),
+    kilosNetos: numDec_(row[COL_PROD.KILOS_NETOS]),
+    horaGuardado: textoHora_(row[COL_PROD.HORA_GUARDADO]),
+    localId: String(row[COL_PROD.LOCAL_ID] || '').trim()
+  };
+}
+
+function leerFilasProd_(hoja) {
+  hoja = hoja || obtenerHojaProd_();
+  asegurarEncabezadosProd_(hoja);
+  var last = hoja.getLastRow();
+  if (last < FILA_INI) return [];
+  var data = hoja.getRange(FILA_INI, 1, last - FILA_INI + 1, COLUMNAS_PROD.length).getValues();
+  var out = [];
+  for (var i = 0; i < data.length; i++) {
+    var fechaIso = normalizarFecha_(data[i][COL_PROD.FECHA]);
+    var lote = num_(data[i][COL_PROD.LOTE]);
+    if (!fechaIso && !lote) continue;
+    out.push(filaProdToCliente_(data[i], FILA_INI + i));
+  }
+  return out;
+}
+
+function buscarProdIndices_(rows, v) {
+  var key = claveProd_(v.fechaIso, v.turno, v.lote, v.guia, v.variedad);
+  var local = String(v.localId || '').trim();
+  var idx = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (local && r.localId && r.localId === local) {
+      idx.push(r.rowIndex);
+      continue;
+    }
+    var rk = claveProd_(r.fechaIso, r.turno, r.lote, r.guia, r.variedad);
+    if (rk === key) idx.push(r.rowIndex);
+  }
+  return idx;
+}
+
+function getProduccion_(d, e) {
+  d = d || {};
+  var sem = d.sem != null && d.sem !== '' ? num_(d.sem) : (param_(e, 'sem') ? num_(param_(e, 'sem')) : null);
+  var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
+  if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
+  var fechaFiltro = String(d.fecha || param_(e, 'fecha') || '').trim();
+  var fechaIsoFiltro = fechaFiltro ? normalizarFecha_(fechaFiltro) : '';
+  var modulo = normMod_(d.modulo || d.md || param_(e, 'modulo') || '');
+
+  var rows = leerFilasProd_();
+  var list = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (sem != null && num_(r.sem) !== sem) continue;
+    if (variedad && formatVariedad_(r.variedad) !== variedad) continue;
+    if (modulo && normMod_(r.modulo) !== modulo) continue;
+    if (fechaIsoFiltro && r.fechaIso !== fechaIsoFiltro) continue;
+    list.push(r);
+  }
+  list.sort(function (a, b) {
+    var df = String(b.fechaIso || '').localeCompare(String(a.fechaIso || ''));
+    if (df) return df;
+    var tm = String(a.turno || '').localeCompare(String(b.turno || ''), 'es', { numeric: true });
+    if (tm) return tm;
+    return (a.lote || 0) - (b.lote || 0);
+  });
+
+  return {
+    ok: true,
+    count: list.length,
+    cfg: prodCfg_(),
+    filters: {
+      sem: sem,
+      variedad: variedad || null,
+      modulo: modulo || null,
+      fecha: fechaIsoFiltro || null
+    },
+    list: list
+  };
+}
+
+function guardarProduccion_(d) {
+  var check = validarProdPayload_(d);
+  if (!check.ok) return check;
+
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+  } catch (eLock) {
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
+  }
+
+  try {
+    var hoja = obtenerHojaProd_();
+    var rows = leerFilasProd_(hoja);
+    var previas = buscarProdIndices_(rows, check);
+    var hora = Utilities.formatDate(new Date(), TZ, 'HH:mm:ss');
+    var fila = filaProdArray_(check, hora);
+
+    if (previas.length) {
+      // Actualiza la más reciente; borra duplicados
+      previas.sort(function (a, b) { return b - a; });
+      var keep = previas[0];
+      hoja.getRange(keep, 1, 1, COLUMNAS_PROD.length).setValues([fila]);
+      if (previas.length > 1) borrarFilas_(hoja, previas.slice(1));
+    } else {
+      hoja.appendRow(fila);
+    }
+
+    return {
+      ok: true,
+      message: 'Producción guardada',
+      record: {
+        fecha: check.fechaIso,
+        sem: check.sem,
+        modulo: check.modulo,
+        turno: check.turno,
+        lote: check.lote,
+        guia: check.guia,
+        ha: check.ha,
+        jorna: check.jorna,
+        jabas: check.jabas,
+        jarras: check.jarras,
+        kilosBruto: check.kilosBruto,
+        kilosNetos: check.kilosNetos,
+        localId: check.localId,
+        horaGuardado: hora
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function guardarProduccionGrupo_(payload) {
+  payload = payload || {};
+  var items = payload.records || payload.items || payload.list || payload.rows || [];
+  if (!Array.isArray(items) || !items.length) {
+    return { ok: false, code: 'EMPTY', message: 'Sin registros de producción' };
+  }
+  var max = maxBatch_();
+  if (items.length > max) {
+    return { ok: false, code: 'BATCH_TOO_LARGE', message: 'Máximo ' + max + ' filas por lote' };
+  }
+
+  var validados = [];
+  for (var i = 0; i < items.length; i++) {
+    var raw = items[i] || {};
+    var shared = {
+      packing: raw.packing != null ? raw.packing : payload.packing,
+      variedad: raw.variedad != null ? raw.variedad : payload.variedad,
+      fecha: raw.fecha != null ? raw.fecha : payload.fecha,
+      sem: raw.sem != null ? raw.sem : payload.sem,
+      fundo: raw.fundo != null ? raw.fundo : payload.fundo,
+      etapa: raw.etapa != null ? raw.etapa : payload.etapa,
+      jorna: raw.jorna != null ? raw.jorna : (raw.jornal != null ? raw.jornal : payload.jorna)
+    };
+    var merged = {};
+    for (var k in raw) {
+      if (raw.hasOwnProperty(k)) merged[k] = raw[k];
+    }
+    for (var sk in shared) {
+      if (shared.hasOwnProperty(sk) && (merged[sk] == null || merged[sk] === '')) {
+        merged[sk] = shared[sk];
+      }
+    }
+    var check = validarProdPayload_(merged);
+    if (!check.ok) {
+      return {
+        ok: false,
+        code: check.code || 'BAD_ROW',
+        message: 'Fila ' + (i + 1) + ': ' + (check.message || 'inválida')
+      };
+    }
+    validados.push(check);
+  }
+
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+  } catch (eLock) {
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
+  }
+
+  try {
+    var hoja = obtenerHojaProd_();
+    var rows = leerFilasProd_(hoja);
+    var hora = Utilities.formatDate(new Date(), TZ, 'HH:mm:ss');
+    var saved = 0;
+    var toDel = [];
+    var append = [];
+
+    for (var v = 0; v < validados.length; v++) {
+      var item = validados[v];
+      var previas = buscarProdIndices_(rows, item);
+      var fila = filaProdArray_(item, hora);
+      if (previas.length) {
+        previas.sort(function (a, b) { return b - a; });
+        hoja.getRange(previas[0], 1, 1, COLUMNAS_PROD.length).setValues([fila]);
+        for (var p = 1; p < previas.length; p++) toDel.push(previas[p]);
+      } else {
+        append.push(fila);
+      }
+      saved++;
+    }
+
+    if (toDel.length) borrarFilas_(hoja, toDel);
+    if (append.length) {
+      var start = hoja.getLastRow() + 1;
+      hoja.getRange(start, 1, append.length, COLUMNAS_PROD.length).setValues(append);
+    }
+
+    return {
+      ok: true,
+      message: 'Producción grupal guardada',
+      count: saved,
+      horaGuardado: hora
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function eliminarProduccion_(d) {
+  d = d || {};
+  var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || '');
+  var turno = normalizarTurno_(d.turno || '');
+  var lote = num_(d.lote);
+  var guia = safeSheetText_(d.guia || '', 40);
+  var variedad = formatVariedad_(d.variedad || '') || '';
+  var localId = safeId_(d.localId || d.id || '');
+  var rowIndex = num_(d.rowIndex);
+
+  if (!rowIndex && !localId && !(fechaIso && turno && lote)) {
+    return { ok: false, code: 'BAD_KEY', message: 'Indica fila o fecha+turno+lote' };
+  }
+
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+  } catch (eLock) {
+    return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
+  }
+
+  try {
+    var hoja = obtenerHojaProd_();
+    var rows = leerFilasProd_(hoja);
+    var toDel = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (rowIndex && r.rowIndex === rowIndex) {
+        toDel.push(r.rowIndex);
+        continue;
+      }
+      if (localId && r.localId && r.localId === localId) {
+        toDel.push(r.rowIndex);
+        continue;
+      }
+      if (fechaIso && turno && lote) {
+        if (r.fechaIso === fechaIso &&
+            normalizarTurno_(r.turno) === turno &&
+            num_(r.lote) === lote &&
+            (!guia || norm_(r.guia) === norm_(guia)) &&
+            (!variedad || formatVariedad_(r.variedad) === variedad)) {
+          toDel.push(r.rowIndex);
+        }
+      }
+    }
+    if (!toDel.length) {
+      return { ok: false, code: 'NOT_FOUND', message: 'No se encontró el registro' };
+    }
+    borrarFilas_(hoja, toDel);
+    return { ok: true, message: 'Producción eliminada', deleted: toDel.length };
+  } finally {
+    lock.releaseLock();
+  }
+}
+

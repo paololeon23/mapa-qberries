@@ -16,7 +16,7 @@
   let variedad = "SEKOYA POP";
   let byLotKey = new Map();
   let selectedKey = "";
-  let tab = "mapa";
+  let tab = "frecuencia";
   let calcFilter = "";
   let calcMod = "";
   let calcTurno = "";
@@ -169,17 +169,20 @@
     return out;
   }
 
-  function recompute() {
-    if (!DATA) return;
-    // Extras + filas de producción alimentan el DR / mapa
-    const fromProd = (readProd() || []).map(r => ({
+  function lotsFromDataOnly() {
+    // /frecuencia y /calculo solo jalan historial de /data (producción), no de otro JSON
+    return (readProd() || []).map(r => ({
       fecha: r.fecha,
       modulo: r.modulo,
       turno: r.turno,
       lote: r.lote,
       variedad: r.variedad
     }));
-    DATA.lots = mergeLots(DATA._baseLots || [], readExtra().concat(fromProd));
+  }
+
+  function recompute() {
+    if (!DATA) return;
+    DATA.lots = mergeLots([], lotsFromDataOnly().concat(readExtra()));
     indexData(DATA);
     renderAll();
   }
@@ -337,14 +340,8 @@
       lots: []
     };
     cutDate = DATA.defaultCutDate || isoTodayLima();
-    const fromProd = (readProd() || []).map(r => ({
-      fecha: r.fecha,
-      modulo: r.modulo,
-      turno: r.turno,
-      lote: r.lote,
-      variedad: r.variedad
-    }));
-    DATA.lots = mergeLots(DATA._baseLots, readExtra().concat(fromProd));
+    // DR /frecuencia = solo filas de /data (no mezclar frecuencias-data.json)
+    DATA.lots = mergeLots([], lotsFromDataOnly().concat(readExtra()));
     indexData(DATA);
     return DATA;
   }
@@ -364,11 +361,17 @@
     return hits[0] || null;
   }
 
-  const TAB_PATH = { data: "/data", calculo: "/calculo", mapa: "/mapa" };
-  const PATH_TAB = { "/data": "data", "/calculo": "calculo", "/mapa": "mapa" };
+  const TAB_PATH = { data: "/data", calculo: "/calculo", frecuencia: "/frecuencia" };
+  const PATH_TAB = {
+    "/data": "data",
+    "/calculo": "calculo",
+    "/frecuencia": "frecuencia",
+    // alias viejo → no mezclar con labores
+    "/mapa": "frecuencia"
+  };
 
   function pathOfTab(name) {
-    return TAB_PATH[name] || "/mapa";
+    return TAB_PATH[name] || "/frecuencia";
   }
 
   function tabFromHash() {
@@ -391,7 +394,8 @@
 
   function setTab(name, opts) {
     const o = opts || {};
-    const valid = PATH_TAB[pathOfTab(name)] ? name : "mapa";
+    const alias = name === "mapa" ? "frecuencia" : name;
+    const valid = PATH_TAB[pathOfTab(alias)] ? alias : "frecuencia";
     tab = valid;
     const screen = $("freqScreen");
     document.querySelectorAll(".freq-tab").forEach(btn => {
@@ -401,12 +405,12 @@
       p.hidden = p.dataset.panel !== valid;
     });
     const legend = $("freqLegendBox");
-    if (legend) legend.style.display = valid === "mapa" ? "" : "none";
+    if (legend) legend.style.display = valid === "frecuencia" ? "" : "none";
 
     if (!o.skipHash) syncHash(valid, !!o.replaceHash);
 
     // Solo monta la vista activa (ligero)
-    if (valid === "mapa") {
+    if (valid === "frecuencia") {
       if (screen) screen.classList.add("is-live-map");
       document.body.classList.add("freq-map-live");
       const bar = screen && screen.querySelector(".freq-top");
@@ -439,19 +443,34 @@
     return Number(n).toFixed(d == null ? 2 : d);
   }
 
+  function dataSearchQuery() {
+    const el = $("freqDataSearch");
+    return String((el && el.value) || "").trim().toLowerCase();
+  }
+
+  function rowMatchesSearch(r, q) {
+    if (!q) return true;
+    const hay = [r.guia, r.lote, r.modulo, r.turno].map(v => String(v == null ? "" : v).toLowerCase());
+    return hay.some(v => v.indexOf(q) >= 0);
+  }
+
   function renderData() {
     const body = $("freqDataBody");
     const meta = $("freqDataMeta");
     if (!body) return;
     fillCascadeModulo();
-    const rows = prodRowsEnriched().filter(r =>
+    const q = dataSearchQuery();
+    const all = prodRowsEnriched().filter(r =>
       !variedad || String(r.variedad).toUpperCase() === variedad
     );
+    const rows = all.filter(r => rowMatchesSearch(r, q));
     if (meta) {
-      meta.textContent = rows.length + " registros · simulación frontend";
+      const filtTxt = q ? " · filtrado " + rows.length + "/" + all.length : "";
+      meta.textContent = all.length + " registros" + filtTxt;
     }
     if (!rows.length) {
-      body.innerHTML = `<tr class="is-empty"><td colspan="14">Sin data. Agrega una cosecha a la derecha.</td></tr>`;
+      body.innerHTML = `<tr class="is-empty"><td colspan="14">${all.length ? "Sin coincidencias en el filtro." : "Sin data. Agrega una cosecha a la derecha."}</td></tr>`;
+      previewAddCalc();
       return;
     }
     body.innerHTML = rows.map(r => {
@@ -826,7 +845,7 @@
     });
   }
 
-  /* ——— 3) MAPA = mismo #grid de deshierbo (ligero) ——— */
+  /* ——— 3) /frecuencia = mismo #grid, solo DR desde /data ——— */
   function paintOnRealMap() {
     const grid = document.getElementById("grid");
     if (!grid) return;
@@ -841,6 +860,10 @@
       const tone = row ? freqTone(dr) : "sin";
       stats[tone] = (stats[tone] || 0) + 1;
 
+      // Quitar restos de labores (no mezclar con deshierbo)
+      cell.classList.remove("labor-done", "labor-progress", "multi-selected", "active");
+      cell.style.removeProperty("--multi-color");
+
       let badge = cell.querySelector(".freq-days");
       if (!badge) {
         badge = document.createElement("span");
@@ -851,8 +874,8 @@
       badge.textContent = row && dr != null ? String(dr) : "—";
       cell.classList.toggle("is-freq-on", selectedKey === k);
       cell.title = row
-        ? `LT.${lote} · ${dr} días · ${row.nEntradas} entradas · última ${formatDMY(row.ultima)}`
-        : `LT.${lote} · sin historial`;
+        ? `LT.${lote} · ${dr} días · ${row.nEntradas} entradas · última ${formatDMY(row.ultima)} · fuente /data`
+        : `LT.${lote} · sin historial en /data`;
     });
 
     const leg = $("freqLegendStats");
@@ -887,7 +910,7 @@
     document.body.classList.add("freq-open");
     syncControls();
     const fromHash = tabFromHash();
-    const initial = startTab || fromHash || "mapa";
+    const initial = startTab || fromHash || "frecuencia";
     loadData()
       .then(() => {
         syncControls();
@@ -931,10 +954,13 @@
   }
 
   function wire() {
-    $("deskFreqBtn")?.addEventListener("click", () => open("mapa"));
+    $("deskFreqBtn")?.addEventListener("click", () => open("frecuencia"));
     $("freqCloseBtn")?.addEventListener("click", close);
     document.querySelectorAll(".freq-tab").forEach(btn => {
-      btn.addEventListener("click", () => setTab(btn.dataset.tab || "mapa"));
+      btn.addEventListener("click", () => setTab(btn.dataset.tab || "frecuencia"));
+    });
+    $("freqDataSearch")?.addEventListener("input", () => {
+      if (tab === "data") renderData();
     });
     $("freqCutDate")?.addEventListener("change", e => {
       cutDate = String(e.target.value || "").slice(0, 10);
@@ -980,7 +1006,7 @@
       }
       if (document.body.classList.contains("freq-open")) close();
     });
-    // Si entran directo con #/data|#/calculo|#/mapa
+    // Si entran directo con #/data|#/calculo|#/frecuencia (#/mapa = alias)
     if (tabFromHash() && isDesktop()) open(tabFromHash());
   }
 
