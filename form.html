@@ -421,8 +421,8 @@
     .field select:focus {
       outline: none;
       background: #fff;
-      border-color: #86efac;
-      box-shadow: 0 0 0 4px rgba(47, 138, 88, 0.12);
+      border-color: #047857;
+      box-shadow: none;
     }
     .field input[readonly] {
       background: #f3f6f4;
@@ -501,20 +501,49 @@
       text-align: left;
       box-sizing: border-box;
       overflow: hidden;
-      transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      box-shadow: none;
+      transition: border-color .15s, background .15s, opacity .15s;
     }
     .mpick-trigger:hover:not(:disabled) {
       border-color: #b7c9bf;
       background: #fff;
+      box-shadow: none;
     }
     .mpick-trigger:active:not(:disabled) { opacity: 0.88; }
+    .mpick-trigger:focus,
     .mpick-trigger:focus-visible,
     .mpick-trigger[aria-expanded="true"],
     .mpick-trigger.is-picking {
       outline: none;
       background: #fff;
-      border-color: #86efac;
-      box-shadow: 0 0 0 4px rgba(47, 138, 88, 0.12);
+      border-color: #047857;
+      box-shadow: none;
+    }
+    /* Campo lleno — un solo borde verde, sin anillo plomo */
+    #laborCard .mpick-trigger.is-filled,
+    #dayCard .mpick-trigger.is-filled,
+    #fundoCard .mpick-trigger.is-filled,
+    #laborCard .field input.is-filled,
+    #dayCard .field input.is-filled {
+      border-color: #047857;
+      background: #fff;
+      box-shadow: none;
+      outline: none;
+    }
+    #laborCard .mpick-trigger.is-filled:focus-visible,
+    #dayCard .mpick-trigger.is-filled:focus-visible,
+    #fundoCard .mpick-trigger.is-filled:focus-visible,
+    #laborCard .mpick-trigger.is-filled[aria-expanded="true"],
+    #dayCard .mpick-trigger.is-filled[aria-expanded="true"],
+    #fundoCard .mpick-trigger.is-filled[aria-expanded="true"],
+    #laborCard .field input.is-filled:focus,
+    #dayCard .field input.is-filled:focus {
+      border-color: #047857;
+      box-shadow: none;
+      outline: none;
     }
     .mpick-trigger:disabled,
     .mpick-trigger.is-disabled {
@@ -1299,8 +1328,8 @@
     }
     #sumModal .mod-edit-field input:focus {
       outline: none;
-      border-color: #86efac;
-      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.1);
+      border-color: #047857;
+      box-shadow: none;
     }
     #sumModal .mod-edit-field input.is-over {
       border-color: #f87171;
@@ -2042,6 +2071,71 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.error { background: var(--qb-red); }
     .toast.offline { background: #b45309; }
+    /* Toast chico bajo mod-group (resumen) */
+    .board-toast {
+      display: none;
+      margin: 0.55rem 0.15rem 0;
+      padding: 0.38rem 0.65rem;
+      border-radius: 8px;
+      background: #0f3327;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: var(--tracking-ui);
+      text-align: center;
+      line-height: 1.25;
+    }
+    .board-toast.show { display: block; }
+    .board-toast.is-error { background: var(--qb-red); }
+    .card.is-process-locked {
+      opacity: 0.72;
+      pointer-events: none;
+    }
+    .card.is-process-locked .mpick-trigger,
+    .card.is-process-locked input {
+      pointer-events: none;
+    }
+    .picker-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      padding: 1.75rem 1rem;
+      color: #64748b;
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+    .picker-loading[hidden] { display: none !important; }
+    .picker-spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2.5px solid #e2e8f0;
+      border-top-color: #047857;
+      animation: qbSpin 0.7s linear infinite;
+    }
+    @keyframes qbSpin {
+      to { transform: rotate(360deg); }
+    }
+    /* Selects/inputs no se salen del card en celular */
+    .card,
+    .card .field,
+    .card .day-body,
+    .card .progress-body,
+    .card .row2 {
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+    .mpick-trigger,
+    .field input,
+    .field select {
+      max-width: 100%;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
 
     @media (min-width: 768px) {
       :root {
@@ -2240,7 +2334,25 @@
     </div>
 
     <form id="laborForm" novalidate>
-      <section class="card" id="laborCard">
+      <section class="card" id="fundoCard">
+        <div class="card-head">
+          <div class="card-head-accent" aria-hidden="true"></div>
+          <div class="card-head-text">
+            <h2>Fundo</h2>
+            <p class="card-head-sub">Licapa I o Licapa II</p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fFundoTrigger">Fundo <span class="req">*</span></label>
+          <input type="hidden" id="fFundo" value="" />
+          <button type="button" class="mpick-trigger" id="fFundoTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <span class="mpick-text is-empty" id="fFundoLabel">Seleccionar fundo...</span>
+            <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="card is-process-locked" id="laborCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
@@ -2252,14 +2364,14 @@
         <div class="field">
           <label for="fLaborRealTrigger">Labor real <span class="req">*</span></label>
           <input type="hidden" id="fLaborReal" value="" />
-          <button type="button" class="mpick-trigger" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false">
-            <span class="mpick-text is-empty" id="fLaborRealLabel">Seleccionar labor...</span>
+          <button type="button" class="mpick-trigger is-disabled" id="fLaborRealTrigger" aria-haspopup="dialog" aria-expanded="false" disabled>
+            <span class="mpick-text is-empty" id="fLaborRealLabel">Elige fundo primero</span>
             <svg class="mpick-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
       </section>
 
-      <section class="card is-gated" id="dayCard">
+      <section class="card is-process-locked" id="dayCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
@@ -2269,18 +2381,8 @@
           <span class="draft-badge" id="draftBadge">Borrador guardado</span>
         </div>
 
-        <div class="form-meta" aria-label="Semana y fecha de hoy">
-          <div class="meta-cell">
-            <span class="meta-k">Semana</span>
-            <span class="meta-v" id="fSemText">—</span>
-            <input type="hidden" id="fSem" />
-          </div>
-          <div class="meta-cell">
-            <span class="meta-k">Fecha</span>
-            <span class="meta-v is-date" id="fFechaText">—</span>
-            <input type="hidden" id="fFecha" />
-          </div>
-        </div>
+        <input type="hidden" id="fSem" />
+        <input type="hidden" id="fFecha" />
 
         <div class="day-body">
         <div class="field">
@@ -2336,18 +2438,14 @@
         </div>
           </div>
           </div>
-        <div class="gate-overlay" aria-hidden="true">
-          <img class="gate-mascot" src="assets/arandano.png?v=3" alt="" />
-          <button type="button" class="gate-labor-btn">Primero elige la labor</button>
-        </div>
       </section>
 
-      <section class="card is-gated" id="progressCard">
+      <section class="card is-process-locked" id="progressCard">
         <div class="card-head">
           <div class="card-head-accent" aria-hidden="true"></div>
           <div class="card-head-text">
             <h2>Progreso</h2>
-            <p class="card-head-sub" id="ratioCardSub">Ratio JR / área total del día</p>
+            <p class="card-head-sub" id="ratioCardSub">Ratio JR / avance del día</p>
           </div>
         </div>
 
@@ -2371,10 +2469,6 @@
         </div>
         <button type="button" class="btn-capture" id="captureBtn">Ver</button>
         </div>
-        <div class="gate-overlay" aria-hidden="true">
-          <img class="gate-mascot" src="assets/arandano.png?v=3" alt="" />
-          <button type="button" class="gate-labor-btn">Primero elige la labor</button>
-      </div>
     </section>
     </form>
 
@@ -2448,6 +2542,7 @@
         </div>
         <p class="mod-edit-ok" id="sumEditOk" hidden aria-live="polite">Se editó el lote correctamente</p>
       </div>
+      <div class="board-toast" id="boardToast" role="status" aria-live="polite" hidden></div>
     </div>
   </div>
 
@@ -2496,9 +2591,9 @@
         <h3 id="pickerTitle">Elegir</h3>
         <button type="button" class="picker-close" id="pickerClose" aria-label="Cerrar"><span>×</span></button>
       </div>
-      <div class="picker-search-wrap" id="pickerSearchWrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input type="search" id="pickerSearch" placeholder="Buscar..." autocomplete="off" />
+      <div class="picker-loading" id="pickerLoading" hidden>
+        <div class="picker-spinner" aria-hidden="true"></div>
+        <p>Cargando opciones…</p>
       </div>
       <div class="picker-list" id="pickerList"></div>
       <div class="picker-multi-bar" id="pickerMultiBar">
@@ -2510,7 +2605,8 @@
 
   <script src="config.js"></script>
   <script src="api.js"></script>
-  <script src="data.js?v=8"></script>
+  <script src="licapa1/data.js?v=9"></script>
+  <script src="licapa2/data.js?v=18"></script>
   <script>
     (function lockDesktopAndShell() {
       const phoneMq = "(max-width: 900px), ((max-height: 520px) and (max-width: 1024px))";
@@ -2558,15 +2654,48 @@
     (function () {
     if (window.__QB_FORM_LOCKED__) return;
 
-    const DRAFT_KEY = "qb-form-draft";
-    const LOCAL_LOTS_KEY = "qb-form-local-lots";
     const FORM_DAY_KEY = "qb-form-day";
-    const data = window.MAP_DATA;
-    const lots = data.lots || [];
-    const modules = data.modules || [];
-    const modById = Object.fromEntries(modules.map(m => [m.id, m]));
-    const byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+    const FUNDO_KEY = "qb-fundo"; // mismo key que el mapa (Licapa I/II)
+    const FUNDOS = {
+      licapa1: { id: "licapa1", label: "LICAPA I", etapa: "I", dataKey: "MAP_DATA" },
+      licapa2: { id: "licapa2", label: "LICAPA II", etapa: "II", dataKey: "MAP_DATA_LICAPA2" }
+    };
+    let activeFundoId = "";
+    let data = { lots: [], modules: [] };
+    let lots = [];
+    let modules = [];
+    let modById = {};
+    let byPos = new Map();
     const LABOR = (window.QB_CONFIG && QB_CONFIG.LABOR_OPTS) || { labor_ppto: [], labor_real: [] };
+
+    function draftKey() {
+      return activeFundoId ? ("qb-form-draft-" + activeFundoId) : "qb-form-draft";
+    }
+    function localLotsKey() {
+      return activeFundoId ? ("qb-form-local-lots-" + activeFundoId) : "qb-form-local-lots";
+    }
+    const DRAFT_KEY = "qb-form-draft"; // legacy alias; prefer draftKey()
+    const LOCAL_LOTS_KEY = "qb-form-local-lots";
+
+    function fundoDataset(id) {
+      const meta = FUNDOS[id];
+      if (!meta) return null;
+      const ds = window[meta.dataKey];
+      return ds && ds.lots && ds.lots.length ? ds : null;
+    }
+
+    function applyFundoDataset(id) {
+      const ds = fundoDataset(id);
+      if (!ds) return false;
+      activeFundoId = id;
+      data = ds;
+      lots = ds.lots || [];
+      modules = ds.modules || [];
+      modById = Object.fromEntries(modules.map(m => [m.id, m]));
+      byPos = new Map(lots.map(l => [`${l.r},${l.c}`, l]));
+      try { localStorage.setItem(FUNDO_KEY, id); } catch (_) { /* ok */ }
+      return true;
+    }
 
     function getCurrentWeek(d = new Date()) {
       const date = new Date(d.getTime());
@@ -2630,10 +2759,8 @@
     function setFechaHoy() {
       const hoy = hoyIso();
       const sem = getCurrentWeek(new Date(hoy + "T12:00:00"));
-      els.fFecha.value = hoy;
-      els.fSem.value = sem;
-      if (els.fSemText) els.fSemText.textContent = "SEM " + sem;
-      if (els.fFechaText) els.fFechaText.textContent = formatFechaDisplay(hoy);
+      if (els.fFecha) els.fFecha.value = hoy;
+      if (els.fSem) els.fSem.value = sem;
     }
 
     const currentWeek = getCurrentWeek(new Date(hoyIso() + "T12:00:00"));
@@ -2654,9 +2781,14 @@
       fVariedad: document.getElementById("fVariedad"),
       fVariedadTrigger: document.getElementById("fVariedadTrigger"),
       fVariedadLabel: document.getElementById("fVariedadLabel"),
+      fFundo: document.getElementById("fFundo"),
+      fFundoTrigger: document.getElementById("fFundoTrigger"),
+      fFundoLabel: document.getElementById("fFundoLabel"),
       fLaborReal: document.getElementById("fLaborReal"),
       fLaborRealTrigger: document.getElementById("fLaborRealTrigger"),
       fLaborRealLabel: document.getElementById("fLaborRealLabel"),
+      boardToast: document.getElementById("boardToast"),
+      pickerLoading: document.getElementById("pickerLoading"),
       fAvance: document.getElementById("fAvance"),
       fAvanceHint: document.getElementById("fAvanceHint"),
       finishLotBtn: document.getElementById("finishLotBtn"),
@@ -2668,9 +2800,7 @@
       fRatio: document.getElementById("fRatio"),
       ratioFormula: document.getElementById("ratioFormula"),
       fSem: document.getElementById("fSem"),
-      fSemText: document.getElementById("fSemText"),
       fFecha: document.getElementById("fFecha"),
-      fFechaText: document.getElementById("fFechaText"),
       fAvanceBar: document.getElementById("fAvanceBar"),
       progressMeta: document.getElementById("progressMeta"),
       lotBoard: document.getElementById("lotBoard"),
@@ -2701,7 +2831,6 @@
       pickerBackdrop: document.getElementById("pickerBackdrop"),
       pickerSheet: document.getElementById("pickerSheet"),
       pickerTitle: document.getElementById("pickerTitle"),
-      pickerSearch: document.getElementById("pickerSearch"),
       pickerList: document.getElementById("pickerList"),
       pickerClose: document.getElementById("pickerClose")
     };
@@ -2736,6 +2865,8 @@
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, " ")
         .trim();
+      // Licapa II: nunca cercos (ni labor ni UI de mapa)
+      if (activeFundoId === "licapa2") return false;
       return s === "CERCOS VIVOS" || s === "CERCO VIVOS";
     }
 
@@ -2799,9 +2930,105 @@
       return isCercosLabor(labor) ? cercosCapHa(a, lot) : a;
     }
 
+    function formHoyIso() {
+      return String((els.fFecha && els.fFecha.value) || "").slice(0, 10) ||
+        new Date().toLocaleDateString("en-CA", { timeZone: "America/Lima" });
+    }
+
+    function formTodayPaintHex() {
+      return String(currentPaintColor() || "").toUpperCase();
+    }
+
+    /** Avance PREVIO (otros días / otro color) del lote en mapa/local → para restante. */
+    function savedLotAvance(posKey, laborReal) {
+      const labor = String(laborReal || (els.fLaborReal && els.fLaborReal.value) || "").toUpperCase().trim();
+      const hoy = formHoyIso();
+      const todayHex = formTodayPaintHex();
+      const keys = [
+        activeFundoId === "licapa1" ? "qb-labores" : ("qb-labores-" + (activeFundoId || "licapa2")),
+        "qb-labores",
+        "qb-labores-licapa2"
+      ];
+      for (let i = 0; i < keys.length; i++) {
+        try {
+          const all = JSON.parse(localStorage.getItem(keys[i]) || "{}");
+          const rec = all && all[posKey];
+          if (!rec || !rec.laborReal) continue;
+          if (labor && String(rec.laborReal).toUpperCase().trim() !== labor) continue;
+          const segs = Array.isArray(rec.segmentos) ? rec.segmentos : [];
+          if (segs.length) {
+            let prior = 0;
+            segs.forEach(s => {
+              const av = roundHa(s && s.avance);
+              if (av <= 0) return;
+              const fecha = String((s && (s.fechaIso || s.fecha)) || "").slice(0, 10);
+              const hex = String(s && s.color || "").toUpperCase();
+              if (fecha && fecha !== hoy) prior += av;
+              else if (fecha === hoy && hex && todayHex && hex !== todayHex) prior += av;
+            });
+            return roundHa(prior);
+          }
+          const total = roundHa(rec.avance);
+          const recDay = String(rec.fechaIso || rec.fecha || "").slice(0, 10);
+          const recHex = String(rec.color || "").toUpperCase();
+          if (recDay && recDay !== hoy) return total;
+          if (recHex && todayHex && recHex !== todayHex) return total;
+          return 0;
+        } catch (_) { /* ok */ }
+      }
+      return 0;
+    }
+
+    /** Piso solo si YA hay avance guardado de hoy · draft vacío no bloquea bajar. */
+    function savedTodayFloor(posKey, laborReal) {
+      const labor = String(laborReal || (els.fLaborReal && els.fLaborReal.value) || "").toUpperCase().trim();
+      const hoy = formHoyIso();
+      const todayHex = formTodayPaintHex();
+      const keys = [
+        activeFundoId === "licapa1" ? "qb-labores" : ("qb-labores-" + (activeFundoId || "licapa2")),
+        "qb-labores",
+        "qb-labores-licapa2"
+      ];
+      for (let i = 0; i < keys.length; i++) {
+        try {
+          const all = JSON.parse(localStorage.getItem(keys[i]) || "{}");
+          const rec = all && all[posKey];
+          if (!rec || !rec.laborReal) continue;
+          if (labor && String(rec.laborReal).toUpperCase().trim() !== labor) continue;
+          const segs = Array.isArray(rec.segmentos) ? rec.segmentos : [];
+          let todayAv = 0;
+          if (segs.length) {
+            segs.forEach(s => {
+              const av = roundHa(s && s.avance);
+              const fecha = String((s && (s.fechaIso || s.fecha)) || "").slice(0, 10);
+              const hex = String(s && s.color || "").toUpperCase();
+              if (fecha === hoy && !(hex && todayHex && hex !== todayHex)) todayAv += av;
+            });
+          } else {
+            const recDay = String(rec.fechaIso || rec.fecha || "").slice(0, 10);
+            const recHex = String(rec.color || "").toUpperCase();
+            if (recDay === hoy && !(recHex && todayHex && recHex !== todayHex)) todayAv = roundHa(rec.avance);
+          }
+          return roundHa(todayAv);
+        } catch (_) { /* ok */ }
+      }
+      return 0;
+    }
+
+    function lotRestanteHa(posKey, lot, laborReal) {
+      const area = roundHa(lot && lot.ha);
+      const prior = savedLotAvance(posKey, laborReal);
+      return roundHa(Math.max(0, area - prior));
+    }
+
     function currentUsableArea() {
-      const lot = byPos.get(els.fLote && els.fLote.value);
-      return laborUsableHa(getLotArea(), els.fLaborReal && els.fLaborReal.value, lot);
+      const key = els.fLote && els.fLote.value;
+      const lot = byPos.get(key);
+      if (!lot) return 0;
+      const labor = els.fLaborReal && els.fLaborReal.value;
+      if (isCercosLabor(labor)) return laborUsableHa(getLotArea(), labor, lot);
+      const rest = lotRestanteHa(key, lot, labor);
+      return rest > 0 ? rest : laborUsableHa(getLotArea(), labor, lot);
     }
 
     function fillHeightPct(av, area, lot) {
@@ -2816,7 +3043,9 @@
       return "background:" + fill + ";height:" + fillHeightPct(av, area) + "%";
     }
 
-    const sortedLots = [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
+    function sortedLotsList() {
+      return [...lots].sort((a, b) => a.lote - b.lote || String(a.tunel).localeCompare(String(b.tunel)));
+    }
 
     function lotPosKey(lot) {
       return `${lot.r},${lot.c}`;
@@ -2834,16 +3063,23 @@
       };
     }
 
-    const moduloOptions = modules.map(m => ({
-      value: String(m.id),
-      title: m.label,
-      sub: (m.name || m.label) + (m.ha != null ? " · " + Number(m.ha).toFixed(2) + " ha" : ""),
-      search: `${m.label} ${m.name || ""} modulo ${m.id}`.toLowerCase()
-    }));
+    function buildModuloOptions() {
+      return modules.map(m => ({
+        value: String(m.id),
+        title: m.label,
+        sub: (m.name || m.label) + (m.ha != null ? " · " + Number(m.ha).toFixed(2) + " ha" : ""),
+        search: `${m.label} ${m.name || ""} modulo ${m.id}`.toLowerCase()
+      }));
+    }
+    let moduloOptions = buildModuloOptions();
+    const fundoOptions = [
+      { value: "licapa1", title: "LICAPA I", sub: "Etapa I", search: "licapa i 1" },
+      { value: "licapa2", title: "LICAPA II", sub: "Etapa II", search: "licapa ii 2" }
+    ];
 
     function lotsForModulo(modId) {
       if (!modId) return [];
-      return sortedLots.filter(l => String(l.modulo) === String(modId));
+      return sortedLotsList().filter(l => String(l.modulo) === String(modId));
     }
 
     function turnoOptionsFor(modId) {
@@ -2876,12 +3112,36 @@
       { value: "MAGICA", title: "Mágica", sub: "Variedad", search: "magica magica" }
     ];
 
-    const laborRealOptions = (LABOR.labor_real || []).map(s => ({
-      value: s,
-      title: laborDisplay(s),
-      sub: "Labor real",
-      search: s.toLowerCase()
-    }));
+    function laborListForFundo(fundoId) {
+      const id = FUNDOS[fundoId] ? fundoId : "licapa1";
+      const by = LABOR.byFundo && LABOR.byFundo[id];
+      if (Array.isArray(by) && by.length) return by.map(s => String(s).toUpperCase().trim()).filter(Boolean);
+      const all = (LABOR.labor_real || []).map(s => String(s).toUpperCase().trim()).filter(Boolean);
+      if (id === "licapa2") return all.filter(s => s !== "CERCOS VIVOS" && s !== "CERCO VIVOS");
+      return all;
+    }
+
+    function buildLaborRealOptions(fundoId) {
+      return laborListForFundo(fundoId).map(s => ({
+        value: s,
+        title: laborDisplay(s),
+        sub: "Labor real",
+        search: s.toLowerCase()
+      }));
+    }
+
+    let laborRealOptions = buildLaborRealOptions("licapa1");
+
+    function refreshLaborOptionsForFundo(fundoId) {
+      laborRealOptions = buildLaborRealOptions(fundoId);
+      if (pickers && pickers.laborReal) {
+        pickers.laborReal.items = laborRealOptions;
+        const cur = String(els.fLaborReal && els.fLaborReal.value || "").toUpperCase().trim();
+        if (cur && !laborRealOptions.some(o => o.value === cur)) {
+          setPickValue(pickers.laborReal, "", true);
+        }
+      }
+    }
 
     function setPickLabel(labelEl, item, placeholder) {
       if (!item || !item.value) {
@@ -2893,11 +3153,31 @@
       labelEl.textContent = item.title;
     }
 
+    function syncFilledFieldStyles() {
+      const markPick = (trigger, hidden) => {
+        if (!trigger) return;
+        const filled = !!(hidden && String(hidden.value || "").trim());
+        trigger.classList.toggle("is-filled", filled);
+      };
+      markPick(els.fFundoTrigger, els.fFundo);
+      markPick(els.fLaborRealTrigger, els.fLaborReal);
+      markPick(els.fModuloTrigger, els.fModulo);
+      markPick(els.fTurnoTrigger, els.fTurno);
+      markPick(els.fLoteTrigger, els.fLote);
+      markPick(els.fVariedadTrigger, els.fVariedad);
+      [els.fTotalJr, els.fCercosLotes].forEach(inp => {
+        if (!inp) return;
+        const hasVal = String(inp.value || "").trim() !== "";
+        inp.classList.toggle("is-filled", hasVal);
+      });
+    }
+
     function setPickValue(picker, value, silent) {
       if (!picker || !picker.hidden) return;
       const item = (picker.items || []).find(i => i.value === value) || null;
       picker.hidden.value = value || "";
       if (picker.labelEl) setPickLabel(picker.labelEl, item, picker.placeholder);
+      syncFilledFieldStyles();
       if (!silent && picker.onChange) picker.onChange(value, item);
     }
 
@@ -3009,7 +3289,12 @@
 
     function openPicker(picker) {
       if (!picker || !picker.trigger) return;
-      if (picker !== pickers.laborReal && !hasLabor()) {
+      if (picker !== pickers.fundo && !hasFundo()) {
+        showToast("Selecciona el fundo primero", "error");
+        if (pickers.fundo) openPicker(pickers.fundo);
+        return;
+      }
+      if (picker !== pickers.laborReal && picker !== pickers.fundo && !hasLabor()) {
         showToast("Selecciona la labor primero", "error");
         if (pickers.laborReal) openPicker(pickers.laborReal);
         return;
@@ -3027,26 +3312,12 @@
         });
         syncPickerMultiCount();
       }
-      const searchWrap = document.getElementById("pickerSearchWrap");
-      const showSearch = !!picker.searchable;
-      if (searchWrap) searchWrap.style.display = showSearch ? "" : "none";
-      if (showSearch) {
-        els.pickerSearch.placeholder = picker.searchPlaceholder || "Buscar...";
-        els.pickerSearch.value = "";
-      } else {
-        els.pickerSearch.value = "";
-      }
       renderPickerList("");
       els.pickerSheet.removeAttribute("inert");
       els.pickerSheet.setAttribute("aria-hidden", "false");
       els.pickerBackdrop.classList.add("open");
       els.pickerSheet.classList.add("open");
       document.body.style.overflow = "hidden";
-      if (showSearch) {
-        setTimeout(() => {
-          if (els.pickerSheet.classList.contains("open")) els.pickerSearch.focus();
-        }, 280);
-      }
     }
 
     function closePicker() {
@@ -3078,7 +3349,7 @@
     const fabMenu = document.getElementById("fabMenu");
     const fabScrim = document.getElementById("fabScrim");
     const fabMq = window.matchMedia("(max-width: 1279px)");
-    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.4.13";
+    const APP_VERSION = (window.QB_CONFIG && QB_CONFIG.APP_VERSION) || "1.4.44";
 
     function setFabOpen(open) {
       if (!fabWrap || !fabBtn) return;
@@ -3142,8 +3413,8 @@
 
     async function clearAppCacheOnly() {
       try {
-        localStorage.removeItem(DRAFT_KEY);
-        localStorage.removeItem(LOCAL_LOTS_KEY);
+        localStorage.removeItem(draftKey());
+        localStorage.removeItem(localLotsKey());
         localStorage.removeItem(FORM_DAY_KEY);
       } catch (e) { /* ok */ }
       localLots = {};
@@ -3319,6 +3590,16 @@
     }
 
     const pickers = {
+      fundo: createPicker({
+        hidden: els.fFundo,
+        trigger: els.fFundoTrigger,
+        labelEl: els.fFundoLabel,
+        items: fundoOptions,
+        placeholder: "Seleccionar fundo...",
+        sheetTitle: "Elegir fundo",
+        searchable: false,
+        onChange: () => { onFundoChange(); }
+      }),
       modulo: createPicker({
         hidden: els.fModulo,
         trigger: els.fModuloTrigger,
@@ -3373,7 +3654,10 @@
             const lot = byPos.get(k);
             if (!lot || !localLots[k]) return;
             localLots[k].laborReal = els.fLaborReal.value;
-            if (!localLots[k].edited) localLots[k].avance = roundHa(lot.ha);
+            if (!localLots[k].edited) {
+              const rest = lotRestanteHa(k, lot, els.fLaborReal.value);
+              localLots[k].avance = rest > 0 ? rest : roundHa(lot.ha);
+            }
           });
           updatePreview();
           persistCurrentLot();
@@ -3383,16 +3667,122 @@
       })
     };
 
+    function hasFundo() {
+      return !!(els.fFundo && FUNDOS[String(els.fFundo.value || "").trim()]);
+    }
+
     function hasLabor() {
       return !!(els.fLaborReal && String(els.fLaborReal.value || "").trim());
     }
 
+    function setProcessLocked(locked) {
+      ["laborCard", "dayCard", "progressCard"].forEach(id => {
+        document.getElementById(id)?.classList.toggle("is-process-locked", !!locked);
+      });
+    }
+
+    function setPickerLoading(on) {
+      if (!els.pickerLoading) return;
+      els.pickerLoading.hidden = !on;
+      if (els.pickerList) els.pickerList.style.display = on ? "none" : "";
+    }
+
+    function showBoardToast(msg, type) {
+      const el = els.boardToast;
+      if (!el) {
+        showToast(msg, type);
+        return;
+      }
+      el.textContent = msg;
+      el.hidden = false;
+      el.className = "board-toast show" + (type === "error" ? " is-error" : "");
+      clearTimeout(showBoardToast._t);
+      showBoardToast._t = setTimeout(() => {
+        el.classList.remove("show");
+        el.hidden = true;
+      }, type === "error" ? 3500 : 2200);
+    }
+
+    function rebuildFundoPickers() {
+      moduloOptions = buildModuloOptions();
+      pickers.modulo.items = moduloOptions;
+      pickers.turno.items = [];
+      pickers.lote.items = [];
+      pickers.turno.placeholder = "Elige módulo";
+      pickers.lote.placeholder = "Elige turno";
+      setPickValue(pickers.modulo, "", true);
+      setPickValue(pickers.turno, "", true);
+      setPickValue(pickers.lote, "", true);
+      setPickLabel(pickers.turno.labelEl, null, pickers.turno.placeholder);
+      setPickLabel(pickers.lote.labelEl, null, pickers.lote.placeholder);
+    }
+
+    function onFundoChange() {
+      const id = String(els.fFundo.value || "").trim();
+      if (!FUNDOS[id]) {
+        setProcessLocked(true);
+        setPickerEnabled(pickers.laborReal, false);
+        pickers.laborReal.placeholder = "Elige fundo primero";
+        setPickLabel(pickers.laborReal.labelEl, null, pickers.laborReal.placeholder);
+        syncFilledFieldStyles();
+        return;
+      }
+      setPickerLoading(true);
+      // Al cambiar I ↔ II: limpiar TODOS los inputs / draft / lotes locales
+      resetForm(true, true);
+      applyFundoDataset(id);
+      try {
+        localStorage.setItem("qb-fundo", id);
+        localStorage.setItem("qb-form-fundo", id); // legacy
+      } catch (_) { /* ok */ }
+      refreshLaborOptionsForFundo(id);
+      rebuildFundoPickers();
+      // No recuperar borradores del fundo destino: inputs en blanco
+      localLots = {};
+      try { localStorage.removeItem(draftKey()); } catch (_) { /* ok */ }
+      try { localStorage.removeItem(localLotsKey()); } catch (_) { /* ok */ }
+      resetForm(true, true);
+      setPickValue(pickers.fundo, id, true);
+      setTimeout(() => {
+        setPickerLoading(false);
+        setProcessLocked(false);
+        setPickerEnabled(pickers.laborReal, true);
+        pickers.laborReal.placeholder = "Seleccionar labor...";
+        setPickLabel(pickers.laborReal.labelEl, null, pickers.laborReal.placeholder);
+        syncLaborGate();
+        renderLocalLots();
+        syncFilledFieldStyles();
+        // Solo cambia fundo + módulo/turno/lote del plano; no navegar al mapa
+        showToast(FUNDOS[id].label + " · plano listo", null);
+      }, 320);
+    }
+
+    function syncProcessGate() {
+      const okFundo = hasFundo();
+      setProcessLocked(!okFundo);
+      setPickerEnabled(pickers.laborReal, okFundo);
+      if (!okFundo) {
+        pickers.laborReal.placeholder = "Elige fundo primero";
+        if (!els.fLaborReal.value) setPickLabel(pickers.laborReal.labelEl, null, pickers.laborReal.placeholder);
+        setPickerEnabled(pickers.modulo, false);
+        setPickerEnabled(pickers.turno, false);
+        setPickerEnabled(pickers.lote, false);
+        syncFilledFieldStyles();
+        return;
+      }
+      syncLaborGate();
+    }
+
     function syncLaborGate() {
+      if (!hasFundo()) {
+        syncProcessGate();
+        return;
+      }
       const ok = hasLabor();
-      const cercos = isCercosLabor(els.fLaborReal && els.fLaborReal.value);
+      const cercos = activeFundoId !== "licapa2" && isCercosLabor(els.fLaborReal && els.fLaborReal.value);
       document.body.classList.toggle("is-cercos", cercos);
-      document.getElementById("dayCard")?.classList.toggle("is-gated", !ok);
-      document.getElementById("progressCard")?.classList.toggle("is-gated", !ok);
+      document.getElementById("dayCard")?.classList.remove("is-gated");
+      document.getElementById("progressCard")?.classList.remove("is-gated");
       if (els.fTotalJr) els.fTotalJr.disabled = !ok;
       if (els.fCercosLotes) els.fCercosLotes.disabled = !ok || !cercos;
       if (cercos) syncCercosLotesFromSelection();
@@ -3401,37 +3791,31 @@
       if (!ok) {
         setPickerEnabled(pickers.turno, false);
         setPickerEnabled(pickers.lote, false);
+        syncFilledFieldStyles();
         return;
       }
       const modId = els.fModulo.value;
       const turno = els.fTurno.value;
       setPickerEnabled(pickers.turno, !!modId);
       setPickerEnabled(pickers.lote, !!modId && !!turno);
+      syncFilledFieldStyles();
     }
 
     setPickerEnabled(pickers.turno, false);
     setPickerEnabled(pickers.lote, false);
-    syncLaborGate();
-
-    document.querySelectorAll(".gate-labor-btn").forEach(btn => {
-      btn.addEventListener("click", e => {
-        e.preventDefault();
-        e.stopPropagation();
-        const trig = els.fLaborRealTrigger;
-        if (trig) {
-          trig.classList.add("is-picking");
-          try { trig.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (err) { /* ok */ }
-        }
-        openPicker(pickers.laborReal);
-      });
+    setPickerEnabled(pickers.laborReal, false);
+    syncProcessGate();
+    ["input", "change", "blur"].forEach(ev => {
+      els.fTotalJr?.addEventListener(ev, syncFilledFieldStyles);
+      els.fCercosLotes?.addEventListener(ev, syncFilledFieldStyles);
     });
+    syncFilledFieldStyles();
 
     els.pickerClose.addEventListener("click", closePicker);
     els.pickerBackdrop.addEventListener("click", closePicker);
     els.pickerSheet.addEventListener("click", e => {
       if (e.target === els.pickerSheet) closePicker();
     });
-    els.pickerSearch.addEventListener("input", () => renderPickerList(els.pickerSearch.value));
     document.getElementById("pickerMultiDone")?.addEventListener("click", applyLoteMulti);
 
     let suppressPersist = false;
@@ -3448,8 +3832,8 @@
       if (stored === today) return false;
       localLots = {};
       try {
-        localStorage.removeItem(LOCAL_LOTS_KEY);
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(localLotsKey());
+        localStorage.removeItem(draftKey());
         localStorage.setItem(FORM_DAY_KEY, today);
       } catch (e) { /* ok */ }
       return true;
@@ -3470,7 +3854,7 @@
     function loadLocalLotsMap() {
       if (rollDayIfNeeded()) return;
       try {
-        localLots = JSON.parse(localStorage.getItem(LOCAL_LOTS_KEY) || "{}") || {};
+        localLots = JSON.parse(localStorage.getItem(localLotsKey()) || "{}") || {};
       } catch {
         localLots = {};
       }
@@ -3481,7 +3865,7 @@
 
     function saveLocalLotsMap() {
       try {
-        localStorage.setItem(LOCAL_LOTS_KEY, JSON.stringify(localLots));
+        localStorage.setItem(localLotsKey(), JSON.stringify(localLots));
       } catch (e) { /* storage lleno */ }
     }
 
@@ -3573,18 +3957,18 @@
         const state = getFormState();
         const empty = !state.lote && !state.laborReal && !state.avance;
         if (empty) {
-          localStorage.removeItem(DRAFT_KEY);
+          localStorage.removeItem(draftKey());
           els.draftBadge.classList.remove("show");
           return;
         }
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+        localStorage.setItem(draftKey(), JSON.stringify(state));
         els.draftBadge.classList.add("show");
       } catch (e) { /* storage lleno / privado */ }
     }
 
     function loadDraft() {
       try {
-        const s = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+        const s = JSON.parse(localStorage.getItem(draftKey()) || "null");
         if (s) {
           applyFormState(s);
           els.draftBadge.classList.add("show");
@@ -3784,9 +4168,10 @@
         }
         return;
       }
-      if (els.ratioCardSub) els.ratioCardSub.textContent = "Ratio JR / área total del día";
+      if (els.ratioCardSub) els.ratioCardSub.textContent = "Ratio JR / avance del día";
       const tot = totalsFromLots();
-      const area = tot.area;
+      // Ratio sobre avance (ha trabajada), no área total del lote
+      const area = tot.av > 0 ? tot.av : 0;
       const ratio = area > 0 ? roundHa(jr / area) : 0;
       if (els.ratioFormula) {
         els.ratioFormula.textContent = "JR " + (jr || 0) + " / " + formatHa(area) + " ha = " + formatHa(ratio);
@@ -3796,7 +4181,7 @@
     function updateJrFromRatio() {
       if (syncingCalc) return;
       syncingCalc = true;
-      const area = totalsFromLots().area;
+      const area = totalsFromLots().av;
       const ratio = roundHa(els.fRatio && els.fRatio.value);
       const jr = area > 0 ? Math.round(ratio * area) : 0;
       if (els.fTotalJr) els.fTotalJr.value = formatJr(jr);
@@ -3808,7 +4193,7 @@
     function updateRatioFromJr() {
       if (syncingCalc) return;
       syncingCalc = true;
-      const area = totalsFromLots().area;
+      const area = totalsFromLots().av;
       const jr = parseJr(els.fTotalJr && els.fTotalJr.value);
       const ratio = area > 0 ? roundHa(jr / area) : 0;
       if (els.fRatio) els.fRatio.value = (jr && area) ? formatHa(ratio) : "";
@@ -3824,14 +4209,24 @@
       const isCurrent = posKey === els.fLote.value;
       const area = roundHa(lot.ha);
       const laborReal = String(els.fLaborReal.value || (prev && prev.laborReal) || "");
+      const prior = savedLotAvance(posKey, laborReal);
+      const rest = roundHa(Math.max(0, area - prior));
       let avance = extra.avance != null
         ? roundHa(extra.avance)
         : (isCurrent ? roundHa(els.fAvance && els.fAvance.value) : roundHa(prev && prev.avance));
-      if (avance <= 0) avance = area;
+      // Default = restante (si ya había avance) · no el área completa
+      if (avance <= 0) avance = rest > 0 ? rest : area;
+      if (extra.avance == null && !(prev && prev.edited) && prior > 0 && rest > 0) {
+        avance = rest;
+      }
       if (extra.avance == null && !(prev && prev.edited) && isCercosLabor(laborReal)) {
         const leftover = cercosCapHa(area, lot);
         if (leftover > 0 && avance > 0 && avance <= leftover && avance < area) avance = area;
       }
+      // Piso solo si ya hay avance GUARDADO de hoy (mapa/hoja) · draft vacío libre
+      const floor = savedTodayFloor(posKey, laborReal);
+      if (floor > 0 && avance < floor) avance = floor;
+      if (rest > 0 && avance > rest) avance = rest;
       if (area > 0 && avance > area) avance = area;
       if (!laborReal) return false;
       if (isCurrent && els.fAvance) els.fAvance.value = avance ? formatHa(avance) : "";
@@ -4083,32 +4478,46 @@
       els.fAvanceHint.classList.toggle("warn", capped);
     }
 
-    /** Solo al salir del campo o al guardar: 2 decimales y tope del lote (área total) */
+    /** Solo al salir del campo o al guardar: 2 decimales, tope restante y piso (solo subir) */
     function finalizeAvance(opts) {
       opts = opts || {};
+      const key = els.fLote && els.fLote.value;
+      const lot = byPos.get(key);
       const area = getLotArea();
+      const labor = els.fLaborReal && els.fLaborReal.value;
+      const rest = lot ? lotRestanteHa(key, lot, labor) : area;
+      const floor = key ? savedTodayFloor(key, labor) : 0;
+      const cap = rest > 0 ? rest : area;
       els.fAvance.removeAttribute("max");
       let typed = readAvanceTyped();
       if (typed == null) {
         els.fAvance.classList.remove("avance-capped");
-        updateAvanceHint(area, false);
-        if (opts.format) els.fAvance.value = "";
-        return 0;
+        updateAvanceHint(cap, false);
+        if (opts.format) els.fAvance.value = floor > 0 ? formatHa(floor) : "";
+        return floor;
       }
       let av = roundHa(typed);
       let capped = false;
-      if (area > 0 && av > area) {
-        av = area;
+      if (floor > 0 && av < floor) {
+        av = floor;
+        if (opts.toast && !avanceWarned) {
+          showToast("Solo puedes aumentar · mínimo " + formatHa(floor) + " ha", "error");
+          avanceWarned = true;
+          setTimeout(() => { avanceWarned = false; }, 2500);
+        }
+      }
+      if (cap > 0 && av > cap) {
+        av = cap;
         capped = true;
         if (opts.toast && !avanceWarned) {
-          showToast("Avance no puede superar " + formatHa(area) + " ha", "error");
+          showToast("Avance no puede superar " + formatHa(cap) + " ha" + (rest > 0 && rest < area ? " restantes" : ""), "error");
           avanceWarned = true;
           setTimeout(() => { avanceWarned = false; }, 2500);
         }
       }
       if (opts.format !== false) els.fAvance.value = formatHa(av);
       els.fAvance.classList.toggle("avance-capped", capped);
-      updateAvanceHint(area, capped);
+      updateAvanceHint(cap, capped);
       return av;
     }
 
@@ -4125,7 +4534,12 @@
           if (saved.laborReal) setPickValue(pickers.laborReal, saved.laborReal, true);
           if (saved.variedad) setPickValue(pickers.variedad, saved.variedad, true);
         }
-        const av = roundHa(saved && saved.avance) || roundHa(lot.ha);
+        const rest = lotRestanteHa(els.fLote.value, lot, els.fLaborReal && els.fLaborReal.value);
+        const floor = savedTodayFloor(els.fLote.value, els.fLaborReal && els.fLaborReal.value);
+        let av = roundHa(saved && saved.avance);
+        if (av <= 0) av = floor > 0 ? floor : (rest > 0 ? rest : roundHa(lot.ha));
+        if (floor > 0 && av < floor) av = floor;
+        if (rest > 0 && av > rest) av = rest;
         if (els.fAvance) els.fAvance.value = av ? formatHa(av) : "";
         suppressPersist = false;
       }
@@ -4170,22 +4584,36 @@
     }
 
     function capAvanceInput() {
+      const key = els.fLote && els.fLote.value;
+      const lot = byPos.get(key);
       const area = getLotArea();
+      const labor = els.fLaborReal && els.fLaborReal.value;
+      const rest = lot ? lotRestanteHa(key, lot, labor) : area;
+      const floor = key ? savedTodayFloor(key, labor) : 0;
+      const cap = rest > 0 ? rest : area;
       const typed = readAvanceTyped();
-      if (typed == null || area <= 0) {
-        updateAvanceHint(area, false);
+      if (typed == null || cap <= 0) {
+        updateAvanceHint(cap, false);
         return;
       }
-      if (typed > area) {
-        els.fAvance.value = formatHa(area);
-        updateAvanceHint(area, true);
+      if (floor > 0 && typed < floor) {
+        els.fAvance.value = formatHa(floor);
+        updateAvanceHint(cap, false);
         if (!avanceWarned) {
-          showToast("Máximo " + formatHa(area) + " ha", "error");
+          showToast("Solo puedes aumentar · mínimo " + formatHa(floor) + " ha", "error");
+          avanceWarned = true;
+          setTimeout(() => { avanceWarned = false; }, 2500);
+        }
+      } else if (typed > cap) {
+        els.fAvance.value = formatHa(cap);
+        updateAvanceHint(cap, true);
+        if (!avanceWarned) {
+          showToast("Máximo " + formatHa(cap) + " ha", "error");
           avanceWarned = true;
           setTimeout(() => { avanceWarned = false; }, 2500);
         }
       } else {
-        updateAvanceHint(area, false);
+        updateAvanceHint(cap, false);
       }
     }
 
@@ -4393,26 +4821,30 @@
         paintEditAvance(posKey, 0, area);
         els.sumEditAvance.classList.remove("is-over");
         setEditOkMsg(false);
+        updateRatioUI();
         return false;
       }
       const { av, capped } = clampEditAvance(typed, area);
       if (capped && opts.reformat) {
         els.sumEditAvance.value = formatHa(av);
-        if (opts.toast) showToast("Máximo " + formatHa(area) + " ha (área del lote)", "error");
+        if (opts.toast) showBoardToast("Máximo " + formatHa(area) + " ha (área del lote)", "error");
       }
       els.sumEditAvance.classList.toggle("is-over", capped);
       if (!opts.reformat) setEditOkMsg(false);
       paintEditAvance(posKey, av, area);
+      // Actualizar avance en vivo (aunque aún no pulse guardar) para el ratio JR/ha
+      localLots[posKey].avance = av;
+      localLots[posKey].edited = true;
       if (av > 0) {
         if (!persistLotAt(posKey, { avance: av })) {
           localLots[posKey].avance = av;
           localLots[posKey].edited = true;
         }
         saveLocalLotsMap();
-        const tot = totalsFromLots();
-        if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
-        updateRatioUI();
       }
+      const tot = totalsFromLots();
+      if (els.sumKpiAv) els.sumKpiAv.textContent = formatHa(tot.av) + " ha";
+      updateRatioUI();
       if (opts.reformat && av > 0) els.sumEditAvance.value = formatHa(av);
       return av > 0 ? av : 0;
     }
@@ -4436,9 +4868,10 @@
       if (els.sumBoard) els.sumBoard.innerHTML = lotBoardHtml(previewItems(), els.fLote.value, true);
       saveDraft();
       hideSumEditBox();
-      showToast(
+      updateRatioUI();
+      showBoardToast(
         capped
-          ? "Avance limitado a " + formatHa(av) + " ha · Se editó el lote correctamente"
+          ? "Avance máx. " + formatHa(av) + " ha · editado"
           : "Se editó el lote correctamente",
         capped ? "error" : null
       );
@@ -4503,6 +4936,7 @@
       clearTimeout(draftTimer);
       draftTimer = null;
       suppressPersist = true;
+      // Conservar fundo (proceso); solo limpia labor/detalle/lotes
       setPickValue(pickers.modulo, "", true);
       setPickValue(pickers.turno, "", true);
       setPickValue(pickers.lote, "", true);
@@ -4519,7 +4953,7 @@
       els.fAvance.value = "";
       if (els.fTotalJr) els.fTotalJr.value = "";
       if (els.fCercosLotes) els.fCercosLotes.value = "";
-      syncLaborGate();
+      syncProcessGate();
       if (els.fRatio) els.fRatio.value = "";
       if (els.fColor) els.fColor.value = "";
       setPaintColor(currentPaintColor());
@@ -4528,7 +4962,7 @@
       clearLotDerived();
       suppressPersist = false;
       if (clearDraft !== false) {
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(draftKey());
         els.draftBadge.classList.remove("show");
       }
       if (clearLocal) {
@@ -4640,6 +5074,7 @@
       let avance = roundHa(item.avance);
       const area = roundHa(lot.ha);
       if (area > 0 && avance > area) avance = area;
+      const fundoMeta = FUNDOS[activeFundoId] || FUNDOS.licapa1;
       return {
         posKey: item.posKey,
         sem: Number(els.fSem.value) || currentWeek,
@@ -4655,7 +5090,9 @@
         totalJr: 0,
         ml: 0,
         color: currentPaintColor(),
-        editar: true
+        editar: true,
+        fundo: String(fundoMeta.label || "").toUpperCase(),
+        etapa: String(fundoMeta.etapa || (activeFundoId === "licapa2" ? "II" : "I"))
       };
     }
 
@@ -4715,13 +5152,16 @@
           r.ml = cercos ? (mlParts[i] || 0) : 0;
           if (cercos) r.lotesTrabajados = cercosLotesN();
         });
+        const fundoMeta = FUNDOS[activeFundoId] || FUNDOS.licapa1;
         const shared = {
           fecha: els.fFecha.value,
           sem: Number(els.fSem.value) || currentWeek,
           laborReal: els.fLaborReal.value,
           totalJr: jrTotal,
           ml: mlTotal,
-          lotesTrabajados: cercos ? cercosLotesN() : 0
+          lotesTrabajados: cercos ? cercosLotesN() : 0,
+          fundo: String(fundoMeta.label || "").toUpperCase(),
+          etapa: String(fundoMeta.etapa || (activeFundoId === "licapa2" ? "II" : "I"))
         };
         const res = records.length === 1
           ? await QBApi.saveLabor(records[0])
@@ -4781,8 +5221,8 @@
 
     document.getElementById("saveBtn").addEventListener("click", saveForm);
     document.getElementById("resetBtn").addEventListener("click", () => {
-      resetForm(true, false);
-      showToast("Formulario limpio · lotes del celular se mantienen", null);
+      resetForm(true, true);
+      showToast("Lotes del día limpiados", null);
     });
     window.QB_onQueueFlushed = n => {
       showToast(n + " pendiente(s) subidos a la hoja", null);
@@ -4867,20 +5307,40 @@
       }).catch(() => {});
     }
 
+    // Restaurar fundo (proceso: fundo → labor → detalle)
+    let storedFundo = "";
+    try {
+      storedFundo = localStorage.getItem("qb-fundo") || localStorage.getItem("qb-form-fundo") || "";
+    } catch (_) { storedFundo = ""; }
+    if (FUNDOS[storedFundo] && fundoDataset(storedFundo)) {
+      applyFundoDataset(storedFundo);
+      rebuildFundoPickers();
+      setPickValue(pickers.fundo, storedFundo, true);
+      setProcessLocked(false);
+      setPickerEnabled(pickers.laborReal, true);
+      pickers.laborReal.placeholder = "Seleccionar labor...";
+      setPickLabel(pickers.laborReal.labelEl, null, pickers.laborReal.placeholder);
+    }
+    syncProcessGate();
+
     const newDay = rollDayIfNeeded();
     loadLocalLotsMap();
     renderColorGrid();
     if (newDay) {
       resetForm(true, true);
+      // conservar fundo elegido
+      if (storedFundo && FUNDOS[storedFundo]) setPickValue(pickers.fundo, storedFundo, true);
+      syncProcessGate();
       showToast("Nuevo día · detalle en 0", null);
     } else {
-    loadDraft();
+      loadDraft();
     }
     setFechaHoy();
     updateStatus();
     renderHistory();
     renderLocalLots();
     syncFabVisibility();
+    syncFilledFieldStyles();
     bindIntegerInput(els.fTotalJr);
     bindIntegerInput(els.fCercosLotes);
     bindDecimalInput(els.sumEditAvance);

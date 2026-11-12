@@ -17,7 +17,7 @@ window.QB_CONFIG = {
 
   BRAND: "Q Berries",
   APP_NAME: "Q Berries · Labores",
-  APP_VERSION: "1.4.13",
+  APP_VERSION: "1.4.44",
 
   LABOR_OPTS: {
     labor_ppto: [
@@ -25,12 +25,26 @@ window.QB_CONFIG = {
       "MANTENIMIENTO CERCOS VIVOS", "MANTENIMIENTO DE CERCOS VIVOS", "PROYECCIONES",
       "RECOJO DE FRUTA"
     ],
+    /** Licapa I: 4 labores. Licapa II: 3 (sin CERCOS VIVOS). Cada labor = su propio mapa/hoja. */
     labor_real: [
       "DESHIERBO",
       "RECOJO DE FRUTA",
       "ARENADO DE MACETAS",
       "CERCOS VIVOS"
-    ]
+    ],
+    byFundo: {
+      licapa1: [
+        "DESHIERBO",
+        "RECOJO DE FRUTA",
+        "ARENADO DE MACETAS",
+        "CERCOS VIVOS"
+      ],
+      licapa2: [
+        "DESHIERBO",
+        "RECOJO DE FRUTA",
+        "ARENADO DE MACETAS"
+      ]
+    }
   },
 
   /** Cercos vivos: lotes con 20% extra abajo (además del 20% de arriba) */

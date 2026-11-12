@@ -1,14 +1,14 @@
-const CACHE = "qb-v192";
+const CACHE = "qb-v223";
 const SHELL = [
   "./",
   "./index.html",
   "./form.html",
   "./config.js",
   "./api.js",
-  "./data.js",
-  "./data.js?v=8",
-  "./data-licapa2.js",
-  "./data-licapa2.js?v=11",
+  "./licapa1/data.js",
+  "./licapa1/data.js?v=9",
+  "./licapa2/data.js",
+  "./licapa2/data.js?v=18",
   "./frecuencias.js",
   "./frecuencias-data.json",
   "./frecuencias-prod-seed.json",
@@ -27,6 +27,16 @@ function isShellPath(pathname) {
     pathname.endsWith(".js") ||
     pathname.endsWith(".webmanifest") ||
     pathname.includes("/assets/")
+  );
+}
+
+/** Planos Licapa I/II: cache-first = mapa offline instantáneo */
+function isMapDataPath(pathname) {
+  return (
+    pathname.includes("/licapa1/data.js") ||
+    pathname.includes("/licapa2/data.js") ||
+    pathname.endsWith("/config.js") ||
+    pathname.endsWith("/api.js")
   );
 }
 
@@ -122,12 +132,24 @@ self.addEventListener("fetch", e => {
   e.respondWith((async () => {
     const cached = await caches.match(e.request);
     const shell = isShellPath(url.pathname);
+    const mapData = isMapDataPath(url.pathname);
 
     function fetchTimeout(ms) {
       return new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), ms));
     }
 
-    // Shell: red primero, pero si hay caché no espera más de ~0.8s
+    // Planos + config: cache-first (offline excelente / arranque rápido)
+    if (mapData && cached) {
+      e.waitUntil((async () => {
+        try {
+          const net = await fetch(e.request, { cache: "no-store" });
+          if (net && net.ok && net.type !== "opaque") await putInCache(e.request, net.clone());
+        } catch (err) { /* offline ok */ }
+      })());
+      return cached;
+    }
+
+    // Shell HTML: red primero, pero si hay caché no espera más de ~0.8s
     if (shell) {
       try {
         const net = await Promise.race([

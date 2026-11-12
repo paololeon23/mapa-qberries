@@ -1,0 +1,395 @@
+[
+  [
+    "CERCOS_II_BLOCK",
+    {
+      "ok": false,
+      "code": "LABOR_NOT_ALLOWED",
+      "message": "CERCOS VIVOS no aplica en Licapa II"
+    }
+  ],
+  [
+    "licapa1:DESHIERBO:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 179,
+          "turno": "T10",
+          "avance": 0.17,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 180,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 181,
+          "turno": "T10",
+          "avance": 0.08,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 178,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 177,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa1:DESHIERBO:GET",
+    {
+      "ok": true,
+      "count": 34,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa1:RECOJO DE FRUTA:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 176,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 159,
+          "turno": "T6",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 158,
+          "turno": "T6",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 141,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 140,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa1:RECOJO DE FRUTA:GET",
+    {
+      "ok": true,
+      "count": 11,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa1:ARENADO DE MACETAS:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 139,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 277,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 138,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 137,
+          "turno": "T1",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 46,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa1:ARENADO DE MACETAS:GET",
+    {
+      "ok": true,
+      "count": 10,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa1:CERCOS VIVOS:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 45,
+          "turno": "T10",
+          "avance": 0.3,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 172,
+          "turno": "T9",
+          "avance": 0.98,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 173,
+          "turno": "T9",
+          "avance": 0.93,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 174,
+          "turno": "T9",
+          "avance": 0.98,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 175,
+          "turno": "T9",
+          "avance": 0.8,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa1:CERCOS VIVOS:GET",
+    {
+      "ok": true,
+      "count": 31,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa2:DESHIERBO:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 359,
+          "turno": "T8",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 362,
+          "turno": "T9",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 363,
+          "turno": "T9",
+          "avance": 0.1,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 366,
+          "turno": "T9",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 367,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa2:DESHIERBO:GET",
+    {
+      "ok": true,
+      "count": 20,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa2:RECOJO DE FRUTA:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 370,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 371,
+          "turno": "T10",
+          "avance": 0.15,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 357,
+          "turno": "T8",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 360,
+          "turno": "T8",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 361,
+          "turno": "T9",
+          "avance": 0.12,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa2:RECOJO DE FRUTA:GET",
+    {
+      "ok": true,
+      "count": 11,
+      "matched": 5
+    }
+  ],
+  [
+    "licapa2:ARENADO DE MACETAS:POST",
+    {
+      "ok": true,
+      "count": 5,
+      "updated": 0,
+      "skipped": 0,
+      "items": [
+        {
+          "ok": true,
+          "lote": 364,
+          "turno": "T9",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 365,
+          "turno": "T9",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 368,
+          "turno": "T10",
+          "avance": 0.34,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 369,
+          "turno": "T10",
+          "avance": 0.1,
+          "updated": false
+        },
+        {
+          "ok": true,
+          "lote": 356,
+          "turno": "T7",
+          "avance": 0.16,
+          "updated": false
+        }
+      ],
+      "message": "Grupo guardado — 5 lote(s)"
+    }
+  ],
+  [
+    "licapa2:ARENADO DE MACETAS:GET",
+    {
+      "ok": true,
+      "count": 11,
+      "matched": 5
+    }
+  ]
+]

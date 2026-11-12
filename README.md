@@ -2,6 +2,13 @@
 
 App de reporte de labores en campo (celular/tablet), offline-first, sincronización a Google Sheets vía Apps Script.
 
+## Datos por fundo (no mezclar)
+
+- `licapa1/data.js` → Licapa I (`window.MAP_DATA`)
+- `licapa2/data.js` → Licapa II (`window.MAP_DATA_LICAPA2`)
+- `licapa2/master.json` → maestro Etapa II (ha / variedad / módulos)
+- `_build/` → scripts OCR/layout y fuentes (no se cargan en la app)
+
 ## Publicar el front (HTTPS)
 
 1. Sube el repo a Netlify (o cualquier host HTTPS estático).

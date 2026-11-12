@@ -460,8 +460,8 @@
       padding: 0.32rem 0.45rem;
       white-space: nowrap;
     }
-    .week-table thead th:first-child { border-top-left-radius: 11px; }
-    .week-table thead th:last-child { border-top-right-radius: 11px; }
+    .week-table thead th:first-child { /* border-top-left-radius: 11px; */ }
+    .week-table thead th:last-child { /* border-top-right-radius: 11px; */ }
     .week-table tfoot td:first-child { border-bottom-left-radius: 11px; }
     .week-table tfoot td:last-child { border-bottom-right-radius: 11px; }
     .week-table td {
@@ -901,8 +901,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 36px;
-      padding: 0.45rem 0.85rem;
+      min-height: 28px;
+      padding: 0.28rem 0.7rem;
       background: #1e4e8c;
       color: #fff;
       text-align: center;
@@ -924,23 +924,53 @@
     .map-wrap {
       flex: 1;
       min-height: 0;
-      overflow: hidden;
+      overflow: hidden !important;
       cursor: grab;
       position: relative;
       background: var(--canvas);
-      padding: 20px;
+      padding: 8px;
+      isolation: isolate;
+    }
+    /* Fondo blanco a todo el viewport del mapa (no mueve lotes) */
+    .map-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      z-index: 0;
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 0 0 1px var(--line-strong), var(--shadow-sm);
+      pointer-events: none;
+    }
+    /* Clip del grid: no puede salirse del map-wrap / fondo blanco */
+    .map-stage-clip {
+      position: absolute;
+      inset: 8px;
+      z-index: 1;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      pointer-events: auto;
+    }
+    .map-wrap > .map-day-legend,
+    .map-wrap > .map-sync-loader,
+    .map-wrap > .mob-zoom,
+    .map-wrap > .map-mobile-ui,
+    .map-wrap > .fundo-empty {
+      z-index: 6;
     }
     .map-wrap.dragging { cursor: grabbing; }
 
-    /* Leyenda colores = día · solo pantalla grande (lado derecho del mapa) */
+    /* Leyenda colores = día · Licapa II (arriba) / Licapa I (abajo) */
     .map-day-legend {
       display: none;
       position: absolute;
-      right: 18px;
-      bottom: 18px;
+      right: 27px;
+      top: 24px;
+      bottom: auto;
       z-index: 6;
-      width: min(168px, 22vw);
-      padding: 0.85rem 0.95rem 0.9rem;
+      width: min(158px, 20vw);
+      padding: 0.65rem 0.75rem 0.7rem;
       background: #fff;
       border: 1px solid #cbd5e1;
       border-radius: 2px;
@@ -948,15 +978,19 @@
       pointer-events: none;
       user-select: none;
     }
+    body.fundo-licapa1 .map-day-legend {
+      right: 27px;
+      top: 497px;
+    }
     .map-day-legend-title {
-      margin: 0 0 0.65rem;
-      font-size: 0.62rem;
+      margin: 0 0 0.45rem;
+      font-size: 0.58rem;
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: #475569;
       border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 0.45rem;
+      padding-bottom: 0.35rem;
     }
     .map-day-legend-list {
       list-style: none;
@@ -964,7 +998,7 @@
       padding: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.42rem;
+      gap: 0.32rem;
     }
     .map-day-legend-list li {
       display: grid;
@@ -1018,17 +1052,24 @@
       display: none !important;
     }
 
-    /* Escritorio: margen pequeño e igual en los 4 lados */
+    /* Escritorio: stage más pegado (menos padding) */
     @media (min-width: 769px) and (min-height: 521px) {
       .map-wrap {
-        padding: 12px;
+        padding: 6px;
         background: var(--canvas);
       }
-      .grid {
+      .map-wrap::before,
+      .map-stage-clip {
+        inset: 6px;
         border-radius: 10px;
-        box-shadow: 0 0 0 1px var(--line-strong), var(--shadow-sm);
-        border: 1px solid var(--line-strong);
-        overflow: visible;
+      }
+      .grid {
+        /* El blanco/borde vive en .map-wrap::before; el grid solo lleva lotes */
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+        background: transparent;
+        overflow: hidden;
       }
     }
 
@@ -1082,11 +1123,11 @@
       gap: 0;
       width: 100%;
       height: 100%;
-      background: #fff;
-      border: 1px solid var(--line-strong);
-      border-radius: var(--radius-sm);
-      box-shadow: 0 0 0 1px var(--line-strong), var(--shadow-sm);
-      overflow: visible;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
       box-sizing: border-box;
       text-rendering: geometricPrecision;
       -webkit-font-smoothing: antialiased;
@@ -2397,20 +2438,28 @@
       font-weight: 600;
       color: #0f172a;
       box-shadow: none;
+      outline: none;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .labor-form .field input.is-invalid {
       border-color: #dc2626 !important;
-      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18);
+      box-shadow: none;
     }
+    /* Sin anillo “plomito”: un solo borde al enfocar */
     .labor-form .field input:focus,
     .labor-form .cselect-trigger:focus,
-    .labor-form .cselect.open .cselect-trigger {
-      border-color: #1e4e8c;
+    .labor-form .cselect.open .cselect-trigger,
+    .labor-form .cselect-trigger:focus-visible {
+      border-color: #047857;
       background: #fff;
-      box-shadow: 0 0 0 3px rgba(30, 78, 140, 0.14);
+      box-shadow: none;
+      outline: none;
+    }
+    .labor-form .cselect-trigger:not(.is-empty) {
+      border-color: #047857;
+      box-shadow: none;
     }
     .labor-form .field input[readonly],
     .labor-form .cselect-trigger:disabled,
@@ -2466,15 +2515,355 @@
       color: #166534;
       font-variant-numeric: tabular-nums;
     }
+    /* Semana/Fecha: oculto en pantalla grande (sigue en inputs hidden) */
     .desk-day-meta {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 0.15rem 0.85rem;
-      padding: 0.7rem 0.9rem;
+      display: none !important;
+    }
+    .btn-capture {
+      width: 100%;
+      height: 40px;
+      margin-top: 0.55rem;
+      border-radius: 10px;
+      border: 1px solid #0f3327;
+      background: #0f3327;
+      color: #fff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-capture:hover { background: #14532d; border-color: #14532d; }
+    .desk-sum-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 12040;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .desk-sum-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .desk-sum-modal .hist-sheet {
+      width: min(420px, 100%);
+      max-height: min(86vh, 680px);
       background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 24px 60px rgba(15, 51, 39, 0.2);
+      display: flex;
+      flex-direction: column;
+      padding: 1.05rem 1rem 0.95rem;
+      transform: translateY(8px) scale(0.98);
+      transition: transform .2s ease;
+    }
+    .desk-sum-modal.open .hist-sheet { transform: none; }
+    .desk-sum-modal .hist-sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.7rem;
+    }
+    .desk-sum-modal .hist-sheet-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f3327;
+    }
+    .desk-sum-modal .hist-sheet-head p {
+      margin: 0.18rem 0 0;
+      font-size: 0.74rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .desk-sum-modal .picker-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .desk-sum-modal .sum-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 0.65rem;
+    }
+    .desk-sum-modal .sum-kpi {
+      padding: 0.55rem 0.35rem;
+      border-radius: 12px;
+      background: #f7faf8;
+      border: 1px solid #e4ece7;
+      text-align: center;
+    }
+    .desk-sum-modal .sum-kpi span {
+      display: block;
+      font-size: 0.55rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.15rem;
+    }
+    .desk-sum-modal .sum-kpi strong {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #0f3327;
+    }
+    .desk-sum-modal .hist-sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+    .desk-sum-modal .mod-edit-box {
+      margin-top: 0.65rem;
+      padding: 0.7rem 0.75rem;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
+      background: #f8fafc;
+    }
+    .desk-sum-modal .mod-edit-box[hidden] { display: none !important; }
+    .desk-sum-modal .mod-edit-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.55rem;
+    }
+    .desk-sum-modal .mod-edit-kicker {
+      margin: 0;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .desk-sum-modal .mod-edit-head strong {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.88rem;
+      color: #0f3327;
+    }
+    .desk-sum-modal .mod-edit-mod {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #fff;
+      background: #1e88e5;
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem;
+    }
+    .desk-sum-modal .mod-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 0.45rem;
+      align-items: end;
+    }
+    .desk-sum-modal .mod-edit-field span {
+      display: block;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 0.2rem;
+    }
+    .desk-sum-modal .mod-edit-field strong,
+    .desk-sum-modal .mod-edit-field input {
+      display: block;
+      width: 100%;
+      height: 36px;
+      border: 1px solid #dce3df;
+      border-radius: 9px;
+      padding: 0 0.55rem;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #0f3327;
+      background: #fff;
+      box-sizing: border-box;
+      box-shadow: none;
+      outline: none;
+    }
+    .desk-sum-modal .mod-edit-field strong {
+      display: flex;
+      align-items: center;
+      background: #f1f5f3;
+      border-color: #e4ece7;
+    }
+    .desk-sum-modal .mod-edit-field input:focus {
+      border-color: #047857;
+      box-shadow: none;
+    }
+    .desk-sum-modal .mod-edit-save {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 9px;
+      background: #0f3327;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .desk-sum-modal .mod-edit-save svg { width: 16px; height: 16px; }
+    .desk-sum-modal .mod-edit-ok {
+      margin: 0.45rem 0 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #047857;
+    }
+    .desk-sum-modal .mod-edit-ok[hidden] { display: none !important; }
+    /* Mismo look de mini-cell que desk-lot-board / form Resumen */
+    .desk-sum-modal .mod-group {
+      padding: 0.5rem;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e8eeeb;
+      margin-bottom: 0.45rem;
+    }
+    .desk-sum-modal .mod-group-head {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .desk-sum-modal .mod-group-head b {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--forest);
+    }
+    .desk-sum-modal .mod-group-head span {
+      margin-left: auto;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .desk-sum-modal .mod-lots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.32rem;
+    }
+    .desk-sum-modal .mod-lots[data-n="1"] .mini-cell-wrap {
+      flex: 0 1 42%;
+      min-width: 110px;
+    }
+    .desk-sum-modal .mini-cell-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+      margin-bottom: 0.2rem;
+    }
+    .desk-sum-modal .mini-cell {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      min-width: 0;
+      min-height: 70px;
+      border-radius: 10px;
+      border: 2px solid #d1d5db;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.28rem 0.15rem 0.3rem;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .desk-sum-modal .mini-cell.is-on {
+      box-shadow: 0 0 0 2px rgba(15, 51, 39, 0.18);
+    }
+    .desk-sum-modal .mini-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
+      opacity: 0.72;
+      pointer-events: none;
+      transition: height 0.12s ease, width 0.12s ease;
+    }
+    body.labor-cercos .desk-sum-modal .mini-fill {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      right: auto;
+      height: 20%;
+      width: 0%;
+      border-radius: 0 2px 2px 0;
+      opacity: 0.88;
+    }
+    .desk-sum-modal .mini-cell .t,
+    .desk-sum-modal .mini-cell .l,
+    .desk-sum-modal .mini-cell .h {
+      position: relative;
+      z-index: 1;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.15;
+      color: #0b0f0d;
+    }
+    .desk-sum-modal .mini-cell .l { font-size: 0.66rem; }
+    .desk-sum-modal .mini-actions {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.22rem;
+    }
+    .desk-sum-modal .mini-edit,
+    .desk-sum-modal .mini-del {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      height: 28px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background .12s ease, transform .12s ease;
+    }
+    .desk-sum-modal .mini-edit {
+      color: #147a4a;
+      box-shadow: inset 0 0 0 1px #d7eadf;
+    }
+    .desk-sum-modal .mini-del {
+      color: #c2414a;
+      box-shadow: inset 0 0 0 1px #f0d5d7;
+    }
+    .desk-sum-modal .mini-edit:hover { background: #f3faf6; }
+    .desk-sum-modal .mini-del:hover { background: #fff6f6; }
+    .desk-sum-modal .mini-edit svg,
+    .desk-sum-modal .mini-del svg {
+      width: 12px;
+      height: 12px;
+      pointer-events: none;
+    }
+    .desk-sum-modal .board-empty {
+      margin: 0;
+      text-align: center;
+      padding: 0.85rem 0.4rem;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
     .desk-day-meta .meta-cell {
       display: flex;
@@ -2970,10 +3359,11 @@
       transform: translateY(-40%);
     }
     .cselect.open .cselect-trigger,
-    .cselect-trigger:focus {
-      border-color: #2f8a58;
+    .cselect-trigger:focus,
+    .cselect-trigger:focus-visible {
+      border-color: #047857;
       background: #fff;
-      box-shadow: 0 0 0 3px rgba(47, 138, 88, 0.16);
+      box-shadow: none;
       outline: none;
     }
     .cselect-trigger.is-empty { color: #7a8f85; font-weight: 600; }
@@ -3078,11 +3468,22 @@
       background: #f8faf9;
       border-color: #d6e0da;
     }
-    .cselect.is-cards .cselect-option.selected,
-    .cselect.is-cards .cselect-option.is-captured {
+    .cselect.is-cards .cselect-option.selected {
       background: #ecfdf3;
       border-color: #86efac;
       color: #0f3327;
+    }
+    .cselect.is-cards .cselect-option.is-captured:not(.selected):not(.is-disabled) {
+      background: #f8faf9;
+      border-color: #e8eeeb;
+    }
+    .cselect.is-cards .cselect-option.is-disabled {
+      opacity: 0.72;
+      cursor: not-allowed;
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #64748b;
+      pointer-events: none;
     }
     .cselect.is-cards .cselect-option b {
       display: block;
@@ -3092,6 +3493,9 @@
       letter-spacing: 0.02em;
       text-transform: uppercase;
     }
+    .cselect.is-cards .cselect-option.is-disabled b {
+      color: #64748b;
+    }
     .cselect.is-cards .cselect-option small {
       display: block;
       margin-top: 0.12rem;
@@ -3099,6 +3503,16 @@
       font-weight: 600;
       color: #64748b;
       text-transform: none;
+    }
+    .cselect.is-cards .cselect-option .opt-hint {
+      display: block;
+      margin-top: 0.18rem;
+      font-size: 0.62rem;
+      font-weight: 700;
+      font-style: normal;
+      color: #b45309;
+      text-transform: none;
+      letter-spacing: 0;
     }
     .cselect.is-cards .opt-check {
       flex-shrink: 0;
@@ -3109,13 +3523,12 @@
       background: #fff;
       position: relative;
     }
-    .cselect.is-cards .cselect-option.selected .opt-check,
-    .cselect.is-cards .cselect-option.is-captured .opt-check {
+    /* Check solo si está seleccionado hoy — no en lotes ya trabajados */
+    .cselect.is-cards .cselect-option.selected .opt-check {
       border-color: #0f3327;
       background: #0f3327;
     }
-    .cselect.is-cards .cselect-option.selected .opt-check::after,
-    .cselect.is-cards .cselect-option.is-captured .opt-check::after {
+    .cselect.is-cards .cselect-option.selected .opt-check::after {
       content: "";
       position: absolute;
       left: 6px;
@@ -3127,10 +3540,21 @@
       border-left: 0;
       transform: rotate(45deg);
     }
+    .cselect.is-cards .cselect-option.is-disabled .opt-check {
+      display: none;
+    }
     .cselect.is-cards .opt-tag {
       margin-top: 0.28rem;
       background: #dcfce7;
       color: #166534;
+    }
+    .cselect.is-cards .cselect-option.is-disabled .opt-tag {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .cselect.is-cards .cselect-option.is-captured:not(.is-disabled) .opt-tag {
+      background: #ffedd5;
+      color: #9a3412;
     }
     .cselect-empty {
       padding: 0.75rem;
@@ -4801,7 +5225,7 @@
       }
       .mob-foot-bar strong { color: #0f3327; font-weight: 800; }
       .map-wrap > .mob-zoom {
-        display: flex;
+        display: none !important;
         position: absolute;
         top: 8px;
         left: 8px;
@@ -4857,16 +5281,20 @@
         top: auto;
         z-index: 1;
       }
-      .grid {
+      .map-stage-clip {
+        inset: 6px;
         border-radius: 10px;
-        border: 1px solid #b8c5bc;
-        box-shadow: 0 0 0 1px #b8c5bc, 0 10px 36px rgba(15, 51, 39, 0.14);
-        overflow: visible;
+      }
+      .grid {
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        overflow: hidden;
       }
       .cell {
         padding: 1px 0;
         line-height: 1;
-        overflow: visible;
+        overflow: hidden;
       }
       .grid.is-cercos .cell:not(.empty) {
         overflow: hidden;
@@ -4907,13 +5335,13 @@
       .mob-detail {
         display: block;
         position: absolute;
-        left: 0.5rem;
-        top: 3.15rem;
+        left: 0.4rem;
+        top: auto;
         right: auto;
-        bottom: auto;
-        width: min(176px, 52vw);
+        bottom: 0.45rem;
+        width: min(132px, 40vw);
         z-index: 85;
-        transform: translateY(-6px);
+        transform: translateY(6px);
         opacity: 0;
         pointer-events: none;
         transition: transform 0.2s ease, opacity 0.2s ease;
@@ -4925,67 +5353,67 @@
       }
       .mob-detail-card {
         background: #fff;
-        border-radius: 12px;
-        padding: 0.45rem 0.5rem 0.5rem;
-        box-shadow: 0 8px 22px rgba(15, 51, 39, 0.16);
+        border-radius: 9px;
+        padding: 0.26rem 0.3rem 0.3rem;
+        box-shadow: 0 5px 14px rgba(15, 51, 39, 0.14);
         border: 1px solid #e2ebe6;
       }
       .mob-detail-head {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 0.35rem;
-        margin-bottom: 0.35rem;
+        gap: 0.2rem;
+        margin-bottom: 0.2rem;
       }
       .mob-detail-pill {
         display: inline-flex;
         align-items: center;
-        padding: 0.1rem 0.38rem;
+        padding: 0.05rem 0.26rem;
         border-radius: 999px;
-        font-size: 0.55rem;
+        font-size: 0.46rem;
         font-weight: 800;
         color: #fff;
       }
       .mob-detail-head h3 {
-        margin: 0.12rem 0 0;
-        font-size: 0.72rem;
+        margin: 0.06rem 0 0;
+        font-size: 0.58rem;
         font-weight: 800;
         color: #0f3327;
-        line-height: 1.2;
+        line-height: 1.15;
       }
       .mob-detail-close {
-        width: 22px;
-        height: 22px;
+        width: 18px;
+        height: 18px;
         flex-shrink: 0;
         border: 1px solid #e2ebe6;
-        border-radius: 7px;
+        border-radius: 5px;
         background: #f7fbf8;
         color: #64748b;
-        font-size: 0.95rem;
+        font-size: 0.8rem;
         line-height: 1;
         cursor: pointer;
       }
       .mob-detail-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.25rem;
+        gap: 0.16rem;
       }
       .mob-detail-grid div {
         background: #f7fbf8;
         border: 1px solid #e2ebe6;
-        border-radius: 8px;
-        padding: 0.22rem 0.32rem;
+        border-radius: 6px;
+        padding: 0.12rem 0.22rem;
       }
       .mob-detail-grid dt {
-        font-size: 0.48rem;
+        font-size: 0.4rem;
         font-weight: 700;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
         color: #64748b;
       }
       .mob-detail-grid dd {
-        margin: 0.08rem 0 0;
-        font-size: 0.66rem;
+        margin: 0.04rem 0 0;
+        font-size: 0.54rem;
         font-weight: 800;
         color: #0f3327;
       }
@@ -5271,18 +5699,10 @@
               </div>
             </div>
           </div>
-        <div class="desk-day-meta" aria-label="Semana y fecha de hoy">
-          <div class="meta-cell">
-            <span class="meta-k">Semana</span>
-            <span class="meta-v" id="fSemText">—</span>
-            <input type="hidden" id="fSem" />
-              </div>
-          <div class="meta-cell">
-            <span class="meta-k">Fecha</span>
-            <span class="meta-v is-date" id="fFechaText">—</span>
-            <input type="hidden" id="fFecha" />
-            </div>
-          </div>
+        <input type="hidden" id="fSem" />
+        <input type="hidden" id="fFecha" />
+        <span id="fSemText" hidden>—</span>
+        <span id="fFechaText" hidden>—</span>
         <div class="field full">
           <label for="fModuloTrigger">Módulo</label>
           <div class="cselect" id="moduloSelect" data-cselect>
@@ -5350,6 +5770,7 @@
           <label>Lotes del día</label>
           <div class="desk-lot-board" id="deskLotBoard"></div>
           <p class="lot-preview-status" id="lotPreviewStatus">Selecciona un lote</p>
+          <button type="button" class="btn-capture" id="deskCaptureBtn">Ver</button>
         </div>
       </div>
     </form>
@@ -5361,6 +5782,47 @@
       </div>
     </div>
   </aside>
+
+  <div class="desk-sum-modal" id="deskSumModal" aria-hidden="true">
+    <div class="hist-sheet" role="dialog" aria-labelledby="deskSumTitle">
+      <div class="hist-sheet-head">
+        <div>
+          <h3 id="deskSumTitle">Resumen</h3>
+          <p>Lotes del día · editar avance</p>
+        </div>
+        <button type="button" class="picker-close" id="deskSumClose" aria-label="Cerrar"><span>×</span></button>
+      </div>
+      <div class="sum-strip" id="deskSumKpis">
+        <div class="sum-kpi"><span>Lotes</span><strong id="deskSumKpiLots">0</strong></div>
+        <div class="sum-kpi"><span>Área total</span><strong id="deskSumKpiArea">0.00 ha</strong></div>
+        <div class="sum-kpi"><span>Avance</span><strong id="deskSumKpiAv">0.00 ha</strong></div>
+      </div>
+      <div class="hist-sheet-body" id="deskSumBoard"></div>
+      <div class="mod-edit-box" id="deskSumEditBox" hidden>
+        <div class="mod-edit-head">
+          <div>
+            <p class="mod-edit-kicker">Editar avance</p>
+            <strong id="deskSumEditLote">—</strong>
+          </div>
+          <span class="mod-edit-mod" id="deskSumEditMod">—</span>
+        </div>
+        <div class="mod-edit-grid">
+          <div class="mod-edit-field">
+            <span>Área lote</span>
+            <strong id="deskSumEditArea">0.00 ha</strong>
+          </div>
+          <label class="mod-edit-field">
+            <span>Avance ha</span>
+            <input id="deskSumEditAvance" type="text" inputmode="decimal" autocomplete="off" aria-label="Avance en hectáreas" />
+          </label>
+          <button type="button" class="mod-edit-save" id="deskSumEditSave" aria-label="Guardar avance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </button>
+        </div>
+        <p class="mod-edit-ok" id="deskSumEditOk" hidden aria-live="polite">Se editó el lote correctamente</p>
+      </div>
+    </div>
+  </div>
 
   <div class="multi-modal" id="multiLotModal" aria-hidden="true">
     <div class="multi-card" role="dialog" aria-labelledby="multiLotTitle">
@@ -5397,13 +5859,27 @@
     </div>
   </div>
 
+  <div class="confirm-modal" id="lotDoneModal" aria-hidden="true">
+    <div class="confirm-card" role="dialog" aria-labelledby="lotDoneTitle" aria-describedby="lotDoneBody">
+      <div class="confirm-card-head">
+        <h3 id="lotDoneTitle">Lote terminado</h3>
+      </div>
+      <div class="confirm-card-body" id="lotDoneBody">
+        Este lote ya se trabajó <strong>toda el área</strong> esta semana.
+      </div>
+      <div class="confirm-card-actions">
+        <button type="button" class="btn btn-primary" id="lotDoneOk">Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <div class="confirm-modal" id="confirmClearModal" aria-hidden="true">
     <div class="confirm-card" role="dialog" aria-labelledby="confirmClearTitle">
       <div class="confirm-card-head">
         <h3 id="confirmClearTitle">Confirmar limpieza</h3>
       </div>
       <div class="confirm-card-body">
-        ¿Estás seguro de que quieres <strong>eliminar todas las áreas sombreadas</strong> del mapa y limpiar el formulario?
+        ¿Limpiar solo los <strong>lotes en caché</strong> que aún no se guardaron? Los avances ya enviados a la hoja no se borran.
       </div>
       <div class="confirm-card-actions">
         <button type="button" class="btn" id="confirmClearCancel">Cancelar</button>
@@ -5490,7 +5966,7 @@
       <div class="filter-head">
         <div>
           <h2 id="filterTitle">Filtros del mapa</h2>
-          <span class="sub">SEM · Fecha · MD · Labor real</span>
+          <span class="sub" id="filterFundoSub">LICAPA I · SEM · Fecha · MD · Labor</span>
         </div>
         <button type="button" id="closeFilterModal">Cerrar</button>
       </div>
@@ -5590,10 +6066,12 @@
           <strong id="fundoEmptyTitle">LICAPA II</strong>
           <span id="fundoEmptyMsg">Plano en preparación</span>
         </div>
-        <div class="scaler" id="scaler">
-          <div class="stage" id="stage">
-            <div class="grid" id="grid"></div>
-            <div class="map-labels" id="mapLabels" aria-hidden="true"></div>
+        <div class="map-stage-clip" id="mapStageClip">
+          <div class="scaler" id="scaler">
+            <div class="stage" id="stage">
+              <div class="grid" id="grid"></div>
+              <div class="map-labels" id="mapLabels" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
         <div class="map-sync-loader" id="mapSyncLoader" hidden aria-live="polite" aria-busy="false">
@@ -5610,11 +6088,7 @@
           <p class="map-day-legend-title">Color · día</p>
           <ul class="map-day-legend-list" id="mapDayLegendList"></ul>
         </aside>
-        <div class="mob-zoom" id="mobZoomBar">
-            <button type="button" id="mobZoomIn" title="Acercar" aria-label="Acercar">+</button>
-            <button type="button" class="mob-fit" id="mobZoomFit" title="Ver todo" aria-label="Ver todo">◎</button>
-            <button type="button" id="mobZoomOut" title="Alejar" aria-label="Alejar">−</button>
-          </div>
+        <div class="mob-zoom" id="mobZoomBar" hidden aria-hidden="true"></div>
         <div class="map-mobile-ui" id="mapMobileUi" aria-hidden="true">
           <button type="button" class="mob-fab-panel" id="mobPanelToggle" title="Ocultar panel" aria-label="Ocultar panel" aria-pressed="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -5916,10 +6390,10 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
-  <script src="data.js?v=8"></script>
-  <script src="data-licapa2.js?v=11"></script>
+  <script src="config.js?v=26"></script>
+  <script src="api.js?v=18"></script>
+  <script src="licapa1/data.js?v=9"></script>
+  <script src="licapa2/data.js?v=18"></script>
   <script src="frecuencias.js"></script>
   <script>
     const API_URL = (window.QB_CONFIG && QB_CONFIG.API_URL) || "";
@@ -6108,9 +6582,67 @@
       if (emptyTitle) emptyTitle.textContent = fundo.label;
       if (emptyMsg) emptyMsg.textContent = showEmpty ? "Plano en preparación" : "";
       if (scalerEl) scalerEl.style.visibility = showEmpty ? "hidden" : "";
+      document.body.classList.toggle("fundo-licapa1", fundo.id === "licapa1");
+      document.body.classList.toggle("fundo-licapa2", fundo.id === "licapa2");
+      const filterSub = document.getElementById("filterFundoSub");
+      if (filterSub) {
+        filterSub.textContent = fundo.label + " · SEM · Fecha · MD · Labor";
+      }
+      const filterTitle = document.getElementById("filterTitle");
+      if (filterTitle) filterTitle.textContent = "Filtros · " + fundo.label;
     }
 
     let fundoHooksReady = false;
+    function laborListForActiveFundo(fundoId) {
+      const id = FUNDOS[fundoId] ? fundoId : (activeFundoId || "licapa1");
+      const opts = (window.QB_CONFIG && QB_CONFIG.LABOR_OPTS) || {};
+      const by = opts.byFundo && opts.byFundo[id];
+      if (Array.isArray(by) && by.length) {
+        return by.map(s => String(s).toUpperCase().trim()).filter(Boolean);
+      }
+      const all = (opts.labor_real || []).map(s => String(s).toUpperCase().trim()).filter(Boolean);
+      if (id === "licapa2") return all.filter(s => s !== "CERCOS VIVOS" && s !== "CERCO VIVOS");
+      return all;
+    }
+
+    function clearDeskInputsOnFundoChange() {
+      try {
+        if (typeof clearMultiLots === "function") clearMultiLots(true);
+        if (typeof setActiveMod === "function") setActiveMod(null);
+        if (typeof moduloCSelect !== "undefined" && moduloCSelect && moduloCSelect.setValue) {
+          moduloCSelect.setValue("", true);
+        }
+        if (typeof resetTurnoLoteSelects === "function") resetTurnoLoteSelects();
+        const areaEl = document.getElementById("fArea");
+        if (areaEl) areaEl.value = "";
+        if (typeof laborPptoCSelect !== "undefined" && laborPptoCSelect && laborPptoCSelect.setValue) {
+          laborPptoCSelect.setValue("", true);
+        }
+        if (typeof laborRealCSelect !== "undefined" && laborRealCSelect) {
+          if (laborRealCSelect.updateItems) laborRealCSelect.updateItems(laborListForActiveFundo(activeFundoId));
+          if (laborRealCSelect.setValue) laborRealCSelect.setValue("", true);
+        }
+        const av = document.getElementById("fAvance");
+        if (av) av.value = "";
+        const jr = document.getElementById("fTotalJr");
+        if (jr) jr.value = "";
+        const cerc = document.getElementById("fCercosLotes");
+        if (cerc) cerc.value = "";
+        if (typeof variedadCSelect !== "undefined" && variedadCSelect && variedadCSelect.setValue) {
+          variedadCSelect.setValue("SEKOYA POP");
+        }
+        const mobDetail = document.getElementById("mobDetail");
+        if (mobDetail) {
+          mobDetail.classList.remove("open");
+          mobDetail.setAttribute("aria-hidden", "true");
+        }
+        if (typeof syncLaborGate === "function") syncLaborGate();
+        if (typeof updateAvanceBar === "function") updateAvanceBar();
+        if (typeof previewFromForm === "function") previewFromForm();
+        if (typeof renderDeskLotBoard === "function") renderDeskLotBoard();
+      } catch (_) { /* selects aún no listos */ }
+    }
+
     function setActiveFundo(id, opts = {}) {
       const next = FUNDOS[id] ? id : "licapa1";
       const changed = next !== activeFundoId;
@@ -6127,6 +6659,27 @@
       FUNDOS[activeFundoId].hasMap = !!(ds && ds.lots && ds.lots.length);
       syncFundoUI();
       if (fundoHooksReady) {
+        if (changed) {
+          // Limpiar inputs al cambiar Licapa I ↔ II
+          clearDeskInputsOnFundoChange();
+          // Licapa II: sin CERCOS ni mapa de cercos
+          const allowed = laborListForActiveFundo(activeFundoId);
+          if (mapQuery && mapQuery.laborReal && !allowed.includes(String(mapQuery.laborReal).toUpperCase())) {
+            mapQuery.laborReal = defaultMapLaborReal();
+          }
+          if (activeFundoId === "licapa2" && mapQuery) {
+            if (/CERCOS/i.test(String(mapQuery.laborReal || ""))) mapQuery.laborReal = defaultMapLaborReal();
+            if (/CERCOS/i.test(String(mapQuery.laborPpto || ""))) mapQuery.laborPpto = "";
+          }
+          if (typeof syncCercosMapLayout === "function") syncCercosMapLayout();
+          if (typeof filterOptions !== "undefined" && filterOptions) {
+            filterOptions.laborReal = unionLabors([]);
+            filterOptions.md = (modules || []).map(m => m.label);
+          }
+          if (typeof refreshFilterPanelUI === "function") refreshFilterPanelUI();
+          if (typeof loadFilterOptions === "function") loadFilterOptions(true);
+          if (typeof applyMapFilters === "function") applyMapFilters(false);
+        }
         const sem = (mapQuery.sem != null && mapQuery.sem !== "") ? mapQuery.sem : currentWeek;
         syncPageTitleFromFilter(sem);
         updateMapLaborBanner();
@@ -6353,20 +6906,20 @@
           : [{ lote: String(lot.lote), tunel: String(lot.tunel || "").toLowerCase(), ha: lot.ha, key: `${lot.r},${lot.c}` }];
         const mod = lot.modulo == null ? "" : String(lot.modulo);
         parts.forEach(p => {
-          const matchQ = !q ||
+        const matchQ = !q ||
             p.lote.includes(q) ||
             (`lt.${p.lote}`).includes(q) ||
             (`lt${p.lote}`).includes(q) ||
             p.tunel.includes(q) ||
-            (`m${mod}`).includes(q);
-          if (!matchQ) return;
-          visibleLots++;
+          (`m${mod}`).includes(q);
+        if (!matchQ) return;
+        visibleLots++;
           visibleHa += roundHa(p.ha);
           const rec = recForMapLot(p.key) || recForMapLot(`${lot.r},${lot.c}`);
-          if (rec?.laborReal) {
-            withLabor++;
-            avanceHa += roundHa(rec.avance);
-          }
+        if (rec?.laborReal) {
+          withLabor++;
+          avanceHa += roundHa(rec.avance);
+        }
         });
       });
       const mobKpiLots = document.getElementById("mobKpiLots");
@@ -6418,7 +6971,13 @@
       let n = 0;
       let syncOk = true;
       try {
-        if (API_URL) {
+        // Offline-first: pintar siempre desde local (rápido) aunque no haya red
+        if (typeof refreshAllLaborVisuals === "function") refreshAllLaborVisuals();
+        if (API_URL && typeof navigator !== "undefined" && navigator.onLine === false) {
+          lastSyncLabel = "Offline · mapa local";
+          syncOk = true;
+          n = Object.keys(laborRecords || {}).length;
+        } else if (API_URL) {
           const filters = currentMapFilters();
           if (showFeedback || opts.nocache) filters.nocache = true;
           if (showCloud) setMapSyncProgress(22, "Conectando con la hoja…");
@@ -6445,6 +7004,11 @@
             lastSyncLabel = "Actualizado " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
           } else if (syncRes?.rateLimited) {
             lastSyncLabel = "Esperando servidor…";
+          } else if (!syncOk) {
+            // GET falló: mapa local sigue válido
+            lastSyncLabel = "Local · reintento luego";
+            syncOk = true;
+            if (typeof refreshAllLaborVisuals === "function") refreshAllLaborVisuals();
           }
           updatePendingChips();
           if ((fast || forceReplace) && typeof QBApi.queueCount === "function" && QBApi.queueCount() > 0) {
@@ -6453,7 +7017,8 @@
             }).catch(() => {});
           }
         } else {
-          lastSyncLabel = "Sin API configurada";
+          lastSyncLabel = "Sin API · mapa local";
+          if (typeof refreshAllLaborVisuals === "function") refreshAllLaborVisuals();
         }
         updateMobileChrome();
         if (!soft || fast || forceReplace) applyFilter();
@@ -6527,8 +7092,10 @@
     let rateLimitWarnedAt = 0;
     let savingLabor = false;
     const AUTO_SYNC_MS = 20000;
-    const FILTER_CACHE_KEY = "qb-filtros-cache";
     const FILTER_CACHE_TTL = 10 * 60 * 1000;
+    function filterCacheKey() {
+      return "qb-filtros-cache-" + (activeFundoId || "licapa1");
+    }
 
     function isApiRateLimited(res) {
       if (!res) return false;
@@ -6546,7 +7113,7 @@
 
     function readFilterCache() {
       try {
-        const raw = sessionStorage.getItem(FILTER_CACHE_KEY);
+        const raw = sessionStorage.getItem(filterCacheKey());
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         if (!parsed?.ts || Date.now() - parsed.ts > FILTER_CACHE_TTL) return null;
@@ -6558,7 +7125,7 @@
 
     function writeFilterCache(data) {
       try {
-        sessionStorage.setItem(FILTER_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+        sessionStorage.setItem(filterCacheKey(), JSON.stringify({ ts: Date.now(), data }));
       } catch { /* ok */ }
     }
 
@@ -6679,26 +7246,54 @@
         btn.className = "mob-mod-chip" + (activeMod === m.id ? " active" : "");
         btn.dataset.mod = String(m.id);
         const count = countLotesModulo(m);
+        const haN = haModuloDisplay(m);
         btn.innerHTML = `<span class="dot" style="background:${m.fill}"></span>${m.label}<span class="mob-mod-count">${count}</span>`;
-        btn.title = `${m.label} · ${count} lotes`;
+        btn.title = `${m.label} · ${count} lotes · ${formatHa(haN)} ha` + (isLicapa2MagicaMod(m) ? " · MAGICA" : "");
         btn.addEventListener("click", () => setActiveMod(activeMod === m.id ? null : m.id));
         mobModScroll.appendChild(btn);
       });
     }
 
-    function countLotesModulo(m) {
-      if (!m) return 0;
-      if (m.lotes != null && m.lotes !== "") return Number(m.lotes) || 0;
-      const mid = m.id;
-      let n = 0;
+    function isLicapa2MagicaMod(m) {
+      return activeFundoId === "licapa2" && Number(m && m.id) === 10;
+    }
+
+    function eachModLotPart(mid, fn) {
       (lots || []).forEach(l => {
-        if (l.modulo === mid) n += 1;
+        if (l.modulo === mid) fn(l);
         if (lotHasSplit(l)) {
           const botMod = l.split.modulo != null ? l.split.modulo : l.modulo;
-          if (botMod === mid) n += 1;
+          if (botMod === mid) fn(l.split);
         }
       });
+    }
+
+    function countLotesModulo(m) {
+      if (!m) return 0;
+      const mid = m.id;
+      // Licapa II · M10: sidebar solo zona MAGICA (6). El mapa conserva todos los lotes.
+      if (isLicapa2MagicaMod(m)) {
+        let n = 0;
+        eachModLotPart(mid, part => { if (part && part.zonaMagica) n += 1; });
+        return n;
+      }
+      if (m.lotes != null && m.lotes !== "") return Number(m.lotes) || 0;
+      let n = 0;
+      eachModLotPart(mid, () => { n += 1; });
       return n;
+    }
+
+    function haModuloDisplay(m) {
+      if (!m) return 0;
+      // Si el conteo es solo MAGICA, las ha también son solo esas
+      if (isLicapa2MagicaMod(m)) {
+        let ha = 0;
+        eachModLotPart(m.id, part => {
+          if (part && part.zonaMagica) ha += Number(part.ha) || 0;
+        });
+        return roundHa(ha);
+      }
+      return roundHa(m.ha != null ? m.ha : 0);
     }
 
     function renderModList() {
@@ -6712,11 +7307,11 @@
       }
       modules.forEach(m => {
         const count = countLotesModulo(m);
-        const haTxt = formatHa(m.ha != null ? m.ha : 0);
+        const haTxt = formatHa(haModuloDisplay(m));
         const div = document.createElement("div");
         div.className = "leg-item" + (activeMod === m.id ? " active" : "");
         div.dataset.mod = m.id;
-        div.title = `${m.label} · ${count} lotes · ${haTxt} ha`;
+        div.title = `${m.label} · ${count} lotes · ${haTxt} ha` + (isLicapa2MagicaMod(m) ? " · MAGICA" : "");
         div.innerHTML = `
           <div class="mod-top">
           <span class="leg-swatch" style="background:${m.fill}"></span>
@@ -7165,8 +7760,42 @@
       return normalizeSegmentos(rec, rec.color || "").filter(s => s.fecha && s.fecha !== hoy);
     }
 
+    function isTodayPaintColor(color) {
+      const hex = (normalizeHexColor(color) || "").toUpperCase();
+      const todayHex = (currentPaintColor() || "").toUpperCase();
+      return !!(hex && todayHex && hex === todayHex);
+    }
+
     function priorAvanceHa(posKey, laborReal) {
-      return roundHa(priorSegmentos(posKey, laborReal).reduce((s, x) => s + Number(x.avance || 0), 0));
+      const rec = recForMapLot(posKey);
+      if (!rec) return 0;
+      const labor = String(laborReal || (fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      if (labor && rec.laborReal && !sameLaborName(rec.laborReal, labor)) return 0;
+      const hoy = deskFechaHoy();
+      const segs = normalizeSegmentos(rec, rec.color || "");
+      let prior = 0;
+      let todayAv = 0;
+      segs.forEach(s => {
+        const av = roundHa(s.avance);
+        if (av <= 0) return;
+        const otherDay = s.fecha && s.fecha !== hoy;
+        // Fecha colapsada a hoy pero color de otro día → ya estaba trabajado
+        const otherColor = s.fecha === hoy && s.color && !isTodayPaintColor(s.color);
+        if (otherDay || otherColor) prior += av;
+        else todayAv += av;
+      });
+      prior = roundHa(prior);
+      todayAv = roundHa(todayAv);
+      const total = roundHa(rec.avance);
+      // Si el total guardado > suma de segmentos, el sobrante ya está trabajado (no bajar)
+      const accounted = roundHa(prior + todayAv);
+      if (total > accounted + 0.001) prior = roundHa(prior + (total - accounted));
+      // Sin segmentos de hoy útiles pero hay avance → prior si fecha/color ≠ hoy
+      if (prior <= 0 && total > 0 && todayAv <= 0) {
+        const recDay = String(rec.fechaIso || rec.fecha || "").slice(0, 10);
+        if ((recDay && recDay !== hoy) || (rec.color && !isTodayPaintColor(rec.color))) prior = total;
+      }
+      return prior;
     }
 
     function todaySegmentAvance(posKey, laborReal) {
@@ -7176,26 +7805,55 @@
       if (labor && rec.laborReal && !sameLaborName(rec.laborReal, labor)) return 0;
       const hoy = deskFechaHoy();
       const segs = normalizeSegmentos(rec, rec.color || "");
-      const today = segs.find(s => s.fecha === hoy);
-      return today ? roundHa(today.avance) : 0;
+      return roundHa(segs.reduce((s, x) => {
+        if (!x.fecha || x.fecha !== hoy) return s;
+        if (x.color && !isTodayPaintColor(x.color)) return s;
+        return s + Number(x.avance || 0);
+      }, 0));
     }
 
-    /** Avance del formulario = solo lo de HOY (encima del avance previo). */
+    /** Máximo de avance de HOY = área − ya trabajado (días previos). */
     function todayAvanceCap(lot, posKey, laborReal) {
       const area = lotTotalHa(lot);
       const prior = priorAvanceHa(posKey, laborReal);
       return roundHa(Math.max(0, area - prior));
     }
 
+    /**
+     * Piso = solo avance YA GUARDADO de hoy (segmento en hoja/local).
+     * Lote vacío / solo draft del día → piso 0 (puede poner cualquier avance ≤ restante).
+     */
+    function todayAvanceFloor(posKey, laborReal) {
+      const labor = String(laborReal || (fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      return todaySegmentAvance(posKey, labor);
+    }
+
+    /**
+     * Avance del formulario = solo HOY (restante).
+     * Si ya hay trabajo previo → default = restante. Solo se puede subir, no bajar.
+     */
     function defaultTodayAvance(lot, posKey, laborReal) {
       const labor = String(laborReal || "");
       const cap = todayAvanceCap(lot, posKey, labor);
       if (cap <= 0) return 0;
-      const existing = todaySegmentAvance(posKey, labor);
+      const existing = todayAvanceFloor(posKey, labor);
       if (existing > 0) return clampLaborAvance(existing, cap, labor, lot) || existing;
       const prior = priorAvanceHa(posKey, labor);
+      // Ya trabajado otros días → traer SOLO lo restante (no el área completa)
       if (prior > 0) return clampLaborAvance(cap, cap, labor, lot) || cap;
-      return defaultLaborAvance(lotTotalHa(lot), labor, lot);
+      return defaultLaborAvance(cap || lotTotalHa(lot), labor, lot);
+    }
+
+    /** Valida avance de hoy: entre piso (no bajar) y tope (restante). */
+    function clampTodayAvance(av, lot, posKey, laborReal) {
+      const labor = String(laborReal || (fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const cap = todayAvanceCap(lot, posKey, labor);
+      const floor = todayAvanceFloor(posKey, labor);
+      let n = roundHa(av);
+      if (n < floor) n = floor;
+      if (cap > 0 && n > cap) n = cap;
+      if (n < 0) n = 0;
+      return n;
     }
 
     function draftSegmentosForPaint(posKey, todayAv, paint, laborReal) {
@@ -7279,6 +7937,10 @@
       (payload || []).forEach(rec => {
         if (!rec || !rec.laborReal) return;
         if (labor && !sameLaborName(rec.laborReal, labor)) return;
+        // No pintar labores de otro fundo (mismos nº de lote en Licapa I/II)
+        if (typeof resumenRowMatchesFundo === "function" && rec.modulo) {
+          if (!resumenRowMatchesFundo(rec)) return;
+        }
         const built = recordFromApiRow(rec);
         if (!built) return;
         const prev = nextMap[built.posKey];
@@ -7354,7 +8016,12 @@
         const payload = Array.isArray(json.list)
           ? json.list
           : (json.records || []);
-        renderWeekResumen(Array.isArray(json.resumen) ? json.resumen : null);
+        // Resumen SIEMPRE por fundo activo (API mezcla Licapa I + II)
+        if (Array.isArray(json.resumen) && json.resumen.length) {
+          renderWeekResumen(json.resumen);
+        } else {
+          refreshWeekResumen();
+        }
         const n = paintFromApiList(payload, wantLabor, {
           replace: opts.replace !== false
         });
@@ -7424,6 +8091,10 @@
       mapQuery.laborReal = labor;
       filters.laborReal = labor;
       if (mapQuery.laborPpto) filters.laborPpto = mapQuery.laborPpto;
+      // Siempre acotar al fundo activo (no mezclar Licapa I / II)
+      const fundo = activeFundo();
+      filters.fundo = fundo.label;
+      filters.etapa = fundo.etapa;
       return filters;
     }
 
@@ -7509,7 +8180,7 @@
           ratio: cercos ? (jr > 0 ? roundHa(ml / jr) : 0) : (area > 0 ? roundHa(jr / area) : 0)
         };
       });
-      return collapseWeekRows(raw);
+      return raw;
     }
 
     function syncWeekTableHeaders(cercos) {
@@ -7528,7 +8199,8 @@
       const cercos = isCercosLabor(mapQuery.laborReal);
       const zeroMid = cercos ? "0" : "0.00";
       if (!list.length) {
-        body.innerHTML = '<tr class="is-empty"><td colspan="5">Sin fechas · área y JR vacíos</td></tr>';
+        const tag = (typeof activeFundo === "function" && activeFundo().label) || "";
+        body.innerHTML = `<tr class="is-empty"><td colspan="5">Sin datos${tag ? " · " + tag : ""}</td></tr>`;
         const za = document.getElementById(totAreaId);
         const zj = document.getElementById(totJrId);
         const zr = document.getElementById(totRatioId);
@@ -7570,7 +8242,14 @@
     function renderWeekResumen(rows) {
       const cercos = isCercosLabor(mapQuery.laborReal);
       syncWeekTableHeaders(cercos);
-      const list = collapseWeekRows(Array.isArray(rows) && rows.length ? rows : weekRowsFromRecords());
+      // Filtrar por módulos del fundo ANTES de colapsar (si no, M1+M8 del mismo día se mezclan)
+      let raw = Array.isArray(rows) && rows.length ? rows : weekRowsFromRecords();
+      raw = filterResumenForActiveFundo(raw);
+      if (!raw.length && Array.isArray(rows) && rows.length) {
+        // API era de otro fundo → intentar solo local del activo
+        raw = filterResumenForActiveFundo(weekRowsFromRecords());
+      }
+      const list = collapseWeekRows(raw);
       fillWeekTable("weekResumenBody", "weekTotArea", "weekTotJr", "weekTotRatio", list);
       fillWeekTable("mobWeekResumenBody", "mobWeekTotArea", "mobWeekTotJr", "mobWeekTotRatio", list);
       // 5+ filas de días → agrandar números (tabla semana + tarjetas M1…)
@@ -7589,32 +8268,52 @@
         out.add("M" + id);
         out.add(lab);
         if (/^M0*\d+$/i.test(lab)) out.add(lab.replace(/^M0+/, "M"));
+        // M06 → M6
+        const mNum = lab.match(/^M0*(\d+)$/i);
+        if (mNum) out.add("M" + mNum[1]);
       });
       return out;
+    }
+
+    function moduloPartInFundo(part, tokens) {
+      const compact = String(part || "").toUpperCase().replace(/\s+/g, "");
+      if (!compact || compact === "—") return false;
+      if (tokens.has(compact) || tokens.has(part)) return true;
+      const n = compact.replace(/^M0*/, "");
+      return tokens.has(n) || tokens.has("M" + n);
     }
 
     function resumenRowMatchesFundo(row) {
       const tokens = moduloTokensForActiveFundo();
       if (!tokens.size) return false;
-      const parts = String(row?.modulo || "")
-        .toUpperCase()
+      // Si el registro trae fundo/etapa, respetarlo
+      const f = typeof activeFundo === "function" ? activeFundo() : null;
+      if (f && (row?.fundo || row?.etapa)) {
+        const rf = String(row.fundo || "").toUpperCase().replace(/\s+/g, "");
+        const re = String(row.etapa || "").toUpperCase().replace(/\s+/g, "");
+        const wantF = String(f.label || "").toUpperCase().replace(/\s+/g, "");
+        const wantE = String(f.etapa || "").toUpperCase().replace(/\s+/g, "");
+        if (rf && wantF && rf !== wantF && !rf.includes(wantF) && !wantF.includes(rf)) return false;
+        if (re && wantE && re !== wantE && re.replace(/^ETAPA/, "") !== wantE.replace(/^ETAPA/, "")) return false;
+      }
+      const raw = String(row?.modulo || "").toUpperCase().trim();
+      const parts = raw
         .split(/[-,;/|+\s]+/)
         .map(s => s.trim())
         .filter(Boolean);
       if (!parts.length) return false;
-      return parts.some(p => {
-        const compact = p.replace(/\s+/g, "");
-        if (tokens.has(compact) || tokens.has(p)) return true;
-        const n = compact.replace(/^M0*/, "");
-        return tokens.has(n) || tokens.has("M" + n);
-      });
+      // Rango M1-M3: TODOS los extremos deben ser del fundo (evita colados)
+      const isRange = /^M?\d+\s*-\s*M?\d+$/i.test(raw.replace(/\s+/g, ""));
+      if (isRange && parts.length >= 2) {
+        return parts.every(p => moduloPartInFundo(p, tokens));
+      }
+      return parts.some(p => moduloPartInFundo(p, tokens));
     }
 
     function filterResumenForActiveFundo(rows) {
       const list = Array.isArray(rows) ? rows : [];
-      const hit = list.filter(resumenRowMatchesFundo);
       // Si nada coincide con módulos del fundo activo (ej. API trae M1-M3 en Licapa II) → vacío
-      return hit;
+      return list.filter(resumenRowMatchesFundo);
     }
 
     async function refreshWeekResumen() {
@@ -7622,14 +8321,14 @@
       const labor = String(mapQuery.laborReal || "").toUpperCase().trim();
       if (QBApi.getResumen && API_URL && labor) {
         try {
-          const json = await QBApi.getResumen(sem, labor);
+          const fundo = activeFundo();
+          const json = await QBApi.getResumen(sem, labor, {
+            fundo: fundo.label,
+            etapa: fundo.etapa
+          });
           if (json?.ok && Array.isArray(json.resumen) && json.resumen.length) {
-            const scoped = filterResumenForActiveFundo(json.resumen);
-            if (scoped.length) {
-              renderWeekResumen(scoped);
-              return;
-            }
-            // API de otro fundo → no pintar; usar solo local del fundo activo
+            renderWeekResumen(json.resumen);
+            return;
           }
         } catch (e) { /* fallback local */ }
       }
@@ -7649,12 +8348,18 @@
         seen.add(s);
         out.push(s);
       };
-      (LABOR_OPTS.labor_real || []).forEach(add);
-      (sheetList || []).forEach(add);
+      laborListForActiveFundo(activeFundoId).forEach(add);
+      const allowed = new Set(laborListForActiveFundo(activeFundoId));
+      (sheetList || []).forEach(v => {
+        const s = String(v || "").toUpperCase().trim();
+        if (s && allowed.has(s)) add(s);
+      });
       return out;
     }
 
     function isCercosLabor(v) {
+      // Licapa II: sin CERCOS VIVOS ni mapa de cercos
+      if (activeFundoId === "licapa2") return false;
       const s = String(v || "")
         .toUpperCase()
         .normalize("NFD")
@@ -7716,9 +8421,15 @@
     }
 
     function syncCercosMapLayout() {
-      const on = isCercosLabor(mapQuery.laborReal);
+      // Licapa II: nunca modo cercos (ni clase de mapa)
+      const laborEl = document.getElementById("fLaborReal");
+      const laborForm = laborEl ? laborEl.value : "";
+      const on = activeFundoId !== "licapa2" && (
+        isCercosLabor(mapQuery.laborReal) || isCercosLabor(laborForm)
+      );
       document.getElementById("grid")?.classList.toggle("is-cercos", on);
       document.body.classList.toggle("labor-cercos", on);
+      document.getElementById("laborDrawer")?.classList.toggle("is-cercos", on && isCercosLabor(laborForm));
     }
 
     function updateMapLaborBanner() {
@@ -7878,7 +8589,11 @@
         return;
       }
       try {
-        const json = await QBApi.getFiltros();
+        const fundo = activeFundo();
+        const json = await QBApi.getFiltros({
+          fundo: fundo.label,
+          etapa: fundo.etapa
+        });
         if (!json?.ok) {
           if (isApiRateLimited(json)) {
             notifyRateLimitSoft();
@@ -7891,7 +8606,8 @@
           sem: (json.sem && json.sem.length) ? json.sem : [currentWeek],
           fecha: json.fecha || [],
           fechaBySem: json.fechaBySem || {},
-          md: (json.md && json.md.length) ? json.md : modules.map(m => m.label),
+          // MD siempre del plano activo (no mezclar M1–M5 de Licapa I con M6–M10 de II)
+          md: (modules || []).map(m => m.label),
           laborReal: unionLabors(json.laborReal),
           laborPpto: (json.laborPpto && json.laborPpto.length)
             ? json.laborPpto
@@ -7906,6 +8622,8 @@
           notifyRateLimitSoft();
         }
       }
+      // Reafirmar MD del fundo activo tras API/caché
+      if (filterOptions) filterOptions.md = (modules || []).map(m => m.label);
       refreshFilterPanelUI();
       if (isMobileMap()) {
         requestAnimationFrame(scheduleMapFit);
@@ -7915,6 +8633,11 @@
     function openFilterModal() {
       const modal = document.getElementById("filterModal");
       if (!modal) return;
+      // MD solo del fundo activo (Licapa I ≠ Licapa II)
+      if (filterOptions) {
+        filterOptions.md = (modules || []).map(m => m.label);
+      }
+      syncFundoUI();
       loadFilterOptions(true);
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
@@ -8202,7 +8925,13 @@
 
     function updateDeskRatio() {
       const items = deskCapturedLots();
-      const area = roundHa(items.reduce((s, x) => s + lotTotalHa(x.lot), 0));
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      // Ratio sobre avance de HOY (restante trabajado), no área total del lote
+      const area = roundHa(items.reduce((s, x) => {
+        const av = roundHa(x.avance);
+        if (av > 0) return s + av;
+        return s + todayAvanceCap(x.lot, x.key, labor);
+      }, 0));
       const jr = parseJr(fTotalJr && fTotalJr.value);
       const el = document.getElementById("deskRatioFormula");
       if (isCercosLabor(fLaborReal && fLaborReal.value)) {
@@ -8241,10 +8970,11 @@
       });
       const paint = currentPaintColor();
       const activeKey = fLote && fLote.value;
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       board.innerHTML = Object.keys(groups).map(id => {
         const mod = modById[id] || modById[Number(id)];
         const rows = groups[id].slice().sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
-        const areaG = roundHa(rows.reduce((s, x) => s + lotTotalHa(x.lot), 0));
+        const areaG = roundHa(rows.reduce((s, x) => s + (roundHa(x.avance) || todayAvanceCap(x.lot, x.key, labor)), 0));
         return `<div class="mod-group">
           <div class="mod-group-head">
             <b>${mod ? mod.label : ("M" + id)}</b>
@@ -8252,21 +8982,27 @@
           </div>
           <div class="mod-lots" data-n="${rows.length}">
             ${rows.map(x => {
-              const area = roundHa(x.lot.ha);
+              const tot = lotTotalHa(x.lot);
+              const cap = todayAvanceCap(x.lot, x.key, labor);
+              const prior = priorAvanceHa(x.key, labor);
               let av = roundHa(x.avance);
-              if (av <= 0) av = area;
-              if (area > 0 && av > area) av = area;
-              const cercos = isCercosLabor((fLaborReal && fLaborReal.value) || mapQuery.laborReal);
-              const barPct = area > 0 ? Math.min(100, (av / area) * 100) : 0;
+              if (av <= 0) av = cap > 0 ? cap : tot;
+              if (cap > 0 && av > cap) av = cap;
+              const cercos = isCercosLabor(labor);
+              const barBase = tot > 0 ? tot : av;
+              const barPct = barBase > 0 ? Math.min(100, ((prior + av) / barBase) * 100) : 0;
               const fillCss = cercos
                 ? `background:${paint};height:20%;width:${barPct}%;top:0;bottom:auto;left:0;right:auto`
                 : `background:${paint};height:${barPct}%`;
               const on = x.key === activeKey ? " is-on" : "";
+              const haTxt = prior > 0
+                ? formatHa(av) + " rest."
+                : formatHa(av);
               return `<button type="button" class="mini-cell${on}" data-open="${x.key}">
                 <div class="mini-fill" style="${fillCss}"></div>
                 <span class="t">${String(x.lot.tunel || "").toUpperCase()}</span>
                 <span class="l">LOTE ${x.lot.lote}</span>
-                <span class="h">${formatHa(area)}</span>
+                <span class="h">${haTxt}</span>
               </button>`;
             }).join("")}
           </div>
@@ -8278,8 +9014,256 @@
       renderDeskLotBoard();
     }
 
+    let deskSumEditKey = null;
+    function hideDeskSumEdit() {
+      const box = document.getElementById("deskSumEditBox");
+      if (box) box.setAttribute("hidden", "");
+      const ok = document.getElementById("deskSumEditOk");
+      if (ok) ok.hidden = true;
+      deskSumEditKey = null;
+      document.getElementById("deskSumBoard")?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
+    }
+
+    function deskSumBoardHtml(items) {
+      if (!items.length) {
+        return '<div class="board-empty">Aún no hay lotes. Elige módulo, turno y lote.</div>';
+      }
+      const paint = currentPaintColor();
+      const groups = {};
+      items.forEach(x => {
+        const id = String(x.lot.modulo != null ? x.lot.modulo : "x");
+        if (!groups[id]) groups[id] = [];
+        groups[id].push(x);
+      });
+      return Object.keys(groups).map(id => {
+        const mod = modById[id] || modById[Number(id)];
+        const rows = groups[id].slice().sort((a, b) => Number(a.lot.lote) - Number(b.lot.lote));
+        return `<div class="mod-group">
+          <div class="mod-group-head">
+            <b>${mod ? mod.label : ("M" + id)}</b>
+            <span>${rows.length} lote(s)</span>
+          </div>
+          <div class="mod-lots" data-n="${rows.length}">
+            ${rows.map(x => {
+              const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+              const area = lotTotalHa(x.lot);
+              const cap = todayAvanceCap(x.lot, x.key, labor);
+              const prior = priorAvanceHa(x.key, labor);
+              let av = roundHa(x.avance);
+              if (av <= 0) av = cap > 0 ? cap : area;
+              if (cap > 0 && av > cap) av = cap;
+              const totalPaint = roundHa(prior + av);
+              const pct = area > 0 ? Math.min(100, Math.round((totalPaint / area) * 10000) / 100) : 0;
+              const cercos = isCercosLabor(labor);
+              const fillCss = cercos
+                ? `background:${paint};height:20%;width:${pct}%;top:0;bottom:auto;left:0;right:auto`
+                : `background:${paint};height:${pct}%`;
+              // Avance de HOY (restante si había previo) / área del lote
+              const haLine = prior > 0
+                ? formatHa(av) + " rest. / " + formatHa(area)
+                : formatHa(av) + " / " + formatHa(area);
+              return `<div class="mini-cell-wrap">
+                <button type="button" class="mini-cell" data-open="${x.key}">
+                  <div class="mini-fill" style="${fillCss}"></div>
+                  <span class="t">${String(x.lot.tunel || "").toUpperCase()}</span>
+                  <span class="l">LOTE ${x.lot.lote}</span>
+                  <span class="h">${haLine}</span>
+                </button>
+                <div class="mini-actions">
+                  <button type="button" class="mini-edit" data-edit="${x.key}" title="Editar" aria-label="Editar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                  <button type="button" class="mini-del" data-del="${x.key}" title="Quitar" aria-label="Quitar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function openDeskSumModal() {
+      const modal = document.getElementById("deskSumModal");
+      if (!modal) return;
+      const items = deskCapturedLots();
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      // Área total = ha de lotes · Avance = ha de HOY (restante / capturado)
+      const area = roundHa(items.reduce((s, x) => s + lotTotalHa(x.lot), 0));
+      const av = roundHa(items.reduce((s, x) => {
+        const a = roundHa(x.avance);
+        return s + (a > 0 ? a : todayAvanceCap(x.lot, x.key, labor));
+      }, 0));
+      const lotsEl = document.getElementById("deskSumKpiLots");
+      const areaEl = document.getElementById("deskSumKpiArea");
+      const avEl = document.getElementById("deskSumKpiAv");
+      if (lotsEl) lotsEl.textContent = String(items.length);
+      if (areaEl) areaEl.textContent = formatHa(area) + " ha";
+      if (avEl) avEl.textContent = formatHa(av) + " ha";
+      hideDeskSumEdit();
+      const board = document.getElementById("deskSumBoard");
+      if (board) board.innerHTML = deskSumBoardHtml(items);
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeDeskSumModal() {
+      const modal = document.getElementById("deskSumModal");
+      if (!modal) return;
+      hideDeskSumEdit();
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function fillDeskSumEdit(posKey) {
+      const items = deskCapturedLots();
+      const hit = items.find(x => x.key === posKey);
+      const box = document.getElementById("deskSumEditBox");
+      if (!hit || !box) return;
+      deskSumEditKey = posKey;
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const mod = hit.lot.modulo != null ? modById[hit.lot.modulo] : null;
+      const area = lotTotalHa(hit.lot);
+      const prior = priorAvanceHa(posKey, labor);
+      const cap = todayAvanceCap(hit.lot, posKey, labor);
+      const floor = todayAvanceFloor(posKey, labor);
+      // Mensaje “no bajar” solo si YA hay avance guardado (previo o de hoy), no por el draft del día
+      const savedToday = todaySegmentAvance(posKey, labor);
+      const hasSavedAvance = prior > 0 || savedToday > 0;
+      let av = roundHa(hit.avance);
+      if (av <= 0) av = defaultTodayAvance(hit.lot, posKey, labor);
+      av = clampTodayAvance(av, hit.lot, posKey, labor);
+      const loteEl = document.getElementById("deskSumEditLote");
+      const modEl = document.getElementById("deskSumEditMod");
+      const areaEl = document.getElementById("deskSumEditArea");
+      const avInp = document.getElementById("deskSumEditAvance");
+      const ok = document.getElementById("deskSumEditOk");
+      if (loteEl) loteEl.textContent = String(hit.lot.tunel || "").toUpperCase() + " · LOTE " + hit.lot.lote;
+      if (modEl) modEl.textContent = (mod && mod.label) || ("M" + (hit.lot.modulo || "—"));
+      if (areaEl) {
+        areaEl.textContent = prior > 0
+          ? formatHa(cap) + " rest. (de " + formatHa(area) + ")"
+          : formatHa(area) + " ha";
+      }
+      if (avInp) {
+        avInp.value = formatHa(av);
+        avInp.setAttribute("data-max-area", formatHa(cap));
+        avInp.setAttribute("data-min-avance", formatHa(hasSavedAvance ? floor : 0));
+        avInp.setAttribute("aria-label", prior > 0
+          ? "Avance de hoy · máximo " + formatHa(cap) + " ha restantes"
+          : (hasSavedAvance ? "Avance ha · solo aumentar" : "Avance ha"));
+      }
+      if (ok) {
+        ok.hidden = false;
+        if (prior > 0) {
+          ok.textContent = "Ya hay " + formatHa(prior) + " ha · hoy solo puedes subir hasta " + formatHa(cap) + " ha";
+        } else if (savedToday > 0) {
+          ok.textContent = "Solo puedes aumentar el avance (no bajar)";
+        } else {
+          ok.textContent = "Ingresa el avance de hoy";
+        }
+      }
+      box.removeAttribute("hidden");
+      document.getElementById("deskSumBoard")?.querySelectorAll(".mini-cell.is-on").forEach(el => el.classList.remove("is-on"));
+      document.getElementById("deskSumBoard")?.querySelector('.mini-cell[data-open="' + posKey + '"]')?.classList.add("is-on");
+      avInp?.focus();
+    }
+
+    function saveDeskSumEdit() {
+      if (!deskSumEditKey) return;
+      const avInp = document.getElementById("deskSumEditAvance");
+      const lot = resolvePosKey(deskSumEditKey);
+      if (!lot || !avInp) return;
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const floor = todayAvanceFloor(deskSumEditKey, labor);
+      const cap = todayAvanceCap(lot, deskSumEditKey, labor);
+      let av = roundHa(avInp.value);
+      if (av < floor) {
+        showToast("Solo puedes aumentar", true, "Mínimo " + formatHa(floor) + " ha");
+        av = floor;
+      }
+      av = clampTodayAvance(av, lot, deskSumEditKey, labor);
+      if (cap > 0 && av > cap) {
+        showToast("Máximo restante", true, formatHa(cap) + " ha");
+        av = cap;
+      }
+      if (multiLotKeys.has(deskSumEditKey)) {
+        const meta = multiLotKeys.get(deskSumEditKey) || {};
+        meta.avance = av;
+        multiLotKeys.set(deskSumEditKey, meta);
+      }
+      // Siempre sincronizar el input del formulario · evita pintar área completa
+      if (fLote && fLote.value === deskSumEditKey && fAvance) {
+        fAvance.value = formatHa(av);
+      }
+      avInp.value = formatHa(av);
+      const ok = document.getElementById("deskSumEditOk");
+      if (ok) {
+        ok.hidden = false;
+        ok.textContent = "Se editó el lote correctamente";
+      }
+      // Pintar el mapa con el avance editado (no el área total)
+      if (multiLotKeys.has(deskSumEditKey)) paintOneMultiCell(deskSumEditKey);
+      else previewFromForm();
+      renderDeskLotBoard();
+      updateDeskRatio();
+      openDeskSumModal();
+      fillDeskSumEdit(deskSumEditKey);
+    }
+
+    function removeDeskSumLot(posKey) {
+      if (multiLotKeys.has(posKey)) {
+        multiLotKeys.delete(posKey);
+        const cell = getCellByKey(posKey);
+        if (cell) {
+          cell.classList.remove("multi-selected");
+          cell.style.removeProperty("--multi-color");
+          const lot = resolvePosKey(posKey);
+          if (lot) applyLaborVisual(cell, lot);
+        }
+      } else if (fLote && fLote.value === posKey) {
+        if (typeof setLoteValue === "function") setLoteValue("", true);
+        else if (fLote) fLote.value = "";
+        if (fAvance) fAvance.value = "";
+        if (fArea) fArea.value = "";
+      }
+      if (deskSumEditKey === posKey) hideDeskSumEdit();
+      renderDeskLotBoard();
+      previewFromForm();
+      openDeskSumModal();
+    }
+
+    document.getElementById("deskCaptureBtn")?.addEventListener("click", openDeskSumModal);
+    document.getElementById("deskSumClose")?.addEventListener("click", closeDeskSumModal);
+    document.getElementById("deskSumModal")?.addEventListener("click", e => {
+      if (e.target.id === "deskSumModal") closeDeskSumModal();
+    });
+    document.getElementById("deskSumEditSave")?.addEventListener("click", saveDeskSumEdit);
+    document.getElementById("deskSumEditAvance")?.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveDeskSumEdit();
+      }
+    });
+    document.getElementById("deskSumBoard")?.addEventListener("click", e => {
+      const edit = e.target.closest("[data-edit]");
+      if (edit) {
+        fillDeskSumEdit(edit.getAttribute("data-edit"));
+        return;
+      }
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        removeDeskSumLot(del.getAttribute("data-del"));
+        return;
+      }
+      const open = e.target.closest(".mini-cell[data-open]");
+      if (open) fillDeskSumEdit(open.getAttribute("data-open"));
+    });
+
     function previewFromForm() {
-      if (multiLotMode) {
+      // Si hay lotes del día en multiLotKeys, el mapa debe usar ese avance (no fAvance viejo)
+      if (multiLotMode || (multiLotKeys && multiLotKeys.size > 0)) {
         previewMultiLots();
         renderDeskLotBoard();
         return;
@@ -8296,7 +9280,9 @@
       const cap = todayAvanceCap(lot, posKey, laborReal);
       let avance = roundHa(fAvance && fAvance.value);
       if (avance <= 0) avance = defaultTodayAvance(lot, posKey, laborReal);
-      avance = clampLaborAvance(avance, cap, laborReal, lot) || defaultTodayAvance(lot, posKey, laborReal);
+      // No usar `|| default` si clamp devolvió 0 válido; solo si queda vacío
+      const clamped = clampTodayAvance(avance, lot, posKey, laborReal);
+      avance = clamped > 0 ? clamped : defaultTodayAvance(lot, posKey, laborReal);
       if (cap > 0 && avance > cap) avance = cap;
       if (fAvance) fAvance.value = avance ? formatHa(avance) : "";
       if (fArea) fArea.value = area ? formatHa(area) : "";
@@ -8604,6 +9590,11 @@
         if (!lab || !lab.text) return;
         // Solo zonas/variedad (cuadritos). Módulos ya van en sidebar.
         if (lab.kind === "module") return;
+        const txt = String(lab.text).toUpperCase().replace(/\s+/g, " ").trim();
+        // Licapa II: no mostrar palabras LAS TUNAS / MAGICA (el color de zona se mantiene)
+        if (activeFundoId === "licapa2" && (txt === "MAGICA" || txt === "LAS TUNAS" || txt.includes("TUNAS"))) {
+          return;
+        }
         const ri = labelRows.indexOf(Number(lab.r));
         if (ri < 0) return;
         const c0 = Number(lab.cStart != null ? lab.cStart : lab.c);
@@ -8616,7 +9607,7 @@
         el.className = "map-zone-label";
         if (lab.anchor === "bottom") el.classList.add("is-bottom");
         else if (lab.anchor === "center") el.classList.add("is-center");
-        if (String(lab.text).toUpperCase() === "MAGICA") {
+        if (txt === "MAGICA") {
           el.style.background = "#6a1b9a";
         }
         el.textContent = String(lab.text);
@@ -8788,7 +9779,7 @@
       if (mobile) updateMobileChrome();
     }
 
-    const MAP_BORDER_INSET = 2;
+    const MAP_BORDER_INSET = 1;
 
     // Misma densidad visual que Licapa I (no achicar celdas si el fundo tiene más filas)
     const REF_MAP_COLS = 34;
@@ -8980,29 +9971,29 @@
     function buildMapGrid() {
       if (!grid) return;
       grid.innerHTML = "";
-      labelRows.forEach(r => {
-        for (let c = minC; c <= maxC; c++) {
-          const lot = byPos.get(`${r},${c}`);
-          const cell = document.createElement("div");
-          if (!lot) {
-            cell.className = "cell empty";
-            grid.appendChild(cell);
-            continue;
-          }
-          const m = lot.modulo;
+    labelRows.forEach(r => {
+      for (let c = minC; c <= maxC; c++) {
+        const lot = byPos.get(`${r},${c}`);
+        const cell = document.createElement("div");
+        if (!lot) {
+          cell.className = "cell empty";
+          grid.appendChild(cell);
+          continue;
+        }
+        const m = lot.modulo;
           const isMagica = !!(lot.zonaMagica || (lot.split && lot.split.zonaMagica));
           cell.className = "cell"
             + (m ? ` m${m}` : "")
             + (lotHasSplit(lot) ? " is-split" : "")
             + (isMagica ? " is-magica" : "")
             + (lotHasCercosFoot(lot) ? " has-cercos-foot" : "");
-          cell.dataset.key = `${lot.r},${lot.c}`;
-          cell.dataset.lote = String(lot.lote);
-          cell.dataset.tunel = lot.tunel;
-          cell.dataset.mod = m == null ? "" : String(m);
+        cell.dataset.key = `${lot.r},${lot.c}`;
+        cell.dataset.lote = String(lot.lote);
+        cell.dataset.tunel = lot.tunel;
+        cell.dataset.mod = m == null ? "" : String(m);
           if (isMagica) cell.dataset.magica = "1";
           if (lotHasSplit(lot)) cell.dataset.loteSplit = String(lot.split.lote);
-          const posKey = `${lot.r},${lot.c}`;
+        const posKey = `${lot.r},${lot.c}`;
           cell.innerHTML = lotCellHtml(lot);
 
           function interactPart(partKey, ev, mode) {
@@ -9013,7 +10004,19 @@
             }
             const desk = !isMobileMap();
             const drawerOpen = desk &&
-              document.getElementById("laborDrawer").classList.contains("open");
+            document.getElementById("laborDrawer").classList.contains("open");
+            // Escritorio: lote terminado → modal, no se captura ni se edita
+            if (desk && isLotWeekDone(partKey) && !multiLotKeys.has(partKey)) {
+              if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
+              clearTimeout(cell._deskClickTimer);
+              cell._deskClickTimer = null;
+              selectLot(partLot, cell, partKey);
+              if (mode === "dbl" || drawerOpen) showLotDoneModal(partKey);
+              return;
+            }
             if (mode === "dbl") {
               if (!desk) return;
               selectLot(partLot, cell, partKey);
@@ -9025,15 +10028,15 @@
               openLaborDrawer(partKey);
               return;
             }
-            if (!drawerOpen) {
+          if (!drawerOpen) {
               if (desk) {
                 clearTimeout(cell._deskClickTimer);
                 cell._deskClickTimer = setTimeout(() => {
                   cell._deskClickTimer = null;
                   selectLot(partLot, cell, partKey);
                 }, 280);
-                return;
-              }
+            return;
+          }
               selectLot(partLot, cell, partKey);
               return;
             }
@@ -9055,17 +10058,17 @@
               syncLaborGate();
               return;
             }
-            if (multiLotMode) {
+          if (multiLotMode) {
               addMultiLot(partKey, true);
-              return;
-            }
+            return;
+          }
             selectLot(partLot, cell, partKey);
             fillLaborForm(partKey);
-            if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
-              fAvance.value = "0.";
-              updateAvanceBar();
-              previewFromForm();
-            }
+          if (!String(fAvance.value || "").trim() || fAvance.value === "0.") {
+            fAvance.value = "0.";
+            updateAvanceBar();
+            previewFromForm();
+          }
           }
 
           if (lotHasSplit(lot)) {
@@ -9096,10 +10099,10 @@
               interactPart(posKey, e, "dbl");
             });
           }
-          applyLaborVisual(cell, lot);
-          grid.appendChild(cell);
-        }
-      });
+        applyLaborVisual(cell, lot);
+        grid.appendChild(cell);
+      }
+    });
       renderMapLabels();
       syncCercosMapLayout();
     }
@@ -9269,6 +10272,13 @@
       const mobSearch = document.getElementById("mobSearch");
       if (mobSearch) mobSearch.value = "";
       setActiveMod(null);
+      applyFilter();
+      // Solo lotes en caché / no guardados (igual que Limpiar formulario)
+      if (typeof resetUnsavedLaborForm === "function") resetUnsavedLaborForm();
+      else if (typeof clearMultiLots === "function") {
+        clearMultiLots(true);
+        if (typeof setMultiLotMode === "function") setMultiLotMode(false);
+      }
     };
 
     /* --- Descarte: selector de semanas (SEM 34–37) --- */
@@ -9589,16 +10599,22 @@
       function optionMarkup(it) {
         const meta = optionMeta ? optionMeta(it) : null;
         const captured = !!(meta && meta.captured);
+        const disabled = !!(meta && meta.disabled);
+        const inDay = !!(meta && meta.inDay);
         const isCurrent = hidden.value === it.value;
-        const sel = (captured || isCurrent) ? " selected" : "";
+        // Check / selected solo si es el actual o está marcado hoy (multi) — no por tener data previa
+        const sel = (isCurrent || inDay) ? " selected" : "";
         const cap = captured ? " is-captured" : "";
+        const dis = disabled ? " is-disabled" : "";
         const sub = it.sub ? `<small>${it.sub}</small>` : "";
-        const tag = captured && meta.tag ? `<span class="opt-tag">${meta.tag}</span>` : "";
+        const tag = meta && meta.tag ? `<span class="opt-tag">${meta.tag}</span>` : "";
+        const hint = meta && meta.hint ? `<em class="opt-hint">${meta.hint}</em>` : "";
         const rich = !!(optionMeta || it.sub);
         const body = rich
-          ? `<span class="opt-copy"><b>${it.label}</b>${sub}${tag}</span><span class="opt-check" aria-hidden="true"></span>`
+          ? `<span class="opt-copy"><b>${it.label}</b>${sub}${tag}${hint}</span><span class="opt-check" aria-hidden="true"></span>`
           : it.label;
-        return `<button type="button" class="cselect-option${sel}${cap}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option">${body}</button>`;
+        // Sin atributo disabled: el click sigue llegando para mostrar modal de “terminado”
+        return `<button type="button" class="cselect-option${sel}${cap}${dis}" data-value="${it.value.replace(/"/g, "&quot;")}" role="option"${disabled ? " aria-disabled=\"true\"" : ""}>${body}</button>`;
       }
 
       function render() {
@@ -9653,6 +10669,12 @@
       list.addEventListener("click", e => {
         const btn = e.target.closest(".cselect-option");
         if (!btn) return;
+        if (btn.disabled || btn.classList.contains("is-disabled")) {
+          if (typeof opts.onDisabledClick === "function") {
+            opts.onDisabledClick(btn.dataset.value, btn);
+          }
+          return;
+        }
         setValue(btn.dataset.value);
         if (closeOnSelect) close();
         else render();
@@ -9806,16 +10828,93 @@
             return out;
           }
           return [{
-            value: `${lot.r},${lot.c}`,
+      value: `${lot.r},${lot.c}`,
             label: `LOTE ${formatLoteTag(lot.lote)}`,
             sub: String(lot.tunel || "").toUpperCase() + " · " + formatHa(lot.ha) + " ha"
           }];
         });
     }
+    function isLotWeekDone(posKey) {
+      if (!posKey || multiLotKeys.has(posKey)) return false;
+      const lot = resolvePosKey(posKey);
+      const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
+      const cap = lot ? todayAvanceCap(lot, posKey, labor) : 0;
+      if (lot && cap <= 0.001) {
+        const prior = priorAvanceHa(posKey, labor);
+        const area = lotTotalHa(lot);
+        if (area > 0 && prior >= area - 0.001) return true;
+      }
+      const rec = recForMapLot(posKey);
+      if (!rec || !rec.laborReal) return false;
+      const area = (lot ? lotTotalHa(lot) : 0) || Number(rec.area) || 0;
+      const avance = Number(rec.avance) || 0;
+      return area > 0 && roundHa(area - avance) <= 0.001;
+    }
+
+    function showLotDoneModal(posKey) {
+      const modal = document.getElementById("lotDoneModal");
+      const body = document.getElementById("lotDoneBody");
+      const title = document.getElementById("lotDoneTitle");
+      if (!modal) {
+        showToast("Lote terminado", true, "Ya se trabajó toda el área esta semana");
+        return;
+      }
+      const lot = resolvePosKey(posKey);
+      const rec = recForMapLot(posKey);
+      const area = lot ? lotTotalHa(lot) : roundHa(rec && rec.area);
+      const avance = roundHa(rec && rec.avance) || area;
+      const tunel = lot ? String(lot.tunel || "").toUpperCase() : String((rec && rec.turno) || "");
+      const loteN = lot ? lot.lote : (rec && rec.lote);
+      const labor = String((rec && rec.laborReal) || (fLaborReal && fLaborReal.value) || mapQuery.laborReal || "").toUpperCase();
+      const sem = Number((rec && rec.sem) || (fSem && fSem.value) || currentWeek) || currentWeek;
+      if (title) {
+        title.textContent = (tunel ? tunel + " · " : "") + "LOTE " + formatLoteTag(loteN);
+      }
+      if (body) {
+        body.innerHTML =
+          "Este lote ya se trabajó <strong>toda el área</strong> esta semana" +
+          (labor ? " en <strong>" + labor + "</strong>" : "") +
+          " (SEM" + sem + ")" +
+          (area ? ": <strong>" + formatHa(avance) + " / " + formatHa(area) + " ha</strong>" : "") +
+          ".<br><br>En computadora no se puede volver a seleccionar ni editar un lote terminado.";
+      }
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      document.getElementById("lotDoneOk")?.focus();
+    }
+
+    function closeLotDoneModal() {
+      const modal = document.getElementById("lotDoneModal");
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
     function loteOptionMeta(it) {
-      if (multiLotKeys.has(it.value)) return { captured: true, tag: "En el día" };
+      if (multiLotKeys.has(it.value)) {
+        return { captured: true, inDay: true, tag: "En el día" };
+      }
+      if (isLotWeekDone(it.value)) {
+        return {
+          captured: true,
+          disabled: true,
+          tag: "Terminado",
+          hint: "Lote ya trabajado esta semana"
+        };
+      }
       const rec = recForMapLot(it.value);
-      if (rec && rec.laborReal) return { captured: true, tag: "Terminado" };
+      if (rec && rec.laborReal) {
+        const lot = resolvePosKey(it.value);
+        const area = lotTotalHa(lot) || Number(rec.area) || 0;
+        const avance = Number(rec.avance) || 0;
+        const falta = Math.max(0, roundHa(area - avance));
+        return {
+          captured: true,
+          disabled: false,
+          tag: "En progreso",
+          hint: "Ya tiene " + formatHa(avance) + " ha · falta " + formatHa(falta) + " ha"
+        };
+      }
       return null;
     }
     function resetTurnoLoteSelects() {
@@ -9857,11 +10956,24 @@
     function captureDeskLot(posKey) {
       const lot = resolvePosKey(posKey);
       if (!lot) return;
+      if (!isMobileMap() && isLotWeekDone(posKey)) {
+        showLotDoneModal(posKey);
+        return;
+      }
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
-      const av = defaultTodayAvance(lot, posKey, labor);
+      const cap = todayAvanceCap(lot, posKey, labor);
+      if (cap <= 0) {
+        showLotDoneModal(posKey);
+        return;
+      }
+      // Avance de hoy = restante (si ya había trabajo) · solo subir
+      const av = defaultTodayAvance(lot, posKey, labor) || cap;
       multiLotKeys.set(posKey, { avance: av });
-      if (fAvance && (!roundHa(fAvance.value) || fAvance.value === "0.")) {
-        fAvance.value = av ? formatHa(av) : "";
+      if (fAvance) fAvance.value = av ? formatHa(av) : "";
+      if (fArea) fArea.value = lotTotalHa(lot) ? formatHa(lotTotalHa(lot)) : "";
+      const prior = priorAvanceHa(posKey, labor);
+      if (prior > 0) {
+        showToast("Restante " + formatHa(cap) + " ha", false, "Ya había " + formatHa(prior) + " ha · solo puedes aumentar");
       }
       syncMultiLotSummary();
       paintOneMultiCell(posKey);
@@ -9907,12 +11019,22 @@
       placeholder: "Seleccionar",
       closeOnSelect: false,
       optionMeta: loteOptionMeta,
+      onDisabledClick: (val) => {
+        if (!isMobileMap() && val && isLotWeekDone(val)) showLotDoneModal(val);
+      },
       onChange: (val) => {
         if (!val) return;
         if (!hasLaborDesk()) {
           loteCSelect.setValue("", true);
           showToast("Selecciona la labor primero", true);
           laborRealCSelect.open();
+          return;
+        }
+        // Solo bloquear si ya está completo; parcial sí se puede seguir
+        if (!multiLotKeys.has(val) && isLotWeekDone(val)) {
+          loteCSelect.setValue("", true);
+          loteCSelect.refresh();
+          showLotDoneModal(val);
           return;
         }
         if (multiLotKeys.has(val)) {
@@ -9944,7 +11066,7 @@
     const laborPptoCSelect = { setValue() {} };
 
     const laborRealCSelect = createCustomSelect(document.getElementById("laborRealSelect"), {
-      items: LABOR_OPTS.labor_real,
+      items: laborListForActiveFundo(activeFundoId),
       placeholder: "Seleccionar",
       onChange: () => {
         const labor = String(fLaborReal.value || "").toUpperCase();
@@ -9996,14 +11118,11 @@
     function getMultiLotAvance(posKey, lot) {
       const meta = multiLotKeys.get(posKey);
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
-      const cap = todayAvanceCap(lot, posKey, labor);
       let av = meta && meta.avance != null && meta.avance !== ""
         ? roundHa(meta.avance)
         : defaultTodayAvance(lot, posKey, labor);
-      av = clampLaborAvance(av, cap || roundHa(lot?.ha), labor, lot);
       if (av <= 0) av = defaultTodayAvance(lot, posKey, labor);
-      if (cap > 0 && av > cap) av = cap;
-      return av;
+      return clampTodayAvance(av, lot, posKey, labor);
     }
 
     function setMultiPaintColor(color) {
@@ -10117,10 +11236,10 @@
       const cell = getCellByKey(posKey);
       if (!lot || !cell || !multiLotKeys.has(posKey)) return;
       const laborReal = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "MULTI");
-      const cap = todayAvanceCap(lot, posKey, laborReal);
       let av = getMultiLotAvance(posKey, lot);
-      av = clampLaborAvance(av, cap, laborReal, lot) || defaultTodayAvance(lot, posKey, laborReal);
-      if (cap > 0 && av > cap) av = cap;
+      const clamped = clampTodayAvance(av, lot, posKey, laborReal);
+      // Importante: no caer a área completa con `|| default` cuando av es válido
+      av = clamped > 0 ? clamped : (av > 0 ? av : defaultTodayAvance(lot, posKey, laborReal));
       cell.style.setProperty("--multi-color", multiPaintColor);
       cell.classList.remove("dim");
       if (lot._half) {
@@ -10212,22 +11331,31 @@
 
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const cap = todayAvanceCap(lot, key, labor) || area;
+      const floor = todayAvanceFloor(key, labor);
       let av = incomplete ? 0 : roundHa(raw);
       if (isNaN(av) || !isFinite(av)) av = getMultiLotAvance(key, lot);
       if (av < 0) av = 0;
 
       if (format) {
+        if (floor > 0 && av < floor) {
+          av = floor;
+          showToast("Solo puedes aumentar", true, "Mínimo " + formatHa(floor) + " ha");
+        }
         if (cap > 0 && av > cap) {
           av = cap;
           showToast("Tope del día", true, "Máximo " + formatHa(cap) + " ha por pintar hoy");
         }
+        av = clampTodayAvance(av, lot, key, labor);
         inp.value = formatHa(av);
       } else if (cap > 0 && av > cap) {
         // Preview/mapa con tope, pero el texto del input queda libre
         av = cap;
+      } else if (floor > 0 && av > 0 && av < floor) {
+        av = floor;
       }
 
       multiLotKeys.set(key, { avance: av });
+      if (fLote && fLote.value === key && fAvance) fAvance.value = av ? formatHa(av) : "";
       if (paint) paintOneMultiCell(key);
       updateMultiLotTotalsOnly();
     }
@@ -10317,6 +11445,11 @@
         return;
       }
 
+      if (!isMobileMap() && isLotWeekDone(posKey)) {
+        showLotDoneModal(posKey);
+        return;
+      }
+
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const av = defaultTodayAvance(lot, posKey, labor);
       multiLotKeys.set(posKey, { avance: av });
@@ -10350,13 +11483,13 @@
           if (halfEl) paintSplitHalfProgress(halfEl, lot, posKey);
           const otherKey = lot._half === "top" ? splitBotKey(lot._cellLot) : splitTopKey(lot._cellLot);
           if (!multiLotKeys.has(otherKey)) {
-            cell.classList.remove("multi-selected");
-            cell.style.removeProperty("--multi-color");
+        cell.classList.remove("multi-selected");
+        cell.style.removeProperty("--multi-color");
           }
         } else {
           cell.classList.remove("multi-selected");
           cell.style.removeProperty("--multi-color");
-          if (lot) {
+        if (lot) {
             const rec = recForMapLot(posKey);
             paintCellProgress(
               cell, lot, rec?.avance, rec?.laborReal,
@@ -10454,6 +11587,10 @@
       if (!posKey) return;
       const lot = resolvePosKey(posKey);
       if (!lot) return;
+      if (!isMobileMap() && isLotWeekDone(posKey) && !multiLotKeys.has(posKey)) {
+        showLotDoneModal(posKey);
+        return;
+      }
       applyDeskCascadeFromLot(posKey);
       if (fAvance && fAvance.removeAttribute) fAvance.removeAttribute("max");
       if (mapQuery.laborReal) laborRealCSelect.setValue(String(mapQuery.laborReal).toUpperCase(), true);
@@ -10488,14 +11625,15 @@
       const cap = todayAvanceCap(lot, posKey, laborReal);
       let av = roundHa(avance);
       if (av <= 0) av = defaultTodayAvance(lot, posKey, laborReal);
-      av = clampLaborAvance(av, cap || area, laborReal, lot) || defaultTodayAvance(lot, posKey, laborReal);
+      const clampedOne = clampTodayAvance(av, lot, posKey, laborReal);
+      av = clampedOne > 0 ? clampedOne : defaultTodayAvance(lot, posKey, laborReal);
       if (cap > 0 && av > cap) av = cap;
       if (av < 0 || area < 0 || area > 500) {
         if (showFeedback) showToast("Datos inválidos", true, "Área/avance fuera de rango");
         return { queued: false, area, avance: 0, error: true };
       }
       const mod = lot.modulo != null ? modById[lot.modulo] : null;
-      const allow = (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase());
+      const allow = laborListForActiveFundo(activeFundoId);
       if (!laborReal || (allow.length && !allow.includes(laborReal))) {
         if (showFeedback) showToast("Labor no permitida", true);
         return { queued: false, area, avance: av, error: true };
@@ -10592,7 +11730,7 @@
         return false;
       }
       const laborReal = String(fLaborReal.value || "").toUpperCase().trim();
-      const allow = (LABOR_OPTS.labor_real || []).map(x => String(x).toUpperCase());
+      const allow = laborListForActiveFundo(activeFundoId);
       if (!laborReal || (allow.length && !allow.includes(laborReal))) {
         if (showFeedback) {
           showToast("Falta labor real", true, "Elige la labor antes de guardar");
@@ -10665,7 +11803,8 @@
         const cap = todayAvanceCap(lot, key, laborReal);
         let av = getMultiLotAvance(key, lot);
         if (av <= 0) av = defaultTodayAvance(lot, key, laborReal);
-        av = clampLaborAvance(av, cap || area, laborReal, lot) || defaultTodayAvance(lot, key, laborReal);
+        const clampedMulti = clampTodayAvance(av, lot, key, laborReal);
+        av = clampedMulti > 0 ? clampedMulti : defaultTodayAvance(lot, key, laborReal);
         if (cap > 0 && av > cap) av = cap;
         const mod = lot.modulo != null ? modById[lot.modulo] : null;
         const prevRec = laborRecords[key];
@@ -10831,9 +11970,13 @@
       const area = lotTotalHa(lot);
       const laborNow = String(fLaborReal.value || "").toUpperCase().trim();
       const cap = todayAvanceCap(lot, posKey, laborNow);
-      let avance = roundHa(fAvance.value);
-      if (avance <= 0) avance = defaultTodayAvance(lot, posKey, laborNow);
-      avance = clampLaborAvance(avance, cap || area, laborNow, lot) || defaultTodayAvance(lot, posKey, laborNow);
+      // Preferir avance editado en lotes del día (multiLotKeys) sobre fAvance desfasado
+      let avance = multiLotKeys.has(posKey)
+        ? getMultiLotAvance(posKey, lot)
+        : roundHa(fAvance.value);
+      if (avance <= 0) avance = roundHa(fAvance.value) || defaultTodayAvance(lot, posKey, laborNow);
+      const clampedSave = clampTodayAvance(avance, lot, posKey, laborNow);
+      avance = clampedSave > 0 ? clampedSave : defaultTodayAvance(lot, posKey, laborNow);
       if (cap > 0 && avance > cap) avance = cap;
       if (avance <= 0) {
         if (showFeedback) {
@@ -10934,6 +12077,10 @@
     }
 
     function openLaborDrawer(posKey) {
+      if (posKey && !isMobileMap() && isLotWeekDone(posKey) && !multiLotKeys.has(posKey)) {
+        showLotDoneModal(posKey);
+        return;
+      }
       laborDrawer.removeAttribute("inert");
       laborDrawer.classList.add("open");
       laborDrawer.setAttribute("aria-hidden", "false");
@@ -10991,13 +12138,19 @@
       const area = lot ? lotTotalHa(lot) : 0;
       const labor = String((fLaborReal && fLaborReal.value) || mapQuery.laborReal || "");
       const cap = lot ? todayAvanceCap(lot, fLote.value, labor) : area;
+      const floor = lot ? todayAvanceFloor(fLote.value, labor) : 0;
       const raw = String(fAvance.value || "").trim().replace(",", ".");
       if (raw === "" || raw === "." || raw === "0.") {
-        fAvance.value = "0.";
+        fAvance.value = floor > 0 ? formatHa(floor) : "0.";
+        if (floor > 0) showToast("Solo puedes aumentar", true, "Mínimo " + formatHa(floor) + " ha");
         previewFromForm();
         return;
       }
       let av = roundHa(raw);
+      if (floor > 0 && av < floor) {
+        av = floor;
+        showToast("Solo puedes aumentar", true, "Mínimo " + formatHa(floor) + " ha");
+      }
       if (cap > 0 && av > cap) {
         av = cap;
         showToast("Avance de hoy no puede superar " + formatHa(cap) + " ha", true);
@@ -11005,6 +12158,7 @@
         av = area;
         showToast("Avance no puede superar " + formatHa(area) + " ha", true);
       }
+      if (lot) av = clampTodayAvance(av, lot, fLote.value, labor);
       fAvance.value = formatHa(av);
       previewFromForm();
     });
@@ -11181,7 +12335,9 @@
             modulo: rec.modulo || (lot.modulo != null ? "M" + lot.modulo : ""),
             sem: rec.sem || currentWeek,
             laborReal: rec.laborReal,
-            fecha: rec.fecha
+            fecha: rec.fecha,
+            fundo: String(activeFundo().label || "").toUpperCase(),
+            etapa: String(activeFundo().etapa || "")
           });
           ok = !!(res && res.ok);
           msg = res && res.message ? res.message : "";
@@ -11209,6 +12365,15 @@
     cellDelModal?.addEventListener("click", e => {
       if (e.target.id === "cellDelModal") closeCellDeleteModal();
     });
+    document.getElementById("lotDoneOk")?.addEventListener("click", closeLotDoneModal);
+    document.getElementById("lotDoneModal")?.addEventListener("click", e => {
+      if (e.target.id === "lotDoneModal") closeLotDoneModal();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      const doneModal = document.getElementById("lotDoneModal");
+      if (doneModal && doneModal.classList.contains("open")) closeLotDoneModal();
+    });
 
     const confirmClearModal = document.getElementById("confirmClearModal");
     function openConfirmClear() {
@@ -11220,28 +12385,8 @@
       confirmClearModal.setAttribute("aria-hidden", "true");
     }
     function clearAllShadedAreas() {
-      laborRecords = {};
-      saveLaborRecords();
-      if (multiLotMode) setMultiLotMode(false);
-      clearMultiLots(true);
-      refreshAllLaborVisuals();
-      if (moduloCSelect) moduloCSelect.setValue("", true);
-      resetTurnoLoteSelects();
-      fArea.value = "";
-      laborPptoCSelect.setValue("", true);
-      laborRealCSelect.setValue("", true);
-      fAvance.value = "0.";
-      fTotalJr.value = "";
-      if (fCercosLotes) fCercosLotes.value = "";
-      variedadCSelect.setValue("SEKOYA POP");
-      lockDeskDay();
-      syncLaborGate();
-      updateAvanceBar();
-      previewFromForm();
-      renderWeekResumen();
-      const msg = document.getElementById("drawerSaveMsg");
-      if (msg) msg.classList.remove("show");
-      showToast("Áreas sombreadas eliminadas", false, "El mapa y el formulario quedaron limpios");
+      // Igual que Limpiar formulario: solo caché / no guardados (no borra hoja ni laborRecords)
+      resetUnsavedLaborForm();
       closeConfirmClear();
     }
     document.getElementById("confirmClearCancel").onclick = closeConfirmClear;

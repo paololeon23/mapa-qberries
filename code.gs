@@ -1,13 +1,19 @@
   /**
- * Q Berries — Reporte de Labores · Etapa I
+ * Q Berries — Reporte de Labores · Licapa I / Licapa II
  *
  * Columnas (fila 1 = encabezados, datos desde fila 2):
  *  SEM | FECHA | LABOR REAL | MD | TURNO | LOTE | VARIEDAD |
  *  AREA LOTE | AVANCE | ML | TOTAL (JR) | COLOR | HORA GUARDADO
  *
- * Hoja "RESUMEN DIA":
+ * Hojas por fundo (no se mezclan):
+ *  LABORES LICAPA I  · RESUMEN DIA LICAPA I
+ *  LABORES LICAPA II · RESUMEN DIA LICAPA II
+ *  (Legacy: LABORES / RESUMEN DIA → se renombran a Licapa I al primer uso)
+ *
+ * Resumen:
  *  FECHA | SEM | LABOR REAL | MD | AREA TOTAL | ML | JR | RATIO
  *  Un renglón por día + labor + módulo (DESHIERBO, RECOJO, ARENADO y CERCOS no se mezclan).
+ *  Licapa I: 4 labores · Licapa II: 3 (sin CERCOS VIVOS).
  *
  * Formatos:
  *  FECHA = dd/MM/yyyy · LOTE = número · VARIEDAD = SEKOYA POP · HORA = HH:mm:ss
@@ -26,11 +32,16 @@
  */
 
 var TZ = 'America/Lima';
-var HOJA = 'LABORES';
-var HOJA_RESUMEN = 'RESUMEN DIA';
+var HOJA = 'LABORES LICAPA I';
+var HOJA_RESUMEN = 'RESUMEN DIA LICAPA I';
+var HOJA_LICAPA2 = 'LABORES LICAPA II';
+var HOJA_RESUMEN_LICAPA2 = 'RESUMEN DIA LICAPA II';
+var HOJA_LEGACY = 'LABORES';
+var HOJA_RESUMEN_LEGACY = 'RESUMEN DIA';
 var HOJA_PROD = 'PRODUCCION';
 var FILA_ENC = 1;
 var FILA_INI = 2;
+var _hojasMigradas = false;
 
 var COLUMNAS = [
   'SEM', 'FECHA', 'LABOR REAL', 'MD', 'TURNO', 'LOTE',
@@ -98,13 +109,16 @@ function procesar_(e, metodo) {
     action = String(action || 'get').toLowerCase().replace(/[^a-z_]/g, '');
 
     if (action === 'ping') {
+      var fundoPing = fundoFrom_(body.data || body, e);
       return {
         ok: true,
         message: 'pong',
         hoy: hoy_(),
         semana: semIso_(),
         tz: TZ,
-        hoja: obtenerHoja_().getName()
+        fundo: fundoPing,
+        hoja: obtenerHoja_(fundoPing).getName(),
+        hojaResumen: obtenerHojaResumen_(fundoPing).getName()
       };
     }
 
@@ -129,20 +143,22 @@ function procesar_(e, metodo) {
     }
 
     if (action === 'filtros' || action === 'filters') {
-      return filtrosOpciones_();
+      return filtrosOpciones_(body.data || body, e);
     }
 
     if (action === 'dashboard') {
       var semDash = body.sem || param_(e, 'sem') || semIso_();
-      return dashboard_(semDash);
+      var fundoDash = fundoFrom_(body.data || body, e);
+      return dashboard_(semDash, fundoDash);
     }
 
     if (action === 'resumen') {
       var semRes = body.sem || param_(e, 'sem') || semIso_();
       var laborRes = norm_(body.laborReal || body.labor_real || param_(e, 'laborReal') || '');
+      var fundoRes = fundoFrom_(body.data || body, e);
       var listRes = [];
       if (laborRes) {
-        var rowsRes = leerFilas_(obtenerHoja_());
+        var rowsRes = leerFilas_(obtenerHoja_(fundoRes));
         var sN = num_(semRes) || semIso_();
         for (var ri = 0; ri < rowsRes.length; ri++) {
           if (num_(rowsRes[ri].sem) !== sN) continue;
@@ -154,7 +170,8 @@ function procesar_(e, metodo) {
         ok: true,
         sem: num_(semRes) || semIso_(),
         laborReal: laborRes || null,
-        resumen: laborRes ? armarResumenLista_(listRes, laborRes) : leerResumenSemana_(semRes)
+        fundo: fundoRes,
+        resumen: laborRes ? armarResumenLista_(listRes, laborRes) : leerResumenSemana_(semRes, '', fundoRes)
       };
     }
 
@@ -198,7 +215,8 @@ function guardar_(d) {
   }
 
   try {
-    var hoja = obtenerHoja_();
+    var fundoId = fundoFrom_(d, null);
+    var hoja = obtenerHoja_(fundoId);
     asegurarEncabezados_(hoja);
 
     var sem = check.sem;
@@ -250,7 +268,7 @@ function guardar_(d) {
 
     if (localId) marcarGuardado_(localId);
     invalidarCacheMapa_(sem);
-    try { actualizarResumenDia_(fechaIso); } catch (eRes) { /* no bloquear el guardado */ }
+    try { actualizarResumenDia_(fechaIso, null, fundoId); } catch (eRes) { /* no bloquear el guardado */ }
 
     return {
       ok: true,
@@ -291,6 +309,7 @@ function guardarGrupo_(payload) {
   var variedadComun = payload.variedad;
   var totalJrComun = payload.totalJr;
   var colorComun = payload.color;
+  var fundoComun = payload.fundo || payload.etapa || '';
 
   var validados = [];
   for (var i = 0; i < items.length; i++) {
@@ -310,6 +329,8 @@ function guardarGrupo_(payload) {
       ml: raw.ml != null ? raw.ml : raw.metrosLineales,
       lotesTrabajados: raw.lotesTrabajados != null ? raw.lotesTrabajados : raw.cercosLotes,
       color: raw.color || colorComun,
+      fundo: raw.fundo || raw.etapa || fundoComun,
+      etapa: raw.etapa || payload.etapa || '',
       editar: raw.editar === true || raw.editar === 1 || raw.editar === '1' || payload.editar === true
     };
     var check = validarPayloadLabor_(merged);
@@ -334,7 +355,11 @@ function guardarGrupo_(payload) {
   }
 
   try {
-    var hoja = obtenerHoja_();
+    var fundoIdG = fundoFrom_(payload, null);
+    if (!payload.fundo && validados[0] && validados[0].fundo) {
+      fundoIdG = normFundoId_(validados[0].fundo);
+    }
+    var hoja = obtenerHoja_(fundoIdG);
     asegurarEncabezados_(hoja);
 
     var rows = leerFilas_(hoja);
@@ -413,7 +438,7 @@ function guardarGrupo_(payload) {
 
     if (validados.length) {
       invalidarCacheMapa_(validados[0].sem);
-      try { actualizarResumenDia_(validados[0].fecha); } catch (eRes) { /* no bloquear el guardado */ }
+      try { actualizarResumenDia_(validados[0].fecha, null, fundoIdG); } catch (eRes) { /* no bloquear el guardado */ }
     }
 
     return {
@@ -529,13 +554,19 @@ function asegurarEncabezadosResumen_(h) {
   return true;
 }
 
-function obtenerHojaResumen_() {
+function obtenerHojaResumen_(fundo) {
+  migrarHojasFundo_();
+  var fundoId = normFundoId_(fundo);
+  var name = hojaResumenName_(fundoId);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var h = ss.getSheetByName(HOJA_RESUMEN);
+  var h = ss.getSheetByName(name);
   var created = false;
+  if (!h && fundoId === 'licapa1') {
+    h = ss.getSheetByName(HOJA_RESUMEN_LEGACY) || ss.getSheetByName('RESUMEN DIA');
+  }
   if (!h) {
     var prev = ss.getActiveSheet();
-    h = ss.insertSheet(HOJA_RESUMEN);
+    h = ss.insertSheet(name);
     h.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
     estilizarEncabezadosResumen_(h);
     created = true;
@@ -546,7 +577,7 @@ function obtenerHojaResumen_() {
     if (needRebuild) {
       _resumenRebuildLock = true;
       try {
-        actualizarResumenDia_('', h);
+        actualizarResumenDia_('', h, fundoId);
       } finally {
         _resumenRebuildLock = false;
       }
@@ -556,9 +587,10 @@ function obtenerHojaResumen_() {
 }
 
 /** Recalcula el resumen (un renglón por labor + módulo). Sin fecha = toda la hoja. */
-function actualizarResumenDia_(fechaIso, hojaResumen) {
+function actualizarResumenDia_(fechaIso, hojaResumen, fundo) {
   fechaIso = fechaIso ? normalizarFecha_(fechaIso) : '';
-  var hoja = obtenerHoja_();
+  var fundoId = normFundoId_(fundo);
+  var hoja = obtenerHoja_(fundoId);
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
   var latest = {};
@@ -599,7 +631,7 @@ function actualizarResumenDia_(fechaIso, hojaResumen) {
     if (!groups[gk].sem) groups[gk].sem = num_(row.sem) || 0;
   }
 
-  var resumen = hojaResumen || obtenerHojaResumen_();
+  var resumen = hojaResumen || obtenerHojaResumen_(fundoId);
   var last = resumen.getLastRow();
   if (last >= FILA_INI) {
     if (!fechaIso) {
@@ -707,11 +739,11 @@ function armarResumenLista_(list, laborReal) {
   return out;
 }
 
-function leerResumenSemana_(sem, laborReal) {
+function leerResumenSemana_(sem, laborReal, fundo) {
   sem = num_(sem);
   if (!sem) sem = semIso_();
   var laborWant = norm_(laborReal);
-  var h = obtenerHojaResumen_();
+  var h = obtenerHojaResumen_(fundo);
   var last = h.getLastRow();
   var out = [];
   if (last < FILA_INI) return out;
@@ -754,12 +786,13 @@ function consultar_(d) {
   var sem = d.sem != null && d.sem !== '' ? num_(d.sem) : null;
   var lote = d.lote != null && d.lote !== '' ? numLote_(d.lote) : null;
   var turno = texto_(d.turno || d.tunel || '');
+  var fundoId = fundoFrom_(d, null);
 
   if (!lote) {
     return { ok: false, message: 'Indique lote' };
   }
 
-  var hoja = obtenerHoja_();
+  var hoja = obtenerHoja_(fundoId);
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
   var match = null;
@@ -802,7 +835,8 @@ function eliminar_(d) {
     return { ok: false, code: 'BUSY', message: 'Servidor ocupado — reintente' };
   }
   try {
-    var hoja = obtenerHoja_();
+    var fundoId = fundoFrom_(d, null);
+    var hoja = obtenerHoja_(fundoId);
     asegurarEncabezados_(hoja);
     var rows = leerFilas_(hoja);
     var idx = [];
@@ -825,7 +859,7 @@ function eliminar_(d) {
     }
     borrarFilas_(hoja, idx);
     invalidarCacheMapa_(sem);
-    try { actualizarResumenDia_(fechaIso || hoy_()); } catch (eRes) { /* ok */ }
+    try { actualizarResumenDia_(fechaIso || hoy_(), null, fundoId); } catch (eRes) { /* ok */ }
     return {
       ok: true,
       deleted: idx.length,
@@ -850,14 +884,15 @@ function getMapa_(d, e) {
   var variedad = formatVariedad_(d.variedad || param_(e, 'variedad') || '');
   if (!String(d.variedad || param_(e, 'variedad') || '').trim()) variedad = '';
   var fechaFiltro = String(d.fecha || param_(e, 'fecha') || '').trim();
+  var fundoId = fundoFrom_(d, e);
   var skipCache = d.nocache === true || d.nocache === 1 ||
     String(d.nocache || param_(e, 'nocache') || '').trim() === '1' ||
     String(d.force || param_(e, 'force') || '').trim() === '1';
 
   var cacheVer = mapaCacheVer_();
-  // v16: resumen por día (sin sumar JR de segmentos multi-día)
-  var cacheKey = 'map_v16_' + cacheVer + '_' + [
-    sem || 'all', laborReal || '-', modulo || '-',
+  // v17: hojas separadas por fundo (Licapa I / II)
+  var cacheKey = 'map_v17_' + cacheVer + '_' + [
+    fundoId, sem || 'all', laborReal || '-', modulo || '-',
     variedad || '-', fechaFiltro || '-'
   ].join('_');
   if (!skipCache) {
@@ -873,7 +908,7 @@ function getMapa_(d, e) {
     } catch (ex) { /* sin cache */ }
   }
 
-  var hoja = obtenerHoja_();
+  var hoja = obtenerHoja_(fundoId);
   var rows = leerFilas_(hoja);
   var buckets = {};
   var list = [];
@@ -920,7 +955,8 @@ function getMapa_(d, e) {
       laborPpto: null,
       modulo: modulo || null,
       variedad: variedad || null,
-      fecha: fechaFiltro || null
+      fecha: fechaFiltro || null,
+      fundo: fundoId
     },
     list: list,
     resumen: armarResumenLista_(dayList, laborReal),
@@ -935,9 +971,10 @@ function getMapa_(d, e) {
 }
 
 /** Valores únicos de la hoja para el panel de filtros */
-function filtrosOpciones_() {
-  try { obtenerHojaResumen_(); } catch (eRes) { /* ok */ }
-  var hoja = obtenerHoja_();
+function filtrosOpciones_(d, e) {
+  var fundoId = fundoFrom_(d || {}, e);
+  try { obtenerHojaResumen_(fundoId); } catch (eRes) { /* ok */ }
+  var hoja = obtenerHoja_(fundoId);
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
   var semMap = {};
@@ -991,14 +1028,22 @@ function filtrosOpciones_() {
     return num_(String(a).replace(/\D/g, '')) - num_(String(b).replace(/\D/g, ''));
   });
 
-  var canonLab = ['DESHIERBO', 'RECOJO DE FRUTA', 'ARENADO DE MACETAS', 'CERCOS VIVOS'];
+  // Licapa I: 4 labores · Licapa II: 3 (sin CERCOS VIVOS)
+  var canonLab = fundoId === 'licapa2'
+    ? ['DESHIERBO', 'RECOJO DE FRUTA', 'ARENADO DE MACETAS']
+    : ['DESHIERBO', 'RECOJO DE FRUTA', 'ARENADO DE MACETAS', 'CERCOS VIVOS'];
   for (var c = 0; c < canonLab.length; c++) laborMap[canonLab[c]] = true;
+  if (fundoId === 'licapa2') {
+    delete laborMap['CERCOS VIVOS'];
+    delete laborMap['CERCO VIVOS'];
+  }
 
   var laborReal = Object.keys(laborMap);
   laborReal.sort();
 
   return {
     ok: true,
+    fundo: fundoId,
     sem: sem,
     fecha: fecha,
     fechaBySem: fechaBySem,
@@ -1011,9 +1056,10 @@ function filtrosOpciones_() {
 
 // ─── DASHBOARD resumen por semana ───────────────────────────────────────────
 
-function dashboard_(semFiltro) {
+function dashboard_(semFiltro, fundo) {
   var sem = semFiltro != null && semFiltro !== '' ? num_(semFiltro) : semIso_();
-  var cacheKey = 'dash_lab_v2_' + sem;
+  var fundoId = normFundoId_(fundo);
+  var cacheKey = 'dash_lab_v3_' + fundoId + '_' + sem;
 
   try {
     var cached = CacheService.getScriptCache().get(cacheKey);
@@ -1026,7 +1072,7 @@ function dashboard_(semFiltro) {
     }
   } catch (e) { /* ok */ }
 
-  var hoja = obtenerHoja_();
+  var hoja = obtenerHoja_(fundoId);
   asegurarEncabezados_(hoja);
   var rows = leerFilas_(hoja);
 
@@ -1459,15 +1505,91 @@ function estilizarEncabezados_(hoja) {
   hoja.setFrozenRows(FILA_ENC);
 }
 
-function obtenerHoja_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var names = [HOJA, 'LABORES', 'Hoja 1'];
-  for (var i = 0; i < names.length; i++) {
-    if (!names[i]) continue;
-    var h = ss.getSheetByName(names[i]);
-    if (h) return h;
+/** Normaliza fundo → licapa1 | licapa2 */
+function normFundoId_(v) {
+  var s = String(v || '').toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!s) return 'licapa1';
+  if (s.indexOf('LICAPA II') >= 0 || s.indexOf('LICAPA 2') >= 0 ||
+      s === 'LICAPA2' || s === 'II' || s === '2' || s === 'ETAPA II' || s === 'ETAPA 2') {
+    return 'licapa2';
   }
-  return ss.getActiveSheet();
+  if (s.indexOf('II') >= 0 && s.indexOf('LICAPA') >= 0) return 'licapa2';
+  return 'licapa1';
+}
+
+function fundoFrom_(d, e) {
+  d = d || {};
+  var v = d.fundo || d.FUNDO || d.etapa || d.ETAPA || '';
+  if (!v && e) v = param_(e, 'fundo') || param_(e, 'etapa') || '';
+  return normFundoId_(v);
+}
+
+function hojaLaboresName_(fundoId) {
+  return normFundoId_(fundoId) === 'licapa2' ? HOJA_LICAPA2 : HOJA;
+}
+
+function hojaResumenName_(fundoId) {
+  return normFundoId_(fundoId) === 'licapa2' ? HOJA_RESUMEN_LICAPA2 : HOJA_RESUMEN;
+}
+
+/** Renombra LABORES / RESUMEN DIA → Licapa I y crea hojas Licapa II si faltan */
+function migrarHojasFundo_() {
+  if (_hojasMigradas) return;
+  _hojasMigradas = true;
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var legacyLab = ss.getSheetByName(HOJA_LEGACY);
+    var l1 = ss.getSheetByName(HOJA);
+    if (legacyLab && !l1) {
+      try { legacyLab.setName(HOJA); } catch (e1) { /* ok */ }
+    }
+    var legacyRes = ss.getSheetByName(HOJA_RESUMEN_LEGACY);
+    var r1 = ss.getSheetByName(HOJA_RESUMEN);
+    if (legacyRes && !r1) {
+      try { legacyRes.setName(HOJA_RESUMEN); } catch (e2) { /* ok */ }
+    }
+    // Asegura existencia de Licapa II (vacías con encabezados)
+    if (!ss.getSheetByName(HOJA_LICAPA2)) {
+      var prev = ss.getActiveSheet();
+      var h2 = ss.insertSheet(HOJA_LICAPA2);
+      h2.getRange(FILA_ENC, 1, 1, COLUMNAS.length).setValues([COLUMNAS]);
+      estilizarEncabezados_(h2);
+      try { if (prev) ss.setActiveSheet(prev); } catch (e3) { /* ok */ }
+    }
+    if (!ss.getSheetByName(HOJA_RESUMEN_LICAPA2)) {
+      var prev2 = ss.getActiveSheet();
+      var r2 = ss.insertSheet(HOJA_RESUMEN_LICAPA2);
+      r2.getRange(FILA_ENC, 1, 1, COLUMNAS_RESUMEN.length).setValues([COLUMNAS_RESUMEN]);
+      estilizarEncabezadosResumen_(r2);
+      try { if (prev2) ss.setActiveSheet(prev2); } catch (e4) { /* ok */ }
+    }
+  } catch (e) { /* ok */ }
+}
+
+function obtenerHoja_(fundo) {
+  migrarHojasFundo_();
+  var fundoId = normFundoId_(fundo);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var name = hojaLaboresName_(fundoId);
+  var h = ss.getSheetByName(name);
+  if (!h && fundoId === 'licapa1') {
+    var legacyNames = [HOJA, HOJA_LEGACY, 'LABORES', 'Hoja 1'];
+    for (var i = 0; i < legacyNames.length; i++) {
+      if (!legacyNames[i]) continue;
+      h = ss.getSheetByName(legacyNames[i]);
+      if (h) break;
+    }
+  }
+  if (!h) {
+    var prev = ss.getActiveSheet();
+    h = ss.insertSheet(name);
+    h.getRange(FILA_ENC, 1, 1, COLUMNAS.length).setValues([COLUMNAS]);
+    estilizarEncabezados_(h);
+    try { if (prev) ss.setActiveSheet(prev); } catch (e) { /* ok */ }
+  }
+  return h;
 }
 
 // ─── Cache / dedup ──────────────────────────────────────────────────────────
@@ -1614,6 +1736,11 @@ function validarPayloadLabor_(d) {
   var fechaIso = normalizarFecha_(d.fecha || d.fechaIso || hoy_());
 
   if (!laborReal) return { ok: false, code: 'MISSING_LABOR', message: 'Falta labor real' };
+  var fundoId = normFundoId_(d.fundo || d.etapa || '');
+  // Licapa II: solo 3 labores (sin CERCOS VIVOS)
+  if (fundoId === 'licapa2' && esCercos_(laborReal)) {
+    return { ok: false, code: 'LABOR_NOT_ALLOWED', message: 'CERCOS VIVOS no aplica en Licapa II' };
+  }
   if (!loteNum || loteNum < 1 || loteNum > 99999) {
     return { ok: false, code: 'BAD_LOTE', message: 'Lote inválido' };
   }
@@ -1646,7 +1773,8 @@ function validarPayloadLabor_(d) {
   var allow = PropertiesService.getScriptProperties().getProperty('LABOR_ALLOWLIST');
   if (allow) {
     var okLabor = false;
-    var parts = String(allow).split('|').concat(['CERCOS VIVOS', 'CERCO VIVOS']);
+    var parts = String(allow).split('|');
+    if (fundoId !== 'licapa2') parts = parts.concat(['CERCOS VIVOS', 'CERCO VIVOS']);
     for (var i = 0; i < parts.length; i++) {
       if (norm_(parts[i]) === laborReal) { okLabor = true; break; }
     }
@@ -1667,6 +1795,7 @@ function validarPayloadLabor_(d) {
     variedad: variedad,
     fecha: fechaIso,
     color: colorCanon_(normalizarColorNombre_(d.color)),
+    fundo: fundoId,
     editar: d.editar === true || d.editar === 1 || d.editar === '1' || d.editar === 'true'
   };
 }

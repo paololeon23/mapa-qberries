@@ -24,10 +24,21 @@
     return String((window.QB_CONFIG && QB_CONFIG.API_TOKEN) || "");
   }
 
-  function laborAllow() {
+  function normFundoId(v) {
+    const s = String(v || "").toUpperCase().replace(/\s+/g, " ").trim();
+    if (!s) return "licapa1";
+    if (s.includes("II") || s === "LICAPA2" || s === "2" || /\b2\b/.test(s)) return "licapa2";
+    return "licapa1";
+  }
+
+  function laborAllow(fundo) {
     const cfg = window.QB_CONFIG && QB_CONFIG.LABOR_OPTS;
-    const list = (cfg && cfg.labor_real) || [];
-    return list.map(x => String(x).toUpperCase().trim());
+    const id = normFundoId(fundo);
+    const by = cfg && cfg.byFundo && cfg.byFundo[id];
+    const list = (Array.isArray(by) && by.length)
+      ? by
+      : ((cfg && cfg.labor_real) || []);
+    return list.map(x => String(x).toUpperCase().trim()).filter(Boolean);
   }
 
   function getQueue() {
@@ -246,7 +257,7 @@
     if (variedad.includes("MAGICA")) variedad = "MAGICA";
     else variedad = "SEKOYA POP";
 
-    const allow = laborAllow();
+    const allow = laborAllow(record.fundo || record.etapa);
     if (laborReal && allow.length && !allow.includes(laborReal)) {
       errors.push("Labor no permitida");
     }
@@ -479,6 +490,8 @@
       ml: shared && shared.ml,
       lotesTrabajados: shared && (shared.lotesTrabajados != null ? shared.lotesTrabajados : shared.cercosLotes),
       color: shared && (sharedColor || normalizeColor(shared.color) || shared.color),
+      fundo: shared && shared.fundo,
+      etapa: shared && shared.etapa,
       items: cleaned
     }), { timeoutMs: 100000 });
   }
@@ -493,6 +506,8 @@
     if (filters.modulo) params.set("modulo", safeText(filters.modulo, 12));
     if (filters.variedad) params.set("variedad", safeText(filters.variedad, 40));
     if (filters.fecha) params.set("fecha", String(filters.fecha).trim().slice(0, 10));
+    if (filters.fundo) params.set("fundo", safeText(filters.fundo, 40));
+    if (filters.etapa) params.set("etapa", safeText(filters.etapa, 12));
     if (filters.nocache || filters.force) params.set("nocache", "1");
     const token = apiToken();
     if (token) params.set("token", token);
@@ -512,12 +527,15 @@
     }
   }
 
-  async function getResumen(sem, laborReal) {
+  async function getResumen(sem, laborReal, opts) {
     const url = apiUrl();
     if (!url) return null;
+    const o = opts && typeof opts === "object" ? opts : {};
     const params = new URLSearchParams({ action: "resumen" });
     if (sem != null && sem !== "") params.set("sem", String(sem).slice(0, 4));
     if (laborReal) params.set("laborReal", safeText(laborReal, 80));
+    if (o.fundo) params.set("fundo", safeText(o.fundo, 40));
+    if (o.etapa) params.set("etapa", safeText(o.etapa, 12));
     const token = apiToken();
     if (token) params.set("token", token);
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -536,10 +554,13 @@
     }
   }
 
-  async function getFiltros() {
+  async function getFiltros(opts) {
     const url = apiUrl();
     if (!url) return null;
+    const o = opts && typeof opts === "object" ? opts : {};
     const params = new URLSearchParams({ action: "filtros" });
+    if (o.fundo) params.set("fundo", safeText(o.fundo, 40));
+    if (o.etapa) params.set("etapa", safeText(o.etapa, 12));
     const token = apiToken();
     if (token) params.set("token", token);
     const res = await fetch(url + "?" + params.toString());
@@ -557,7 +578,9 @@
         modulo: record && (record.modulo || record.md),
         sem: record && record.sem,
         laborReal: record && record.laborReal,
-        fecha: record && record.fecha
+        fecha: record && record.fecha,
+        fundo: record && record.fundo,
+        etapa: record && record.etapa
       }
     };
     const token = apiToken();
